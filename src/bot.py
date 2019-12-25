@@ -1,42 +1,40 @@
 # bin/env/python
 # -*- coding: utf-8 -*-
 
-from cogs.utils.db import *
+from cogs.utils.db import Db
 from cogs.utils.config import Config
 from cogs.utils.strings import multi_replace
 
-from discord.ext.commands import Bot
+from discord.ext.commands import AutoShardedBot
 from pathlib import Path
 from aiohttp import ClientSession
 from datetime import datetime
 from json import load as json_load
+from context import WardenContext
 
-import logging 
+import logging
+import discord
 
 
-class Warden(Bot):
+class Warden(AutoShardedBot):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.config = kwargs.pop("config", Config())
         
-        self.path = Path(__file__).parent.absolute()
-        self.cogs_path = Path(self.config.cogs_path).absolute()
-        self.langs_path = Path(self.config.langs_path).absolute()
+        self.path = Path(__file__).parent.resolve().absolute()
+        self.cogs_path = Path(self.config.cogs_path).resolve().absolute()
+        self.langs_path = Path(self.config.langs_path).resolve().absolute()
         
         self.session = ClientSession(loop=self.loop)
 
-        self.db = Db(DbType.MySQL if self.config.use_mysql else DbType.SQLite, **self.config.to_dict("host", "database", "user", "password"))
+        self.db = Db(self.config.db_type, **self.config.to_dict("database", "host", "user", "password"))
 
         self.uptime = None
 
         self._load_langs()
         self._load_cogs()
-
-    def __del__(self):
-        self.db.conn.close()
-        self.session.close()
 
     def _load_langs(self):
         langs = {}
@@ -51,12 +49,12 @@ class Warden(Bot):
     def _load_cogs(self, reload=False):
 
         def to_ext(path):
-            parent = str(path.parent.absolute())
-            path = str(path.absolute())
+            parent = str(path.parent.parent.resolve().absolute())
+            path = str(path.resolve().absolute())
 
-            return multi_replace(path[len(parent):-4], ['\\', '/'], '.')
+            return multi_replace(path[len(parent) + 1:-3], ['\\', '/'], '.')
 
-        for path in self.cogs_path.glob("*.cog.py"):
+        for path in self.cogs_path.glob("*.py"):
             if not path.is_file():
                 continue
 
@@ -70,4 +68,28 @@ class Warden(Bot):
 
                 logging.info(f"Loaded - {ext_path}")
             except Exception as e:
-                logging.debug(f"Failed to load extension {ext_name}:", "\n", f"{str(e)} - {e.__traceback__}")
+                logging.error(f"Failed to load extension {ext_path}:\n{str(e)}")
+
+    async def process_commands(self, message):
+        ctx = await self.get_context(message, cls=WardenContext)
+
+        if ctx.command is None:
+            return
+
+        check = await self.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?", ctx.guild.id)
+        lang = check[0] if check is not None else self.config.default_lang
+        ctx.lang = self.langs[lang]
+
+        check = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?", ctx.guild.id)
+        color = check[0] if check is not None else self.config.default_color
+        ctx.color = discord.Colour.from_rgb(*map(int, color.split(';')))
+
+        await self.invoke(ctx)
+
+    async def on_message(self, message):
+        if not message.author.bot:
+            await self.process_commands(message)
+
+    async def on_ready(self):
+        self.uptime = datetime.now()
+        logging.info(f'{self.user.name} started with {len(self.guilds)} guilds')
