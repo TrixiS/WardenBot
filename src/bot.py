@@ -1,3 +1,6 @@
+# bin/env/python
+# -*- coding: utf-8 -*-
+
 from cogs.utils.db import *
 from cogs.utils.config import Config
 from cogs.utils.strings import multi_replace
@@ -24,8 +27,7 @@ class Warden(Bot):
         
         self.session = ClientSession(loop=self.loop)
 
-        self.db = Db(DbType.MySQL if self.config.use_mysql else DbType.SQLite, \
-            database=self.config.database, password=self.config.password, user=self.config.user, host=self.config.host)
+        self.db = Db(DbType.MySQL if self.config.use_mysql else DbType.SQLite, **self.config.to_dict("host", "database", "user", "password"))
 
         self.uptime = None
 
@@ -36,7 +38,7 @@ class Warden(Bot):
         self.db.conn.close()
         self.session.close()
 
-    def _load_langs(self, reload=False):
+    def _load_langs(self):
         langs = {}
 
         for path in self.langs_path.glob("*.json"):
@@ -46,13 +48,13 @@ class Warden(Bot):
 
         self.langs = langs
 
-    def _load_cogs(self):
+    def _load_cogs(self, reload=False):
 
         def to_ext(path):
             parent = str(path.parent.absolute())
-            path = str(path)
+            path = str(path.absolute())
 
-            return multi_replace(path[len(parent):], ['\\', '/'], '.')
+            return multi_replace(path[len(parent):-4], ['\\', '/'], '.')
 
         for path in self.cogs_path.glob("*.cog.py"):
             if not path.is_file():
@@ -60,6 +62,10 @@ class Warden(Bot):
 
             try:
                 ext_path = to_ext(path)
+                
+                if reload and ext_path in self.extensions:
+                    self.unload_extension(ext_path)
+
                 self.load_extension(ext_path)
 
                 logging.info(f"Loaded - {ext_path}")
