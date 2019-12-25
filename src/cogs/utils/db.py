@@ -1,5 +1,6 @@
 import sqlite3
 import pymysql
+import logging
 
 from asyncio import Lock
 from enum import Enum
@@ -22,16 +23,17 @@ class Db:
     int_min_bound = -9223372036854775808
     int_max_bound = 9223372036854775807
 
-    def __init__(self, *args):
-        if args[0] is DbType.SQLite:
-            self.conn = sqlite3.connect(args[4])
-        elif args[0] is DbType.MySQL:
-            self.conn = pymysql.connect(args[1], args[2], args[3], args[4])
+    def __init__(self, db_type, **kwargs):
+        if db_type is DbType.SQLite:
+            database = kwargs.pop("database")
+            self.conn = sqlite3.connect(database, **kwargs)
+        elif db_type is DbType.MySQL:
+            self.conn = pymysql.connect(**kwargs)
         else:
-            raise Exception(f"Unsupported DbType - {type(args[0]).__name__}")
+            raise Exception("Unsupported DbType")
 
+        self.db_type = db_type
         self.cursor = self.conn.cursor()
-        self.db_type = args[0]
         self._lock = Lock()
 
     async def commit(self) -> None:
@@ -42,7 +44,8 @@ class Db:
         sql = self.prepare_query(query, list(args))
 
         if not self.prevent_injection(sql):
-            raise Exception("SQL injection detected")
+            logging.warn(f"SQL injection detected")
+            return None
 
         try:
             self.cursor.execute(sql)

@@ -4,7 +4,6 @@ from aiohttp import ClientSession
 
 from config import Config
 
-
 class Warden(Bot):
 
     def __init__(self, *args, **kwargs):
