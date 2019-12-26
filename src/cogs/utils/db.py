@@ -26,7 +26,7 @@ class Db:
     def __init__(self, db_type, **kwargs):
         if db_type is DbType.SQLite:
             database = kwargs.pop("database")
-            self.conn = sqlite3.connect(database, **kwargs)
+            self.conn = sqlite3.connect(database)
         elif db_type is DbType.MySQL:
             self.conn = pymysql.connect(**kwargs)
         else:
@@ -40,7 +40,7 @@ class Db:
         async with self._lock:
             self.conn.commit()
 
-    async def execute(self, query: str, *args, fetch_all=False, with_commit=False) -> Optional[Any]:
+    async def execute(self, query: str, *args: Collection, fetch_all=False, with_commit=False) -> Optional[Any]:
         sql = self.prepare_query(query, list(args))
 
         if not self.prevent_injection(sql):
@@ -57,7 +57,8 @@ class Db:
                 return self.cursor.fetchall()
 
             return self.cursor.fetchone()                
-        except:
+        except Exception as e:
+            logging.warn(f"{str(e)} ({sql})")
             return None
 
     def prevent_injection(self, query: str) -> bool:
