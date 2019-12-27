@@ -1,8 +1,6 @@
 from discord.ext.commands import Context
 from discord import Embed
 
-import logging
-
 
 class WardenContext(Context):
     

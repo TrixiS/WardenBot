@@ -36,16 +36,16 @@ class GeneralCog(Cog):
     @command(name="embed-color")
     @is_commander()
     async def embed_color(self, ctx, *, hex: discord.Colour):
-        rgb_str = ';'.join(hex.to_rgb())
+        rgb_str = ';'.join(map(str, hex.to_rgb()))
 
-        check = await self.bot.db.execute("SELECT `color` FROM `embed_colors` WHERE `embed_colors`.`server` = ?",
+        check = await self.bot.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             ctx.guild.id)
 
         if check is None:
-            await self.bot.db.execute("INSERT INTO `embed_colors` (`server`, `color`) VALUES (?, ?)", 
+            await self.bot.db.execute("INSERT INTO `colors` (`server`, `color`) VALUES (?, ?)", 
                 ctx.guild.id, rgb_str, with_commit=True)
         else:
-            await self.bot.db.execute("UPDATE `embed_colors` SET `color` = ? WHERE `server` = ?",
+            await self.bot.db.execute("UPDATE `colors` SET `color` = ? WHERE `server` = ?",
                 rgb_str, ctx.guild.id, with_commit=True)
 
         await ctx.answer(ctx.lang["general"]["embed_color_changed"].format(rgb_str))
