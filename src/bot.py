@@ -77,11 +77,11 @@ class Warden(AutoShardedBot):
             return
 
         check = await self.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?", ctx.guild.id)
-        lang = check[0] if check is not None else self.config.default_lang
+        lang = check if check is not None else self.config.default_lang
         ctx.lang = self.langs[lang]
 
         check = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?", ctx.guild.id)
-        color = check[0] if check is not None else self.config.default_color
+        color = check if check is not None else self.config.default_color
         ctx.color = discord.Colour.from_rgb(*map(int, color.split(';')))
 
         await self.invoke(ctx)
