@@ -56,7 +56,12 @@ class Db:
             if fetch_all:
                 return self.cursor.fetchall()
 
-            return self.cursor.fetchone()                
+            fetched = self.cursor.fetchone()
+
+            if fetched is not None and len(fetched) == 1:
+                return fetched[0]
+
+            return fetched
         except Exception as e:
             logging.warn(f"{str(e)} ({sql})")
             return None
