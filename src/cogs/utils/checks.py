@@ -39,7 +39,7 @@ def is_commander(*, check=all, **perms):
             ctx.guild.id)
 
         if check is not None:
-            role = ctx.message.guild.get_role(check[0]) 
+            role = ctx.message.guild.get_role(check) 
 
             if role is not None and role in ctx.message.author.roles:
                 return True
@@ -56,7 +56,7 @@ def is_moderator(*, check=all, **perms):
             ctx.guild.id)
 
         if check is not None:
-            role = ctx.message.guild.get_role(check[0])
+            role = ctx.message.guild.get_role(check)
 
             if role is not None and role in ctx.message.author.roles:
                 return True
