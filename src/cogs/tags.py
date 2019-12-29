@@ -70,6 +70,15 @@ class TagCog(commands.Cog):
 
         await ctx.answer(ctx.lang["tags"]["already_created"].format(name))
             
+    @tag.command(name="random")
+    async def tag_random(self, ctx):
+        check = await self.bot.db.execute("SELECT `member`, `name`, `content` FROM `tags` ORDER BY RAND() LIMIT 1")
+
+        user = self.bot.get_user(check[0])
+        fmt = f"{str(user)} - {check[1]}\n\n{check[2]}"
+
+        await ctx.send(fmt)
+
 
 def setup(bot):
     bot.add_cog(TagCog(bot))
