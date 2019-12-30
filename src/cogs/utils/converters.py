@@ -1,6 +1,8 @@
 import discord
 
 from discord.ext import commands
+from asyncio import iscoroutinefunction as is_coro
+
 
 class Uint(commands.Converter):
 
@@ -34,4 +36,57 @@ class IndexConverter(Uint):
         convertered = await super().convert(ctx, arg) - 1
 
         return Index(convertered if convertered >= 0 else 0)
+
+
+class _Check(commands.Converter):
+
+    def __init__(self, *, converter=None, check=None):
+        self.converter = converter
+        self.check = check
+
+    def __getitem__(self, params):
+        if not isinstance(params, tuple):
+            params = (params, )
+
+        if len(params) < 1:
+            raise TypeError("Check[...] only takes > 1 arguments")
+
+        if len(params) == 1:
+            params = (params[0], lambda x: bool(x))
+
+        converter, check = params
+
+        if not callable(check):
+            raise TypeError("Check function must be callable")
+
+        if not (callable(converter) or isinstance(converter, commands.Converter) or converter is type(None)):
+            raise TypeError("Converter parameter must be commands.Converter or a function")
+
+        return self.__class__(converter=converter, check=check)
+
+    async def convert(self, ctx, argument):
+        convertered = None
         
+        if isinstance(self.converter, commands.Converter):
+            convertered = await self.converter.convert(ctx, argument)
+        elif not is_coro(self.converter):
+            convertered = self.converter(argument)
+        elif is_coro(self.converter):
+            convertered = await self.converter(argument)
+        else:
+            convertered = type(self.converter)(argument)
+
+        checked = False
+
+        if is_coro(self.check):
+            checked = await self.check(convertered)
+        elif not is_coro(self.check):
+            checked = self.check(convertered)
+
+        if not checked:
+            raise commands.BadArgument(ctx.lang["errors"]["not_checked"])
+
+        return convertered
+
+
+Check = _Check()
