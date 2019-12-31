@@ -62,7 +62,8 @@ class TagCog(commands.Cog):
 
         if check is None:
             content = await commands.clean_content().convert(ctx,
-                await ctx.ask(ctx.lang["tags"]["content?"], timeout=30.0)
+                await ctx.ask(ctx.lang["tags"]["content?"], 
+                with_attachments=True, timeout=30.0)
             )
 
             await self.bot.db.execute("INSERT INTO `tags` VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())",
