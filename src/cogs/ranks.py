@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from .utils.strings import markdown
 from .utils.constants import StringConstants, RanksConstants
+from .utils.checks import is_commander
+
 
 class RankCog(commands.Cog):
 
@@ -14,8 +16,8 @@ class RankCog(commands.Cog):
         check = await self.bot.db.execute("SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
             ctx.guild.id, fetch_all=True)
 
-        if not len(check):
-            return await ctx.send(ctx.lang["ranks"]["no_ranks"])
+        if check is None or not len(check):
+            return await ctx.answer(ctx.lang["ranks"]["no_ranks"])
 
         ranks_roles = [ctx.guild.get_role(c[0]) for c in check]
 
@@ -27,11 +29,11 @@ class RankCog(commands.Cog):
                     ctx.lang["ranks"]["role_is_not_rank"].format(role.mention)
                 )
 
-            if role in ctx.autor.roles:
-                ctx.author.remove_roles(role)
+            if role in ctx.author.roles:
+                await ctx.author.remove_roles(role, reason=ctx.lang["ranks"]["title"])
                 await ctx.answer(ctx.lang["ranks"]["removed"].format(role.mention))
             else:
-                ctx.author.add_roles(role)
+                await ctx.author.add_roles(role, reason=ctx.lang["ranks"]["title"])
                 await ctx.answer(ctx.lang["ranks"]["added"].format(role.mention))
         else:
             answer = '\n'.join(
@@ -48,8 +50,10 @@ class RankCog(commands.Cog):
             await ctx.send(embed=em)
 
     @rank.command(name="toggle")
+    @is_commander()
     async def rank_toggle(self, ctx, roles: commands.Greedy[discord.Role]):
-        roles = {role for role in roles if role < ctx.guild.me.top_role}
+        roles = {role for role in roles if (role < ctx.guild.me.top_role
+            and role < ctx.message.author.top_role)}
 
         if not len(roles):
             raise commands.BadArgument(ctx.lang["errors"]["no_roles"])
@@ -61,25 +65,20 @@ class RankCog(commands.Cog):
 
         del check
 
-        deleted = []
-        added = []
+        deleted = {role for role in roles if role in ranks_roles and role is not None}
+        added = list(set(roles) ^ deleted)[:RanksConstants.ROLES_MAX_COUNT]
 
-        for role in roles:
-            if role in ranks_roles:
-                await self.bot.db.execute("DELETE FROM `ranks` WHERE `ranks`.`server` = ? AND `ranks`.`role` = ?",
-                    ctx.guild.id, role.id, with_commit=True)
-                
-                deleted.append(role)
-            else:
-                await self.bot.db.execute("INSERT INTO `ranks` VALUES (?, ?)",
-                    ctx.guild.id, role.id, with_commit=True)
+        for role in deleted:
+            await self.bot.db.execute("DELETE FROM `ranks` WHERE `ranks`.`server` = ? AND `ranks`.`role` = ?",
+                ctx.guild.id, role.id, with_commit=True)
 
-                added.append(role)
+        for role in added:
+            await self.bot.db.execute("INSERT INTO `ranks` VALUES (?, ?)",
+                ctx.guild.id, role.id, with_commit=True)
 
         def build_field(ranks: list) -> str:
             result = ', '.join(
                 role.mention for role in ranks 
-                if role is not None
             )
 
             return result or ctx.lang["shared"]["no"]
