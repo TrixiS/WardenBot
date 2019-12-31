@@ -4,8 +4,12 @@ from discord.ext import commands
 from typing import Optional
 from math import ceil
 
-from .utils.converters import IndexConverter, Index
+from .utils.converters import IndexConverter, Index, Check
 from .utils.strings import markdown
+from .utils.time import UnixTime
+
+TAG_MAX_LEN = 60
+TAG_CHECK_PAGE_MAX = 30
 
 
 class TagCog(commands.Cog):
@@ -13,18 +17,16 @@ class TagCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.tag_check_page_max = 30
-
     @commands.group(invoke_without_command=True, aliases=['t'])
     async def tag(self, ctx, *, name: commands.clean_content):
-        check = await self.bot.db.execute("SELECT `content` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` LIKE ?",
+        check = await self.bot.db.execute("SELECT `content` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
             ctx.author.id, name)
 
         if check is not None:
             await ctx.send(check)
             await ctx.message.delete()
 
-            await self.bot.db.execute("UPDATE `tags` SET `used` = `used` + 1 WHERE `tags`.`member` = ? AND `tags`.`name` LIKE ?",
+            await self.bot.db.execute("UPDATE `tags` SET `used` = `used` + 1 WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
                 ctx.author.id, name, with_commit=True)
         else:
             await ctx.answer(ctx.lang["tags"]["no"].format(name))
@@ -34,7 +36,7 @@ class TagCog(commands.Cog):
         member = member or ctx.message.author
     
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? ORDER BY `tags`.`created` LIMIT ? OFFSET ?",
-            member.id, self.tag_check_page_max, self.tag_check_page_max * page.value,
+            member.id, TAG_CHECK_PAGE_MAX, TAG_CHECK_PAGE_MAX * page.value,
             fetch_all=True
         )
 
@@ -47,15 +49,15 @@ class TagCog(commands.Cog):
                 colour=ctx.color
             )
             em.set_thumbnail(url=member.avatar_url)
-            em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / self.tag_check_page_max)}')           
+            em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / TAG_CHECK_PAGE_MAX)}')           
 
             return await ctx.send(embed=em)
 
         await ctx.answer(ctx.lang["tags"]["dont_have_any"].format(member.mention, page.humanize()))            
 
     @tag.command(name="create")
-    async def tag_create(self, ctx, *, name: commands.clean_content):
-        check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` LIKE ?",
+    async def tag_create(self, ctx, *, name: Check[commands.clean_content(), lambda x: len(x) <= TAG_MAX_LEN]):
+        check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
             ctx.message.author.id, name)
 
         if check is None:
@@ -78,6 +80,30 @@ class TagCog(commands.Cog):
         fmt = f"{str(user)} - {check[1]}\n\n{check[2]}"
 
         await ctx.send(fmt)
+
+    @tag.command(name="info")
+    async def tag_info(self, ctx, member: Optional[discord.Member]=None, *, name: commands.clean_content):
+        member = member or ctx.author
+
+        check = await self.bot.db.execute("SELECT * FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
+            member.id, name)
+
+        if check is None:
+            return await ctx.answer(ctx.lang["tags"]["no_with_name"].format(member.mention, name))
+
+        owner = self.bot.get_user(check[0])
+        created = UnixTime(check[4]).humanize()
+
+        em = discord.Embed(title=ctx.lang["tags"]["information"], 
+            colour=ctx.color
+        )
+        em.add_field(name=ctx.lang["shared"]["name"], value=name, inline=False)
+        em.add_field(name=ctx.lang["shared"]["owner"], value=str(owner))
+        em.add_field(name=ctx.lang["tags"]["used"], value=check[3])
+        em.add_field(name=ctx.lang["shared"]["created"], value=created)
+        em.set_thumbnail(url=ctx.message.author.avatar_url)
+
+        await ctx.send(embed=em)
 
 
 def setup(bot):
