@@ -18,7 +18,7 @@ class WardenContext(Context):
 
         await self.send(embed=em)
 
-    async def ask(self, text: str, **kwargs) -> str:
+    async def ask(self, text: str, *, with_attachments=False, **kwargs) -> str:
         await self.send(f"{self.message.author.mention}, {text}")
 
         content = ""
@@ -26,6 +26,14 @@ class WardenContext(Context):
         try:
             check = kwargs.pop("check", lambda m: m.author == self.author)
 
-            content = (await self.bot.wait_for("message", **kwargs, check=check)).content
+            msg = await self.bot.wait_for("message", **kwargs, check=check)
+
+            content = msg.content
+            
+            if with_attachments:
+                content += '\n'.join(
+                attach.url for attach in msg.attachments
+                if (attach.width or attach.height)
+            )
         finally:
             return content
