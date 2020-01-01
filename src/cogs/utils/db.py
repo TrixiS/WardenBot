@@ -89,6 +89,8 @@ class Db:
                     new_arg += s
 
             arg = f"'{new_arg}'"
+        elif isinstance(arg, bool):
+            arg = str(int(arg))
         else:
             arg = self.null
 
