@@ -7,9 +7,7 @@ from math import ceil
 from .utils.converters import IndexConverter, Index, Check
 from .utils.strings import markdown
 from .utils.time import UnixTime
-
-TAG_MAX_LEN = 60
-TAG_CHECK_PAGE_MAX = 30
+from .utils.constants import TagsConstants
 
 
 class TagCog(commands.Cog):
@@ -36,7 +34,7 @@ class TagCog(commands.Cog):
         member = member or ctx.message.author
     
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? ORDER BY `tags`.`created` LIMIT ? OFFSET ?",
-            member.id, TAG_CHECK_PAGE_MAX, TAG_CHECK_PAGE_MAX * page.value,
+            member.id, TagsConstants.CHECK_PAGE_MAX, TagsConstants.CHECK_PAGE_MAX * page.value,
             fetch_all=True
         )
 
@@ -49,14 +47,14 @@ class TagCog(commands.Cog):
                 colour=ctx.color
             )
             em.set_thumbnail(url=member.avatar_url)
-            em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / TAG_CHECK_PAGE_MAX)}')           
+            em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / TagsConstants.CHECK_PAGE_MAX)}')           
 
             return await ctx.send(embed=em)
 
         await ctx.answer(ctx.lang["tags"]["dont_have_any"].format(member.mention, page.humanize()))            
 
     @tag.command(name="create")
-    async def tag_create(self, ctx, *, name: Check[commands.clean_content(), lambda x: len(x) <= TAG_MAX_LEN]):
+    async def tag_create(self, ctx, *, name: Check[commands.clean_content(), lambda x: len(x) <= TagsConstants.MAX_LEN]):
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
             ctx.message.author.id, name)
 
