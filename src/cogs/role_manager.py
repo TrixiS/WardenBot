@@ -4,6 +4,8 @@ from discord.ext import commands
 from .utils.checks import is_commander
 from .utils.strings import join_or_default, collect_attributes
 
+from typing import Union
+
 
 class RoleManagerCog(commands.Cog):
 
@@ -91,6 +93,31 @@ class RoleManagerCog(commands.Cog):
             await ctx.answer(ctx.lang["rm"]["now_enabled"])
         else:
             await ctx.answer(ctx.lang["rm"]["now_disabled"])
+
+    @role_manager.command(name="ignore")
+    @is_commander(manage_roles=True)
+    async def role_manager_ignore(self, ctx, role_or_user: Union[discord.Role, discord.User]):
+        check = await self.bot.db.execute("SELECT `model` FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
+            ctx.guild.id, role_or_user.id)
+
+        if check is None:
+            await self.bot.db.execute("INSERT INTO `rm_ignore` VALUES (?, ?, ?)",   
+                ctx.guild.id, 
+                role_or_user.id, 
+                isinstance(role_or_user, discord.Role),
+                with_commit=True
+            )
+
+            return await ctx.answer(
+                ctx.lang["rm"]["now_ignored"].format(role_or_user.mention)
+            )
+        
+        await self.bot.db.execute("DELETE FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
+            ctx.guild.id, role_or_user.id, with_commit=True)
+
+        await ctx.answer(ctx.lang["rm"]["now_not_ignored"].format(
+            role_or_user.mention)
+        )
 
 
 def setup(bot):
