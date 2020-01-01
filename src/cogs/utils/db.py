@@ -5,7 +5,8 @@ import logging
 from asyncio import Lock
 from enum import Enum
 from typing import Optional, Collection, Any
-from string import whitespace
+from random import random
+from time import time
 
 
 class DbType(Enum):
@@ -31,7 +32,14 @@ class Db:
 
         self.db_type = db_type
         self.cursor = self.conn.cursor()
+
         self._lock = Lock()
+        self._adapt()
+
+    def _adapt(self) -> None:
+        if self.db_type is DbType.SQLite:
+            self.conn.create_function("rand", 0, random)
+            self.conn.create_function("unix_timestamp", 0, time)
 
     async def commit(self) -> None:
         async with self._lock:
