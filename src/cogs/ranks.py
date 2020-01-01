@@ -1,7 +1,7 @@
 import discord
 
 from discord.ext import commands
-from .utils.strings import markdown, join_or_default
+from .utils.strings import markdown, join_or_default, collect_attributes
 from .utils.constants import StringConstants, RanksConstants
 from .utils.checks import is_commander
 
@@ -79,12 +79,18 @@ class RankCog(commands.Cog):
         em = discord.Embed(colour=ctx.color, title=ctx.lang["ranks"]["title"])
         em.add_field(
             name=ctx.lang["shared"]["added"], 
-            value=join_or_default(added, ', ', ctx.lang["shared"]["no"]), 
+            value=join_or_default(
+                collect_attributes(added, "mention"), ', ', 
+                ctx.lang["shared"]["no"]
+            ), 
             inline=False
         )
         em.add_field(
             name=ctx.lang["shared"]["deleted"],
-            value=join_or_default(deleted, ', ', ctx.lang["shared"]["no"]),
+            value=join_or_default(
+                collect_attributes(deleted, "mention"), ', ', 
+                ctx.lang["shared"]["no"]
+            ),
             inline=False
         )
 
