@@ -1,7 +1,7 @@
 import discord
 
 from discord.ext import commands
-from .utils.strings import markdown
+from .utils.strings import markdown, join_or_default
 from .utils.constants import StringConstants, RanksConstants
 from .utils.checks import is_commander
 
@@ -76,22 +76,15 @@ class RankCog(commands.Cog):
             await self.bot.db.execute("INSERT INTO `ranks` VALUES (?, ?)",
                 ctx.guild.id, role.id, with_commit=True)
 
-        def build_field(ranks: list) -> str:
-            result = ', '.join(
-                role.mention for role in ranks 
-            )
-
-            return result or ctx.lang["shared"]["no"]
-
         em = discord.Embed(colour=ctx.color, title=ctx.lang["ranks"]["title"])
         em.add_field(
             name=ctx.lang["shared"]["added"], 
-            value=build_field(added), 
+            value=join_or_default(added, ', ', ctx.lang["shared"]["no"]), 
             inline=False
         )
         em.add_field(
             name=ctx.lang["shared"]["deleted"],
-            value=build_field(deleted),
+            value=join_or_default(deleted, ', ', ctx.lang["shared"]["no"]),
             inline=False
         )
 
