@@ -100,6 +100,53 @@ class RoleManagerCog(commands.Cog):
         await ctx.answer(ctx.lang["rm"]["now_not_ignored"].format(
             role_or_user.mention))
 
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        if not member.guild.me.guild_permissions.manage_roles:
+            return
+
+        enabled = await self.bot.db.execute("SELECT `enabled` FROM `rm_enabled` WHERE `rm_enabled`.`server` = ?",
+            member.guild.id)
+
+        if not enabled:
+            return
+
+        check = await self.bot.db.execute("SELECT `role` FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
+            member.guild.id, member.id, fetch_all=True)
+
+        if check is None or not len(check):
+            return
+
+        roles_to_return = []
+
+        for row in check:
+            role = member.guild.get_role(row[0])
+
+            if role is not None and member.guild.me.top_role > role \
+                and role.id != member.guild.id:
+                    roles_to_return.append(role)
+
+        await self.bot.db.execute("DELETE FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
+            member.guild.id, member.id, with_commit=True)
+
+        await member.add_roles(*roles_to_return, reason="Role manager")
+
+    @commands.Cog.listener()
+    async def on_member_remove(self, member):
+        if not member.guild.me.guild_permissions.manage_roles:
+            return
+        
+        enabled = await self.bot.db.execute("SELECT `enabled` FROM `rm_enabled` WHERE `rm_enabled`.`server` = ?",
+            member.guild.id)
+
+        if not enabled:
+            return
+
+        for role in member.roles:
+            if role < member.guild.me.top_role:
+                await self.bot.db.execute("INSERT INTO `rm_buffer` VALUES (?, ?, ?)",
+                    member.guild.id, member.id, role.id, with_commit=True)
+
 
 def setup(bot):
     bot.add_cog(RoleManagerCog(bot))
