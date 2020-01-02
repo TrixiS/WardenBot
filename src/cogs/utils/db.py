@@ -51,22 +51,23 @@ class Db:
                 self.cursor.execute(self.prepare_query(query, list(args)))
             elif self.db_type is DbType.SQLite:
                 self.cursor.execute(query, args)
-
-            if with_commit:
-                await self.commit()
-
-            if fetch_all:
-                return self.cursor.fetchall()
-
-            fetched = self.cursor.fetchone()
-
-            if fetched is not None and len(fetched) == 1:
-                return fetched[0]
-
-            return fetched
         except Exception as e:
             logging.warn(f"{str(e)} ({query}) ({args})")
             return None
+
+        if with_commit:
+            await self.commit()
+            return self.cursor.rowcount
+
+        if fetch_all:
+            return self.cursor.fetchall()
+
+        fetched = self.cursor.fetchone()
+
+        if fetched is not None and len(fetched) == 1:
+            return fetched[0]
+
+        return fetched
 
     def prevent_injection(self, arg: Any) -> Any:
         if isinstance(arg, int) or isinstance(arg, float):
