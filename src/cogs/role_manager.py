@@ -92,10 +92,10 @@ class RoleManagerCog(commands.Cog):
     @role_manager.command(name="ignore")
     @is_commander(manage_roles=True)
     async def role_manager_ignore(self, ctx, role_or_user: Union[discord.Role, discord.User]):
-        check = await self.bot.db.execute("SELECT `model` FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
-            ctx.guild.id, role_or_user.id)
+        check = await self.bot.db.execute("DELETE FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
+            ctx.guild.id, role_or_user.id, with_commit=True)
 
-        if check is None:
+        if not check:
             await self.bot.db.execute("INSERT INTO `rm_ignore` VALUES (?, ?, ?)",   
                 ctx.guild.id, 
                 role_or_user.id, 
@@ -105,9 +105,6 @@ class RoleManagerCog(commands.Cog):
             return await ctx.answer(
                 ctx.lang["rm"]["now_ignored"].format(role_or_user.mention))
         
-        await self.bot.db.execute("DELETE FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
-            ctx.guild.id, role_or_user.id, with_commit=True)
-
         await ctx.answer(ctx.lang["rm"]["now_not_ignored"].format(
             role_or_user.mention))
 

@@ -56,8 +56,13 @@ class Db:
             return None
 
         if with_commit:
-            await self.commit()
-            return self.cursor.rowcount
+            count = self.cursor.rowcount
+            
+            if count:
+                await self.commit()
+
+            return count
+
 
         if fetch_all:
             return self.cursor.fetchall()
