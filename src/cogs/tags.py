@@ -69,6 +69,16 @@ class TagCog(commands.Cog):
 
         await ctx.answer(ctx.lang["tags"]["already_created"].format(name))
             
+    @tag.command(name="delete")
+    async def tag_delete(self, ctx, *, name: commands.clean_content):
+        check = await self.bot.db.execute("DELETE FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
+            ctx.author.id, name, with_commit=True)
+
+        if check:
+            await ctx.answer(ctx.lang["tags"]["deleted"].format(name))
+        else:
+            await ctx.answer(ctx.lang["tags"]["no"].format(name))
+
     @tag.command(name="random")
     async def tag_random(self, ctx):
         check = await self.bot.db.execute("SELECT `member`, `name`, `content` FROM `tags` ORDER BY RAND() LIMIT 1")
