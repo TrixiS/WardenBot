@@ -21,8 +21,6 @@ class RankCog(commands.Cog):
 
         ranks_roles = [ctx.guild.get_role(c[0]) for c in check]
 
-        del check
-
         if role is not None:
             if role not in ranks_roles:
                 return await ctx.answer(
@@ -60,8 +58,6 @@ class RankCog(commands.Cog):
             ctx.guild.id, fetch_all=True)
 
         ranks_roles = tuple(ctx.guild.get_role(c[0]) for c in check)
-
-        del check
 
         deleted = {role for role in roles if role in ranks_roles and role is not None}
         added = list(set(roles) ^ deleted)[:RanksConstants.ROLES_MAX_COUNT]
