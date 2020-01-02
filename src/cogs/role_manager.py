@@ -51,24 +51,19 @@ class RoleManagerCog(commands.Cog):
             title=ctx.lang["rm"]["title"],
             description=ctx.lang["shared"]["enabled"] if
                 enabled else ctx.lang["shared"]["disabled"],
-            colour=ctx.color
-        )
+            colour=ctx.color)
         em.add_field(
             name=ctx.lang["rm"]["ignored_roles"],
             value=join_or_default(
                 collect_attributes(roles, "mention"), ', ', 
-                ctx.lang["shared"]["no"]
-            ),
-            inline=False
-        )
+                ctx.lang["shared"]["no"]),
+            inline=False)
         em.add_field(
             name=ctx.lang["rm"]["ignored_users"],
             value=join_or_default(
                 collect_attributes(users, "mention"), ', ', 
-                ctx.lang["shared"]["no"]
-            ),
-            inline=False
-        )
+                ctx.lang["shared"]["no"]),
+            inline=False)
 
         await ctx.send(embed=em)
 
@@ -105,19 +100,16 @@ class RoleManagerCog(commands.Cog):
                 ctx.guild.id, 
                 role_or_user.id, 
                 isinstance(role_or_user, discord.Role),
-                with_commit=True
-            )
+                with_commit=True)
 
             return await ctx.answer(
-                ctx.lang["rm"]["now_ignored"].format(role_or_user.mention)
-            )
+                ctx.lang["rm"]["now_ignored"].format(role_or_user.mention))
         
         await self.bot.db.execute("DELETE FROM `rm_ignore` WHERE `rm_ignore`.`server` = ? AND `rm_ignore`.`model` = ?",
             ctx.guild.id, role_or_user.id, with_commit=True)
 
         await ctx.answer(ctx.lang["rm"]["now_not_ignored"].format(
-            role_or_user.mention)
-        )
+            role_or_user.mention))
 
 
 def setup(bot):

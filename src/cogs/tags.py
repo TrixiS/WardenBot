@@ -34,9 +34,9 @@ class TagCog(commands.Cog):
         member = member or ctx.message.author
     
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? ORDER BY `tags`.`created` LIMIT ? OFFSET ?",
-            member.id, TagsConstants.CHECK_PAGE_MAX, TagsConstants.CHECK_PAGE_MAX * page.value,
-            fetch_all=True
-        )
+            member.id, TagsConstants.CHECK_PAGE_MAX, 
+            TagsConstants.CHECK_PAGE_MAX * page.value,
+            fetch_all=True)
 
         if check is not None and len(check) > 0:
             count = await self.bot.db.execute("SELECT COUNT(*) FROM `tags` WHERE `tags`.`member` = ?",
@@ -44,8 +44,7 @@ class TagCog(commands.Cog):
 
             em = discord.Embed(title=ctx.lang["tags"]["check_title"].format(member.name),
                 description=', '.join(markdown(c[0], '`') for c in check),
-                colour=ctx.color
-            )
+                colour=ctx.color)
             em.set_thumbnail(url=member.avatar_url)
             em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / TagsConstants.CHECK_PAGE_MAX)}')           
 
@@ -61,8 +60,7 @@ class TagCog(commands.Cog):
         if check is None:
             content = await commands.clean_content().convert(ctx,
                 await ctx.ask(ctx.lang["tags"]["content?"], 
-                with_attachments=True, timeout=30.0)
-            )
+                with_attachments=True, timeout=30.0))
 
             await self.bot.db.execute("INSERT INTO `tags` VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())",
                 ctx.message.author.id, name, content, 0, with_commit=True)
@@ -94,8 +92,7 @@ class TagCog(commands.Cog):
         created = UnixTime(check[4]).humanize()
 
         em = discord.Embed(title=ctx.lang["tags"]["information"], 
-            colour=ctx.color
-        )
+            colour=ctx.color)
         em.add_field(name=ctx.lang["shared"]["name"], value=name, inline=False)
         em.add_field(name=ctx.lang["shared"]["owner"], value=str(owner))
         em.add_field(name=ctx.lang["tags"]["used"], value=check[3])

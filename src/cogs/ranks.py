@@ -26,8 +26,7 @@ class RankCog(commands.Cog):
         if role is not None:
             if role not in ranks_roles:
                 return await ctx.answer(
-                    ctx.lang["ranks"]["role_is_not_rank"].format(role.mention)
-                )
+                    ctx.lang["ranks"]["role_is_not_rank"].format(role.mention))
 
             if role in ctx.author.roles:
                 await ctx.author.remove_roles(role, reason=ctx.lang["ranks"]["title"])
@@ -38,14 +37,13 @@ class RankCog(commands.Cog):
         else:
             answer = '\n'.join(
                 f"{markdown(role.name, '**')} {StringConstants.DOT_SYMBOL} {len(role.members)}"
-                for role in ranks_roles if len(role.name) <= RanksConstants.ROLE_NAME_MAX_LEN 
-            )
+                for role in ranks_roles 
+                if len(role.name) <= RanksConstants.ROLE_NAME_MAX_LEN)
 
             em = discord.Embed(
                 description=answer,
                 colour=ctx.color,
-                title=ctx.lang["ranks"]["title"]    
-            )
+                title=ctx.lang["ranks"]["title"])
 
             await ctx.send(embed=em)
 
@@ -81,18 +79,14 @@ class RankCog(commands.Cog):
             name=ctx.lang["shared"]["added"], 
             value=join_or_default(
                 collect_attributes(added, "mention"), ', ', 
-                ctx.lang["shared"]["no"]
-            ), 
-            inline=False
-        )
+                ctx.lang["shared"]["no"]), 
+            inline=False)
         em.add_field(
             name=ctx.lang["shared"]["deleted"],
             value=join_or_default(
                 collect_attributes(deleted, "mention"), ', ', 
-                ctx.lang["shared"]["no"]
-            ),
-            inline=False
-        )
+                ctx.lang["shared"]["no"]),
+            inline=False)
 
         await ctx.send(embed=em)
 

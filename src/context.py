@@ -33,7 +33,6 @@ class WardenContext(Context):
             if with_attachments:
                 content += '\n'.join(
                 attach.url for attach in msg.attachments
-                if (attach.width or attach.height)
-            )
+                if (attach.width or attach.height))
         finally:
             return content
