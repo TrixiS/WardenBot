@@ -12,19 +12,19 @@ class RoleManagerCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def get_ignored(self, ctx):
+    async def get_ignored(self, guild):
         ignored_roles = set()
         ignored_users = set()
 
         check = await self.bot.db.execute("SELECT `model`, `is_role` FROM `rm_ignore` WHERE `rm_ignore`.`server` = ?",
-            ctx.guild.id, fetch_all=True)
+            guild.id, fetch_all=True)
 
         if check is not None:
             for row in check:
                 model_id, is_role = row
 
                 if is_role:
-                    role = ctx.guild.get_role(model_id)
+                    role = guild.get_role(model_id)
 
                     if role is not None:
                         ignored_roles.add(role)
@@ -45,7 +45,7 @@ class RoleManagerCog(commands.Cog):
         if enabled is None:
             enabled = False
 
-        roles, users = await self.get_ignored(ctx)
+        roles, users = await self.get_ignored(ctx.guild)
 
         em = discord.Embed(
             title=ctx.lang["rm"]["title"],
@@ -69,7 +69,7 @@ class RoleManagerCog(commands.Cog):
 
     @role_manager.command(name="toggle")
     @is_commander(manage_roles=True)
-    async def role_manager_toggle(self, ctx):
+    async def role_manager_toggle(self, ctx):   
         toggled = await self.bot.db.execute("UPDATE `rm_enabled` SET `enabled` = NOT `enabled` WHERE `rm_enabled`.`server` = ?",
             ctx.guild.id, with_commit=True)
 
@@ -111,20 +111,25 @@ class RoleManagerCog(commands.Cog):
         if not enabled:
             return
 
+        ignored_roles, ignored_users = await self.get_ignored(member.guild)
+
+        if member in ignored_users:
+            return
+
         check = await self.bot.db.execute("SELECT `role` FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
             member.guild.id, member.id, fetch_all=True)
 
         if check is None or not len(check):
             return
 
-        roles_to_return = []
+        roles_to_return = set()
 
         for row in check:
             role = member.guild.get_role(row[0])
 
             if role is not None and member.guild.me.top_role > role \
-                and role.id != member.guild.id:
-                    roles_to_return.append(role)
+                and role.id != member.guild.id and role not in ignored_roles:
+                    roles_to_return.add(role)
 
         await self.bot.db.execute("DELETE FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
             member.guild.id, member.id, with_commit=True)
