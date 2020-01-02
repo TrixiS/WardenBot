@@ -70,24 +70,16 @@ class RoleManagerCog(commands.Cog):
     @role_manager.command(name="toggle")
     @is_commander(manage_roles=True)
     async def role_manager_toggle(self, ctx):
-        enabled = await self.bot.db.execute("SELECT `enabled` FROM `rm_enabled` WHERE `rm_enabled`.`server` = ?",
-            ctx.guild.id)
+        toggled = await self.bot.db.execute("UPDATE `rm_enabled` SET `enabled` = NOT `enabled` WHERE `rm_enabled`.`server` = ?",
+            ctx.guild.id, with_commit=True)
 
-        if enabled is None:
+        if toggled:
+            await ctx.answer(ctx.lang["rm"]["toggled"])
+        else:
             await self.bot.db.execute("INSERT INTO `rm_enabled` VALUES (?, ?)",
                 ctx.guild.id, True, with_commit=True)
-
-            return await ctx.answer(ctx.lang["rm"]["now_enabled"])
-
-        enabled = not enabled
-
-        await self.bot.db.execute("UPDATE `rm_enabled` SET `enabled` = ? WHERE `rm_enabled`.`server` = ?",
-            enabled, ctx.guild.id, with_commit=True)
-        
-        if enabled:
+            
             await ctx.answer(ctx.lang["rm"]["now_enabled"])
-        else:
-            await ctx.answer(ctx.lang["rm"]["now_disabled"])
 
     @role_manager.command(name="ignore")
     @is_commander(manage_roles=True)
