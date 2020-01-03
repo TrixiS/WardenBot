@@ -14,7 +14,7 @@ class WardenContext(Context):
         self.lang = None
         self.color = None
 
-    async def send(self, content: str, **kwargs) -> None:
+    async def send(self, content: str=None, **kwargs) -> None:
         try:
             await super().send(content, **kwargs)
         except Exception as e:
@@ -41,7 +41,7 @@ class WardenContext(Context):
             
             if with_attachments:
                 content += '\n'.join(
-                attach.url for attach in msg.attachments
-                if (attach.width or attach.height))
+                    attach.url for attach in msg.attachments
+                    if (attach.width or attach.height))
         finally:
             return content
