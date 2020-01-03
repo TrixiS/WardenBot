@@ -13,8 +13,8 @@ class RoleManagerCog(commands.Cog):
         self.bot = bot
 
     async def get_ignored(self, guild):
-        ignored_roles = set()
-        ignored_users = set()
+        ignored_roles = []
+        ignored_users = []
 
         check = await self.bot.db.execute("SELECT `model`, `is_role` FROM `rm_ignore` WHERE `rm_ignore`.`server` = ?",
             guild.id, fetch_all=True)
@@ -27,12 +27,12 @@ class RoleManagerCog(commands.Cog):
                     role = guild.get_role(model_id)
 
                     if role is not None:
-                        ignored_roles.add(role)
+                        ignored_roles.append(role)
                 else:
                     user = self.bot.get_user(model_id)
 
                     if user is not None:
-                        ignored_users.add(user)
+                        ignored_users.append(user)
 
         return ignored_roles, ignored_users
 
@@ -122,14 +122,15 @@ class RoleManagerCog(commands.Cog):
         if check is None or not len(check):
             return
 
-        roles_to_return = set()
+        roles_to_return = []
 
         for row in check:
             role = member.guild.get_role(row[0])
 
             if role is not None and member.guild.me.top_role > role \
-                and role.id != member.guild.id and role not in ignored_roles:
-                    roles_to_return.add(role)
+                and role.id != member.guild.id and role not in ignored_roles \
+                and role not in member.roles:
+                    roles_to_return.append(role)
 
         await self.bot.db.execute("DELETE FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
             member.guild.id, member.id, with_commit=True)
