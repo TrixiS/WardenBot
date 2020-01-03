@@ -1,7 +1,9 @@
 from discord.ext.commands import Context
 from discord import Embed
-
+from cogs.utils.constants import EmbedConstants
 from asyncio import TimeoutError
+
+import logging
 
 
 class WardenContext(Context):
@@ -11,6 +13,13 @@ class WardenContext(Context):
 
         self.lang = None
         self.color = None
+
+    async def send(self, content: str, **kwargs) -> None:
+        try:
+            await super().send(content, **kwargs)
+        except Exception as e:
+            logging.error(str(e))
+            await super().send(self.lang["errors"]["send_error"])
 
     async def answer(self, message: str) -> None:
         em = Embed(colour=self.color, description=message)
