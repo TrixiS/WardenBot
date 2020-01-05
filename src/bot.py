@@ -21,8 +21,8 @@ class Warden(AutoShardedBot):
         self.config = kwargs.pop("config", Config())
         
         self.path = Path(__file__).parent.resolve().absolute()
-        self.cogs_path = Path(self.config.cogs_path).resolve().absolute()
-        self.langs_path = Path(self.config.langs_path).resolve().absolute()
+        self.cogs_path = self.path.joinpath(self.config.cogs_path).resolve()
+        self.langs_path = Path(self.config.langs_path).resolve()
         
         self.session = ClientSession(loop=self.loop)
 
