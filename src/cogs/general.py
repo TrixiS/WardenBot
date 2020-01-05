@@ -50,25 +50,19 @@ class GeneralCog(Cog):
             ctx.lang["general"]["embed_color_changed"].format(rgb_str))
 
     async def _role_setup_pattern(self, ctx, role: discord.Role, table: str, no_key: str, is_key: str, new_key: str):
-        check = await self.bot.db.execute(f"SELECT `role` FROM `{table}` WHERE `{table}`.`server` = ?",
-            ctx.guild.id)
-
         if role is None:
+            check = await self.bot.db.execute(f"SELECT `role` FROM `{table}` WHERE `{table}`.`server` = ?",
+                ctx.guild.id)
+
             checked_role = ctx.guild.get_role(check)
 
             if check is None or checked_role is None:
                 await ctx.answer(ctx.lang["general"][no_key])
             else:
-                await ctx.answer(ctx.lang["general"][is_key].format(checked_role.mention))            
+                await ctx.answer(ctx.lang["general"][is_key].format(checked_role.mention))        
         else:
-            if check is None:
-                await self.bot.db.execute(f"INSERT INTO `{table}` (`server`, `role`) VALUES (?, ?)",
-                    ctx.guild.id, role.id, with_commit=True)
-            else:
-                await self.bot.db.execute(f"UPDATE `{table}` SET `role` = ? WHERE `server` = ?",
-                    role.id, ctx.guild.id, with_commit=True)
-
-            await ctx.answer(ctx.lang["general"][new_key].format(role.mention))
+            await self._settings_pattern(ctx, table, "role", role.id, 
+                ctx.lang["general"][new_key].format(role.mention))
 
     async def _role_delete_pattern(self, ctx, table: str, deleted_key: str):
         await self.bot.db.execute(f"DELETE FROM `{table}` WHERE `{table}`.`server` = ?",
