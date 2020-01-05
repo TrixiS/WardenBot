@@ -4,14 +4,13 @@ from discord.ext.commands import Cog, command, has_permissions, group
 from .utils.checks import is_commander
 from .utils.strings import markdown
 
-#SQL REFACTOR
 
 class GeneralCog(Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    async def settings_pattern(self, ctx, table: str, field: str, new_value: str, message: str):
+    async def _settings_pattern(self, ctx, table: str, field: str, new_value: str, message: str):
         check = await self.bot.db.execute(f"UPDATE `{table}` SET `{field}` = ? WHERE `{table}`.`server` = ?",
             new_value, ctx.guild.id, with_commit=True)
 
@@ -34,7 +33,7 @@ class GeneralCog(Cog):
 
         ctx.lang = self.bot.langs[lang_code]
 
-        await self.settings_pattern(ctx, "langs", "lang", lang_code, 
+        await self._settings_pattern(ctx, "langs", "lang", lang_code, 
             ctx.lang["general"]["now_speaks"].format(self.bot.user.name, lang_code))
 
     @command(name="embed-color")
@@ -47,7 +46,7 @@ class GeneralCog(Cog):
 
         ctx.color = new_color
 
-        await self.settings_pattern(ctx, "colors", "color", rgb_str, 
+        await self._settings_pattern(ctx, "colors", "color", rgb_str, 
             ctx.lang["general"]["embed_color_changed"].format(rgb_str))
 
     async def _role_setup_pattern(self, ctx, role: discord.Role, table: str, no_key: str, is_key: str, new_key: str):
