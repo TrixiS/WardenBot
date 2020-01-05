@@ -1,6 +1,3 @@
-# bin/env/python
-# -*- coding: utf-8 -*-
-
 from cogs.utils.db import Db
 from cogs.utils.config import Config
 from cogs.utils.strings import multi_replace
@@ -32,6 +29,7 @@ class Warden(AutoShardedBot):
         self.db = Db(self.config.db_type, **self.config.to_dict("database", "host", "user", "password"))
 
         self.uptime = None
+        self.langs = {}
 
         self._load_langs()
         self._load_cogs()
@@ -70,18 +68,28 @@ class Warden(AutoShardedBot):
             except Exception as e:
                 logging.error(f"Failed to load extension {ext_path}:\n{str(e)}")
 
+    async def get_color(self, guild):
+        color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
+            guild.id)
+
+        color = color or self.config.default_color
+
+        return discord.Colour.from_rgb(*map(int, color.split(';')))
+
+    async def get_lang(self, guild):
+        lang = await self.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?",
+            guild.id)
+
+        return self.langs[lang or self.config.default_lang]
+
     async def process_commands(self, message):
         ctx = await self.get_context(message, cls=WardenContext)
 
         if ctx.command is None:
             return
 
-        check = await self.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?", ctx.guild.id)
-        ctx.lang = self.langs[check or self.config.default_lang]
-
-        check = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?", ctx.guild.id)
-        color = check or self.config.default_color
-        ctx.color = discord.Colour.from_rgb(*map(int, color.split(';')))
+        ctx.lang = await self.get_lang(message.guild)
+        ctx.color = await self.get_color(message.guild)
 
         await self.invoke(ctx)
 
