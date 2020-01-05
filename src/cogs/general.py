@@ -2,53 +2,53 @@ import discord
 
 from discord.ext.commands import Cog, command, has_permissions, group
 from .utils.checks import is_commander
+from .utils.strings import markdown
 
+#SQL REFACTOR
 
 class GeneralCog(Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    @command(name="language", aliases=["lang"])
-    @is_commander()
-    async def language(self, ctx, lang_code: str.lower=None):
-        supported_langs = self.bot.langs.keys()
+    async def settings_pattern(self, ctx, table: str, field: str, new_value: str, message: str):
+        check = await self.bot.db.execute(f"UPDATE `{table}` SET `{field}` = ? WHERE `{table}`.`server` = ?",
+            new_value, ctx.guild.id, with_commit=True)
 
-        if lang_code is None or not lang_code in supported_langs:
+        if not check:
+            await self.bot.db.execute(f"INSERT INTO `{table}` VALUES (?, ?)",
+                ctx.guild.id, new_value, with_commit=True)
+
+        await ctx.answer(message)
+
+    @command(name="lang")
+    @is_commander()
+    async def lang(self, ctx, lang_code: str.lower=None):
+        supperted_langs = self.bot.langs.keys()
+
+        if lang_code is None or lang_code not in supperted_langs:
             answer = ctx.lang["general"]["supported_langs"].format(
-                ', '.join(f"**{l}**" for l in supported_langs)
-            )
+                ', '.join(markdown(l, "**") for l in supperted_langs))
 
             return await ctx.answer(answer)
 
-        check = await self.bot.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?", 
-            ctx.guild.id)
+        ctx.lang = self.bot.langs[lang_code]
 
-        if check is not None:
-            await self.bot.db.execute("UPDATE `langs` SET `lang` = ? WHERE `langs`.`server` = ?", 
-                lang_code, ctx.guild.id, with_commit=True)
-        else:
-            await self.bot.db.execute("INSERT INTO `langs` (`server`, `lang`) VALUES (?, ?)", 
-                ctx.guild.id, lang_code, with_commit=True)
-
-        await ctx.answer(ctx.lang["general"]["now_speaks"].format(lang_code))
+        await self.settings_pattern(ctx, "langs", "lang", lang_code, 
+            ctx.lang["general"]["now_speaks"].format(self.bot.user.name, lang_code))
 
     @command(name="embed-color")
     @is_commander()
-    async def embed_color(self, ctx, *, hex: discord.Colour):
-        rgb_str = ';'.join(map(str, hex.to_rgb()))
+    async def embed_color(self, ctx, *, new_color: discord.Colour=None):
+        if new_color is None:
+            return await ctx.answer(str(ctx.color).upper())
 
-        check = await self.bot.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
-            ctx.guild.id)
+        rgb_str = ';'.join(map(str, new_color.to_rgb()))
 
-        if check is None:
-            await self.bot.db.execute("INSERT INTO `colors` (`server`, `color`) VALUES (?, ?)", 
-                ctx.guild.id, rgb_str, with_commit=True)
-        else:
-            await self.bot.db.execute("UPDATE `colors` SET `color` = ? WHERE `server` = ?",
-                rgb_str, ctx.guild.id, with_commit=True)
+        ctx.color = new_color
 
-        await ctx.answer(ctx.lang["general"]["embed_color_changed"].format(rgb_str))
+        await self.settings_pattern(ctx, "colors", "color", rgb_str, 
+            ctx.lang["general"]["embed_color_changed"].format(rgb_str))
 
     async def _role_setup_pattern(self, ctx, role: discord.Role, table: str, no_key: str, is_key: str, new_key: str):
         check = await self.bot.db.execute(f"SELECT `role` FROM `{table}` WHERE `{table}`.`server` = ?",
