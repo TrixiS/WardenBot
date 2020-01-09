@@ -31,4 +31,6 @@ class UnixTime:
         now.value -= timedelta.total_seconds()
         return now
 
-        
+    def passed_seconds(self) -> int:
+        now = self.now()
+        return now.timestamp - self.value
