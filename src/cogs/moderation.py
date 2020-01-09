@@ -78,14 +78,16 @@ class MutePool:
         await asyncio.sleep(time)
         await self.remove_mute(guild, member)    
 
-    async def add_mute(self, ctx, member: discord.User, info: MuteInfo) ->:        
+    async def add_mute(self, guild, member: discord.User, info: MuteInfo):        
         mute_role = await self.roles.get_mute_role(guild)
 
         await member.add_roles(mute_role, reason=info.reason)
 
-        if info.time > 0:
+        time = info.time.passed_seconds()
+
+        if time > 0:
             task = self.loop.create_task(
-                self.mute_task(guild, member, info.time.passed_seconds()))
+                self.mute_task(guild, member, time))
             self.pool[self._create_pair(guild, member)] = task
 
     async def remove_mute(self, guild, member: discord.User, info: MuteInfo):
