@@ -67,30 +67,34 @@ class MutePool:
     def _create_pair(self, guild, member):
         return (guild.id, member.id)
 
-    def is_muted(self, guild, member) -> bool:
-        return self._create_pair(guild, member) in self.pool
+    def is_muted(self, member) -> bool:
+        return self._create_pair(member.guild, member) in self.pool
 
-    async def mute_task(self, guild, member, time: int):
+    async def mute_task(self, member, time: int):
         await asyncio.sleep(time)
-        await self.remove_mute(guild, member)    
+        await self.remove_mute(member, MuteInfo(time=None, reason="Unmute"))    
 
     async def add_mute(self, member: discord.Member, info: MuteInfo):        
         mute_role = await self.roles.get_mute_role(member.guild)
 
-        await member.add_roles(mute_role, reason=info.reason)
+        if mute_role not in member.roles:
+            await member.add_roles(mute_role, reason=info.reason)
 
         time = info.time.passed_seconds()
 
+        print(time)
+
         if time > 0:
             task = self.loop.create_task(
-                self.mute_task(member.guild, member, time))
+                self.mute_task(member, time))
 
-            self.pool[self._create_pair(guild, member)] = task
+            self.pool[self._create_pair(member.guild, member)] = task
 
     async def remove_mute(self, member: discord.Member, info: MuteInfo):
         mute_role = await self.roles.get_mute_role(member.guild)
 
-        await member.remove_roles(mute_role, reason=info.reason)
+        if mute_role in member.roles:
+            await member.remove_roles(mute_role, reason=info.reason)
 
         pair = self._create_pair(member.guild, member)
 
@@ -101,9 +105,10 @@ class MutePool:
 
 class EntryType(Enum):
     Mute = 0
-    Kick = 1
-    Ban = 2
-    Clear = 3
+    Unmute = 1
+    Kick = 2
+    Ban = 3
+    Clear = 4
 
 
 class ModerationCog(commands.Cog):
@@ -127,13 +132,13 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @is_moderator(kick_members=True)
     async def mute(self, ctx, member: discord.Member, time: Optional[int]=None, *, reason: str=None):
-        if self.mute_pool.is_muted(ctx.guild, member):
+        if self.mute_pool.is_muted(member):
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
 
         info = MuteInfo(
-            time=time or UnixTime.now(), 
-            reason=reason or ctx.lang["moderation"]["no_reason"])
+            time=UnixTime.now() + timedelta(seconds=time), 
+            reason=reason or ctx.lang["shared"]["no_reason"])
 
         await self.mute_pool.add_mute(member, info) 
 
@@ -141,10 +146,24 @@ class ModerationCog(commands.Cog):
             member.mention))
 
         await self.log_entry(ctx, EntryType.Mute, member, info)
-            
-    async def unmute(self, *args):
-        #await ctx.answer(ctx.lang["moderation"]["unmuted"].format(
-        #    member.mention))
+
+    @commands.command()
+    @is_moderator(kick_members=True)
+    async def unmute(self, ctx, member: discord.Member, *, reason: str=None):
+        if not self.mute_pool.is_muted(member):
+            return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
+                member.mention))
+
+        info = MuteInfo(
+            time=UnixTime.now(),
+            reason=reason or ctx.lang["moderation"]["mute_removal"])
+
+        await self.mute_pool.remove_mute(member, info)
+
+        await ctx.answer(ctx.lang["moderation"]["unmuted"].format(
+            member.mention))
+        
+        await self.log_entry(ctx, EntryType.Unmute, member, info)
 
 
 def setup(bot):
