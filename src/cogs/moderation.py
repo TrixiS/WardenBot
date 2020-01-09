@@ -10,10 +10,6 @@ from collections import namedtuple
 from .utils.time import UnixTime
 from .utils.checks import is_moderator, is_commander
 #from .utils.converters import HumanTime, EqualMember
-# CREATE TABLE `mog_log` (
-#   `server` BIGINT, `author` BIGINT, `member` BIGINT,
-#   `type` VARCHAR(10), `expires` INT(11), `reason` TEXT
-# )
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
 
@@ -78,8 +74,8 @@ class MutePool:
         await asyncio.sleep(time)
         await self.remove_mute(guild, member)    
 
-    async def add_mute(self, guild, member: discord.User, info: MuteInfo):        
-        mute_role = await self.roles.get_mute_role(guild)
+    async def add_mute(self, member: discord.Member, info: MuteInfo):        
+        mute_role = await self.roles.get_mute_role(member.guild)
 
         await member.add_roles(mute_role, reason=info.reason)
 
@@ -87,15 +83,16 @@ class MutePool:
 
         if time > 0:
             task = self.loop.create_task(
-                self.mute_task(guild, member, time))
+                self.mute_task(member.guild, member, time))
+
             self.pool[self._create_pair(guild, member)] = task
 
-    async def remove_mute(self, guild, member: discord.User, info: MuteInfo):
-        mute_role = await self.roles.get_mute_role(guild)
+    async def remove_mute(self, member: discord.Member, info: MuteInfo):
+        mute_role = await self.roles.get_mute_role(member.guild)
 
         await member.remove_roles(mute_role, reason=info.reason)
 
-        pair = self._create_pair(guild, member)
+        pair = self._create_pair(member.guild, member)
 
         if pair in self.pool:
             self.pool[pair].cancel()
@@ -138,7 +135,7 @@ class ModerationCog(commands.Cog):
             time=time or UnixTime.now(), 
             reason=reason or ctx.lang["moderation"]["no_reason"])
 
-        await self.mute_pool.add_mute(ctx, member, info) 
+        await self.mute_pool.add_mute(member, info) 
 
         await ctx.answer(ctx.lang["moderation"]["muted"].format(
             member.mention))
