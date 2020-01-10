@@ -1,10 +1,6 @@
 from discord.ext.commands import check as cmd_check
 
 
-async def none_guild(ctx):
-    return ctx.guild and ctx.guild is not None
-
-
 async def check_permissions(ctx, perms, *, check=all):
     if ctx.author.id in ctx.bot.config.owners:
         return True
@@ -12,6 +8,20 @@ async def check_permissions(ctx, perms, *, check=all):
     resolved = ctx.message.channel.permissions_for(ctx.author)
 
     return check(getattr(resolved, name, None) == value for name, value in perms.items())
+
+
+async def check_bot_permissions(ctx, perms, *, check=all):
+    resolved = ctx.message.channel.permissions_for(ctx.guild.me)
+
+    return check(getattr(resolved, name, None) == value for name, value in perms.items())
+
+
+def bot_has_permissions(*, check=all, **perms):
+
+    async def predicate(ctx):
+        return await check_bot_permissions(ctx, perms, check=check)
+
+    return cmd_check(predicate)
 
 
 def has_permissions(*, check=all, **perms):
