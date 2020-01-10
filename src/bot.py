@@ -83,6 +83,9 @@ class Warden(AutoShardedBot):
         return self.langs[lang or self.config.default_lang]
 
     async def process_commands(self, message):
+        if message.guild is None:
+            return
+
         ctx = await self.get_context(message, cls=WardenContext)
 
         if ctx.command is None:
