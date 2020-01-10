@@ -8,7 +8,7 @@ from typing import Optional
 from collections import namedtuple
 
 from .utils.time import UnixTime
-from .utils.checks import is_moderator, is_commander
+from .utils.checks import is_moderator, is_commander, is_owner
 #from .utils.converters import HumanTime, EqualMember
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
@@ -54,8 +54,6 @@ class MuteRoles:
         
         return role
 
-# TODO:
-#   add langs for all methods below
 
 class MutePool:
 
@@ -72,7 +70,8 @@ class MutePool:
 
     async def mute_task(self, member, time: int):
         await asyncio.sleep(time)
-        await self.remove_mute(member, MuteInfo(time=None, reason="Unmute"))    
+        await self.remove_mute(member, MuteInfo(time=None, reason="Unmute"), 
+            auto=True)    
 
     async def add_mute(self, member: discord.Member, info: MuteInfo):        
         mute_role = await self.roles.get_mute_role(member.guild)
@@ -82,15 +81,13 @@ class MutePool:
 
         time = info.time.passed_seconds()
 
-        print(time)
-
         if time > 0:
             task = self.loop.create_task(
                 self.mute_task(member, time))
 
             self.pool[self._create_pair(member.guild, member)] = task
 
-    async def remove_mute(self, member: discord.Member, info: MuteInfo):
+    async def remove_mute(self, member: discord.Member, info: MuteInfo, *, auto=False):
         mute_role = await self.roles.get_mute_role(member.guild)
 
         if mute_role in member.roles:
@@ -99,7 +96,9 @@ class MutePool:
         pair = self._create_pair(member.guild, member)
 
         if pair in self.pool:
-            self.pool[pair].cancel()
+            if not auto:
+                self.pool[pair].cancel()
+            
             del self.pool[pair]
 
 
@@ -138,12 +137,12 @@ class ModerationCog(commands.Cog):
 
         info = MuteInfo(
             time=UnixTime.now() + timedelta(seconds=time), 
-            reason=reason or ctx.lang["shared"]["no_reason"])
+            reason=reason or ctx.lang["shared"]["no"])
 
         await self.mute_pool.add_mute(member, info) 
 
         await ctx.answer(ctx.lang["moderation"]["muted"].format(
-            member.mention))
+            member.mention, info.time.humanize("%d.%m.%y %H:%M:%S")))
 
         await self.log_entry(ctx, EntryType.Mute, member, info)
 
@@ -156,7 +155,7 @@ class ModerationCog(commands.Cog):
 
         info = MuteInfo(
             time=UnixTime.now(),
-            reason=reason or ctx.lang["moderation"]["mute_removal"])
+            reason=reason or ctx.lang["shared"]["no"])
 
         await self.mute_pool.remove_mute(member, info)
 
