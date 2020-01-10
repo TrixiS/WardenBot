@@ -135,7 +135,8 @@ class RoleManagerCog(commands.Cog):
         await self.bot.db.execute("DELETE FROM `rm_buffer` WHERE `rm_buffer`.`server` = ? AND `rm_buffer`.`member` = ?",
             member.guild.id, member.id, with_commit=True)
 
-        await member.add_roles(*roles_to_return, reason="Role manager")
+        if len(roles_to_return):
+            await member.add_roles(*roles_to_return, reason="Role manager")
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
