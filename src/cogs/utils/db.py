@@ -101,7 +101,8 @@ class Db:
         for s in query:
             if s in "`'\"":
                 in_param = not in_param
-            elif s == self.param_lit:
+            
+            if not in_param and s == self.param_lit:
                 s = r"%s"
 
             result += s
