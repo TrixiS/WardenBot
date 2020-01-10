@@ -149,10 +149,13 @@ class RoleManagerCog(commands.Cog):
         if not enabled:
             return
 
-        for role in member.roles:
-            if role < member.guild.me.top_role:
-                await self.bot.db.execute("INSERT INTO `rm_buffer` VALUES (?, ?, ?)",
-                    member.guild.id, member.id, role.id, with_commit=True)
+        query_args = tuple(
+            (member.guild.id, member.id, role.id) for role in member.roles
+            if role < member.guild.me.top_role)
+
+        if len(query_args):
+            await self.bot.db.executemany("INSERT INTO `rm_buffer` VALUES (?, ?, ?)",
+                query_args, with_commit=True)
 
 
 def setup(bot):
