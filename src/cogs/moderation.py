@@ -55,18 +55,30 @@ class MuteRoles:
         return role
 
 
+class MemberDict(dict):
+
+    def __getitem__(self, member: discord.Member):
+        return super().__getitem__((member.guild.id, member.id))
+
+    def __setitem__(self, member: discord.Member, value):
+        super().__setitem__((member.guild.id, member.id), value)
+
+    def __contains__(self, member: discord.Member):
+        return super().__contains__((member.guild.id, member.id))
+
+    def __delitem__(self, member: discord.Member):
+        super().__delitem__((member.guild.id, member.id))
+
+
 class MutePool:
 
     def __init__(self, loop, roles):
         self.loop = loop
         self.roles = roles
-        self.pool = {}
+        self.pool = MemberDict()
 
-    def _create_pair(self, guild, member):
-        return (guild.id, member.id)
-
-    def is_muted(self, member) -> bool:
-        return self._create_pair(member.guild, member) in self.pool
+    def __contains__(self, member) -> bool:
+        return member in self.pool
 
     async def mute_task(self, member, time: int):
         await asyncio.sleep(time)
@@ -85,7 +97,7 @@ class MutePool:
             task = self.loop.create_task(
                 self.mute_task(member, time))
 
-            self.pool[self._create_pair(member.guild, member)] = task
+            self.pool[member] = task
 
     async def remove_mute(self, member: discord.Member, info: MuteInfo, *, auto=False):
         mute_role = await self.roles.get_mute_role(member.guild)
@@ -93,13 +105,11 @@ class MutePool:
         if mute_role in member.roles:
             await member.remove_roles(mute_role, reason=info.reason)
 
-        pair = self._create_pair(member.guild, member)
-
-        if pair in self.pool:
+        if member in self.pool:
             if not auto:
-                self.pool[pair].cancel()
+                self.pool[member].cancel()
             
-            del self.pool[pair]
+            del self.pool[member]
 
 
 class EntryType(Enum):
@@ -124,14 +134,16 @@ class ModerationCog(commands.Cog):
             info.time.timestamp, info.reason, 
             with_commit=True)
 
-    # TODO:
+    # TODO (#1):
     #   add perms check for bot
-    #   global message perms check
+
+    # TODO (#2):
+    #   any erros when bot has no perms?
 
     @commands.command()
     @is_moderator(kick_members=True)
     async def mute(self, ctx, member: discord.Member, time: Optional[int]=None, *, reason: str=None):
-        if self.mute_pool.is_muted(member):
+        if member in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
 
@@ -149,7 +161,7 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @is_moderator(kick_members=True)
     async def unmute(self, ctx, member: discord.Member, *, reason: str=None):
-        if not self.mute_pool.is_muted(member):
+        if member not in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
