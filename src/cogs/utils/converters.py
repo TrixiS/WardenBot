@@ -70,6 +70,19 @@ class EqualMember(commands.MemberConverter):
         return member
 
 
+class EqualRole(commands.RoleConverter):
+
+    async def convert(self, ctx, arg):
+        role = await super().convert(ctx, arg)
+
+        if role >= ctx.author.top_role or role >= ctx.guild.me.top_role:
+            raise commands.BadArgument(
+                ctx.lang["errors"]["role_over_top_role"].format(
+                    role.mention, ctx.bot.user.mention))
+
+        return role
+
+
 class _Check(commands.Converter):
 
     def __init__(self, *, converter=None, check=None):
