@@ -9,7 +9,7 @@ from collections import namedtuple
 
 from .utils.time import UnixTime
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
-from .utils.converters import HumanTime, EqualMember
+from .utils.converters import HumanTime, EqualMember, EqualRole
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
 
@@ -32,7 +32,8 @@ class MuteRoles:
 
     async def setup_mute_role(self, *, guild=None, role=None):
         if role is None:
-            role = await guild.create_role(name="Muted")
+            role = discord.utils.get(guild.roles, name="Muted") or \
+                await guild.create_role(name="Muted")
 
         for channel in role.guild.channels:
             await channel.set_permissions(role, overwrite=self.overwrite)
@@ -169,7 +170,8 @@ class ModerationCog(commands.Cog):
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
-        reason = f"{ctx.lang['shared']['reason']}: {reason or ctx.lang['shared']['no']}"
+        if info.reason is None:
+            info.reason = ctx.lang["shared"]["no"]
 
         info = MuteInfo(
             time=UnixTime.now(),
@@ -181,6 +183,31 @@ class ModerationCog(commands.Cog):
             member.mention))
         
         await self.log_entry(ctx, EntryType.Unmute, member, info)
+
+    @commands.group(name="mute-role", invoke_without_command=True)
+    @bot_has_permissions(manage_roles=True, manage_channels=True)
+    @is_commander(manage_roles=True)
+    async def mute_role(self, ctx, role: EqualRole=None):
+        if role is None:
+            return await ctx.answer(ctx.lang["moderation"]["mute_role_now"].format(
+                (await self.roles.get_mute_role(guild=ctx.guild)).mention))
+
+        await self.roles.setup_mute_role(role=role)
+
+        await ctx.answer(ctx.lang["moderation"]["new_mute_role"].format(
+            role.mention))
+
+    @mute_role.command(name="delete")
+    @bot_has_permissions(manage_roles=True)
+    @is_commander(manage_roles=True)
+    async def mute_role_delete(self, ctx):
+        check = await self.bot.db.execute("DELETE FROM `mute_roles` WHERE `mute_roles`.`server` = ?",
+            ctx.guild.id, with_commit=True)
+
+        if check:
+            await ctx.answer(ctx.lang["moderation"]["mute_role_delete"])
+        else:
+            await ctx.answer(ctx.lang["moderation"]["no_mute_role"])
 
 
 def setup(bot):
