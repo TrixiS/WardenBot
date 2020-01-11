@@ -18,7 +18,7 @@ class UnixTime:
     def to_datetime(self):
         return datetime.datetime.fromtimestamp(self.value)
     
-    def humanize(self, fmt="%d.%m.%Y"):
+    def humanize(self, fmt="%d.%m.%Y") -> str:
         return self.to_datetime().strftime(fmt)
 
     def __add__(self, timedelta: datetime.timedelta):
@@ -33,4 +33,4 @@ class UnixTime:
 
     def passed_seconds(self) -> int:
         now = self.now()
-        return now.timestamp - self.value
+        return self.value - now.timestamp
