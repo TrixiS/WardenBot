@@ -38,6 +38,37 @@ class IndexConverter(Uint):
         return Index(convertered if convertered >= 0 else 0)
 
 
+class HumanTime(commands.Converter):
+
+    async def convert(self, ctx, arg):
+        seconds_in = ctx.lang["time_map"]
+        
+        try:
+            return int(arg[:-1]) * seconds_in[arg[-1]]
+        except:
+            raise commands.BadArgument(ctx.lang["erros"]["time_convert_failed"])
+
+class EqualMember(commands.MemberConverter):
+
+    async def convert(self, ctx, arg):
+        member = await super().convert(ctx, arg)
+
+        if member == ctx.author:
+            raise commands.BadArgument(ctx.lang["errors"]["cant_use_to_yourself"])
+
+        if ctx.author == ctx.guild.owner:
+            return member
+
+        member_perms = ctx.channel.permissions_for(member)
+        author_perms = ctx.channel.permissions_for(ctx.author)
+
+        if author_perms <= member_perms:
+            raise commands.BadArgument(
+                ctx.lang["errors"]["member_has_eq_over_perms"].format(member.mention))
+
+        return member
+
+
 class _Check(commands.Converter):
 
     def __init__(self, *, converter=None, check=None):

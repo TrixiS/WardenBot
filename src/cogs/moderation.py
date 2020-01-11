@@ -8,8 +8,8 @@ from typing import Optional
 from collections import namedtuple
 
 from .utils.time import UnixTime
-from .utils.checks import is_moderator, is_commander, is_owner
-#from .utils.converters import HumanTime, EqualMember
+from .utils.checks import is_moderator, is_commander, bot_has_permissions
+from .utils.converters import HumanTime, EqualMember
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
 
@@ -127,6 +127,12 @@ class ModerationCog(commands.Cog):
         self.roles = MuteRoles(bot)
         self.mute_pool = MutePool(bot.loop, self.roles)
 
+    # TODO (#1):
+    #   add `cases` through PRIMARY KEY + AUTO_INCREMENT
+
+    # TODO (#2):
+    #   cache for cases to return on reload if any
+
     async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: MuteInfo):
         await self.bot.db.execute("INSERT INTO `mod_log` VALUES (?, ?, ?, ?, ?, ?)",
             ctx.guild.id, ctx.author.id, 
@@ -134,40 +140,40 @@ class ModerationCog(commands.Cog):
             info.time.timestamp, info.reason, 
             with_commit=True)
 
-    # TODO (#1):
-    #   add perms check for bot
-
-    # TODO (#2):
-    #   any erros when bot has no perms?
-
     @commands.command()
-    @is_moderator(kick_members=True)
-    async def mute(self, ctx, member: discord.Member, time: Optional[int]=None, *, reason: str=None):
+    @bot_has_permissions(manage_roles=True)
+    @is_moderator(manage_roles=True)
+    async def mute(self, ctx, member: EqualMember, time: Optional[HumanTime]=0, *, reason: str=None):
         if member in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
-
+        
+        reason = f"{ctx.lang['shared']['reason']}: {reason or ctx.lang['shared']['no']}"
+        
         info = MuteInfo(
             time=UnixTime.now() + timedelta(seconds=time), 
-            reason=reason or ctx.lang["shared"]["no"])
+            reason=reason)
 
         await self.mute_pool.add_mute(member, info) 
 
         await ctx.answer(ctx.lang["moderation"]["muted"].format(
-            member.mention, info.time.humanize("%d.%m.%y %H:%M:%S")))
+            member.mention))
 
         await self.log_entry(ctx, EntryType.Mute, member, info)
 
     @commands.command()
-    @is_moderator(kick_members=True)
+    @bot_has_permissions(manage_roles=True)
+    @is_moderator(manage_roles=True)
     async def unmute(self, ctx, member: discord.Member, *, reason: str=None):
         if member not in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
+        reason = f"{ctx.lang['shared']['reason']}: {reason or ctx.lang['shared']['no']}"
+
         info = MuteInfo(
             time=UnixTime.now(),
-            reason=reason or ctx.lang["shared"]["no"])
+            reason=reason)
 
         await self.mute_pool.remove_mute(member, info)
 
