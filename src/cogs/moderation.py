@@ -149,11 +149,9 @@ class ModerationCog(commands.Cog):
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
         
-        reason = f"{ctx.lang['shared']['reason']}: {reason or ctx.lang['shared']['no']}"
-        
         info = MuteInfo(
             time=UnixTime.now() + timedelta(seconds=time), 
-            reason=reason)
+            reason=reason or ctx.lang["shared"]["no"])
 
         await self.mute_pool.add_mute(member, info) 
 
