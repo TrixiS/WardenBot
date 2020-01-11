@@ -1,4 +1,5 @@
-from discord.ext.commands import check as cmd_check
+from discord.ext import commands
+from .strings import markdown
 
 
 async def check_permissions(ctx, perms, *, check=all):
@@ -19,17 +20,26 @@ async def check_bot_permissions(ctx, perms, *, check=all):
 def bot_has_permissions(*, check=all, **perms):
 
     async def predicate(ctx):
-        return await check_bot_permissions(ctx, perms, check=check)
+        if (await check_bot_permissions(ctx, perms, check=check)):
+            return True
 
-    return cmd_check(predicate)
+        raise commands.CheckFailure(ctx.lang["errors"]["bot_hasnt_perms"].format(
+            ctx.bot.user.mention, 
+            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+
+    return commands.check(predicate)
 
 
 def has_permissions(*, check=all, **perms):
 
     async def predicate(ctx):
-        return await check_permissions(ctx, perms, check=check)
+        if (await check_permissions(ctx, perms, check=check)):
+            return True
 
-    return cmd_check(predicate)
+        raise commands.CheckFailure(ctx.lang["errors"]["you_hasnt_perms"].format(
+            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+
+    return commands.check(predicate)
 
 
 def is_owner():
@@ -37,7 +47,7 @@ def is_owner():
     def predicate(ctx):
         return ctx.message.author.id in ctx.bot.config.owners
 
-    return cmd_check(predicate)
+    return commands.check(predicate)
 
 
 def is_commander(*, check=all, **perms):
@@ -45,32 +55,40 @@ def is_commander(*, check=all, **perms):
         perms["manage_guild"] = True
 
     async def predicate(ctx):
-        check = await ctx.bot.db.execute("SELECT `role` FROM `commanders` WHERE `commanders`.`server` = ?", 
+        role_id = await ctx.bot.db.execute("SELECT `role` FROM `commanders` WHERE `commanders`.`server` = ?", 
             ctx.guild.id)
 
-        if check is not None:
-            role = ctx.message.guild.get_role(check) 
+        if role_id is not None:
+            role = ctx.message.guild.get_role(role_id) 
 
             if role is not None and role in ctx.message.author.roles:
                 return True
 
-        return await check_permissions(ctx, perms, check=check)
+        if (await check_permissions(ctx, perms, check=check)):
+            return True
 
-    return cmd_check(predicate)
+        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_commander"].format(
+            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+
+    return commands.check(predicate)
 
 
 def is_moderator(*, check=all, **perms):
 
     async def predicate(ctx):
-        check = await ctx.bot.db.execute("SELECT `role` FROM `moderators` WHERE `moderators`.`server` = ?", 
+        role_id = await ctx.bot.db.execute("SELECT `role` FROM `moderators` WHERE `moderators`.`server` = ?", 
             ctx.guild.id)
 
-        if check is not None:
-            role = ctx.message.guild.get_role(check)
+        if role_id is not None:
+            role = ctx.message.guild.get_role(role_id)
 
             if role is not None and role in ctx.message.author.roles:
                 return True
 
-        return await check_permissions(ctx, perms, check=check)
+        if (await check_permissions(ctx, perms, check=check)):
+            return True
 
-    return cmd_check(predicate)
+        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_moderator"].format(
+            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+
+    return commands.check(predicate)
