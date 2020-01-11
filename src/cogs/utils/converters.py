@@ -46,7 +46,8 @@ class HumanTime(commands.Converter):
         try:
             return int(arg[:-1]) * seconds_in[arg[-1]]
         except:
-            raise commands.BadArgument(ctx.lang["erros"]["time_convert_failed"])
+            raise commands.BadArgument(ctx.lang["errors"]["time_convert_failed"])
+
 
 class EqualMember(commands.MemberConverter):
 
