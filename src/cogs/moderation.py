@@ -170,12 +170,9 @@ class ModerationCog(commands.Cog):
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
-        if info.reason is None:
-            info.reason = ctx.lang["shared"]["no"]
-
         info = MuteInfo(
             time=UnixTime.now(),
-            reason=reason)
+            reason=reason or ctx.lang["shared"]["no"])
 
         await self.mute_pool.remove_mute(member, info)
 
