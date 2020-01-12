@@ -128,18 +128,18 @@ class ModerationCog(commands.Cog):
         self.roles = MuteRoles(bot)
         self.mute_pool = MutePool(bot.loop, self.roles)
 
-    # TODO (#1):
-    #   add `cases` through PRIMARY KEY + AUTO_INCREMENT
-
     # TODO (#2):
     #   cache for cases to return on reload if any
 
     async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: MuteInfo):
-        await self.bot.db.execute("INSERT INTO `mod_log` VALUES (?, ?, ?, ?, ?, ?)",
-            ctx.guild.id, ctx.author.id, 
-            member.id, entry_type.name, 
-            info.time.timestamp, info.reason, 
-            with_commit=True)
+        check = await self.bot.db.execute("SELECT MAX(`id`) FROM `cases` WHERE `cases`.`server` = ?",
+            ctx.guild.id)
+
+        await self.bot.db.execute("INSERT INTO `cases` VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (check or 0) + 1, ctx.guild.id,
+            ctx.author.id, member.id, 
+            entry_type.name, int(info.time.timestamp),
+            info.reason, with_commit=True)
 
     @commands.command()
     @bot_has_permissions(manage_roles=True)
