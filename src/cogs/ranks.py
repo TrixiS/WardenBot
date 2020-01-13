@@ -4,6 +4,7 @@ from discord.ext import commands
 from .utils.strings import markdown, join_or_default, collect_attributes
 from .utils.constants import StringConstants, RanksConstants
 from .utils.checks import is_commander
+from .utils.converters import EqualRole
 
 
 class RankCog(commands.Cog):
@@ -12,7 +13,7 @@ class RankCog(commands.Cog):
         self.bot = bot
 
     @commands.group(invoke_without_command=True, name="rank", aliases=["ranks"])
-    async def rank(self, ctx, *, role: discord.Role=None):
+    async def rank(self, ctx, *, role: EqualRole=None):
         check = await self.bot.db.execute("SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
             ctx.guild.id, fetch_all=True)
 
@@ -47,10 +48,7 @@ class RankCog(commands.Cog):
 
     @rank.command(name="toggle")
     @is_commander()
-    async def rank_toggle(self, ctx, roles: commands.Greedy[discord.Role]):
-        roles = {role for role in roles if (role < ctx.guild.me.top_role
-            and role < ctx.message.author.top_role)}
-
+    async def rank_toggle(self, ctx, roles: commands.Greedy[EqualRole]):
         if not len(roles):
             raise commands.BadArgument(ctx.lang["errors"]["no_roles"])
         
