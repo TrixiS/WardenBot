@@ -68,6 +68,14 @@ class Warden(AutoShardedBot):
             except Exception as e:
                 logging.error(f"Failed to load extension {ext_path}:\n{str(e)}")
 
+    def get_member(self, guild_id, member_id):
+        guild = self.get_guild(guild_id)
+
+        if guild is None:
+            return
+
+        return guild.get_member(member_id)
+
     async def get_color(self, guild):
         color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
