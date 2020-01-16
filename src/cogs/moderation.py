@@ -129,11 +129,18 @@ class ModerationCog(commands.Cog):
         self.mute_pool = MutePool(bot.loop, self.roles)
 
     async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: MuteInfo):
-        check = await self.bot.db.execute("SELECT MAX(`id`) FROM `cases` WHERE `cases`.`server` = ?",
-            ctx.guild.id)
+        query = f"""
+        SELECT (CASE WHEN (MAX(`id`) IS NULL)
+        THEN 
+            1
+        ELSE 
+            max(`id`) + 1
+        END)
+        FROM `cases`
+        WHERE `cases`.`server` = {ctx.guild.id}"""
 
-        await self.bot.db.execute("INSERT INTO `cases` VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (check or 0) + 1, ctx.guild.id,
+        await self.bot.db.execute(f"INSERT INTO `cases` VALUES (({query}), ?, ?, ?, ?, ?, ?, ?)",
+            ctx.guild.id,
             ctx.author.id, member.id, 
             entry_type.name, int(info.time.timestamp),
             info.reason, False, with_commit=True)
