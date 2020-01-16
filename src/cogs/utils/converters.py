@@ -4,6 +4,10 @@ from discord.ext import commands
 from asyncio import iscoroutinefunction as is_coro
 
 
+# TODO (#3):
+#   lang exception class
+#   change BadArgument(clx.lang...) to it
+
 class Uint(commands.Converter):
 
     def __init__(self, include_zero=True):
@@ -40,11 +44,20 @@ class IndexConverter(Uint):
 
 class HumanTime(commands.Converter):
 
+    SECONDS_IN_YEAR = 31536000
+
     async def convert(self, ctx, arg):
+        arg = arg.lower()
+
         seconds_in = ctx.lang["time_map"]
         
         try:
-            return int(arg[:-1]) * seconds_in[arg[-1]]
+            total_seconds = int(arg[:-1]) * seconds_in[arg[-1]]
+
+            if total_seconds <= self.SECONDS_IN_YEAR:
+                return total_seconds
+            else:
+                return self.SECONDS_IN_YEAR
         except:
             raise commands.BadArgument(ctx.lang["errors"]["time_convert_failed"])
 
