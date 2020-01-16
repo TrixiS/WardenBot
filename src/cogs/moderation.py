@@ -81,13 +81,13 @@ class MutePool:
     def __contains__(self, member) -> bool:
         return member in self.pool
 
+    def create_task(self, *args, **kwargs):
+        return self.loop.create_task(self.mute_task(*args, **kwargs))
+
     async def mute_task(self, member, time: int):
         await asyncio.sleep(time)
         await self.remove_mute(member, MuteInfo(time=None, reason="Unmute"), 
             auto=True)
-
-    def create_task(self, *args, **kwargs):
-        return self.loop.create_task(self.mute_task(*args, **kwargs))
 
     async def add_mute(self, member: discord.Member, info: MuteInfo):        
         mute_role = await self.roles.get_mute_role(member.guild)
@@ -98,13 +98,7 @@ class MutePool:
         time = info.time.passed_seconds()
 
         if time > 0:
-            task = self.loop.create_task(
-                self.mute_task(member, time))
-
-            setattr(task, "member", member)
-            setattr(task, "info", info)
-
-            self.pool[member] = task
+            self.pool[member] = self.create_task(member, time)
 
     async def remove_mute(self, member: discord.Member, info: MuteInfo, *, auto=False):
         mute_role = await self.roles.get_mute_role(member.guild)
@@ -126,14 +120,6 @@ class EntryType(Enum):
     Ban = 3
     Clear = 4
 
-# TODO (#1):
-#   make cache table for mutes
-#   
-#   in log_entry
-#   if type.Mute -> insert
-#   if type.Unmute -> delete
-#   or cache from pool using on_disconnect() event
-
 class ModerationCog(commands.Cog):
 
     def __init__(self, bot):
@@ -141,23 +127,19 @@ class ModerationCog(commands.Cog):
         self.roles = MuteRoles(bot)
         self.mute_pool = MutePool(bot.loop, self.roles)
 
-    async def backup_mutes(self):
-        query_args = tuple(set(
-            (task.member.guild.id, task.member.id, task.info.time.timestamp) 
-            for task in self.mute_pool.pool.values()))
-
-        await self.bot.db.executemany("INSERT INTO `mute_buffer` VALUES (?, ?, ?)",
-            query_args, with_commit=True)
-
     async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: MuteInfo):
         check = await self.bot.db.execute("SELECT MAX(`id`) FROM `cases` WHERE `cases`.`server` = ?",
             ctx.guild.id)
 
-        await self.bot.db.execute("INSERT INTO `cases` VALUES (?, ?, ?, ?, ?, ?, ?)",
+        await self.bot.db.execute("INSERT INTO `cases` VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (check or 0) + 1, ctx.guild.id,
             ctx.author.id, member.id, 
             entry_type.name, int(info.time.timestamp),
-            info.reason, with_commit=True)
+            info.reason, False, with_commit=True)
+
+        if entry_type == EntryType.Unmute:
+            await self.bot.db.execute("UPDATE `cases` SET `removed` = ? WHERE `cases`.`id` = ?",
+                True, check, with_commit=True)
 
     @commands.command()
     @bot_has_permissions(manage_roles=True)
@@ -223,35 +205,24 @@ class ModerationCog(commands.Cog):
             await ctx.answer(ctx.lang["moderation"]["no_mute_role"])
 
     @commands.Cog.listener()
-    async def on_disconnect(self):
-        print("triggered")
-        await self.backup_mutes()
-
-    @commands.Cog.listener()
     async def on_ready(self):
-        await self.bot.wait_until_ready()
-        
-        check = await self.bot.db.execute("SELECT * FROM `mute_buffer` WHERE `mute_buffer`.`time` > UNIX_TIMESTAMP() GROUP BY `time` HAVING count(*) >= 1",
-            fetch_all=True)
+        check = await self.bot.db.execute("SELECT `server`, `member`, `expires` FROM `cases` WHERE `cases`.`type` = ? AND `cases`.`expires` > UNIX_TIMESTAMP() AND `cases`.`removed` = ?",
+            EntryType.Mute.name, False, fetch_all=True)
 
         if check is None or len(check) == 0:
             return
 
         for row in check:
-            guild_id, member_id, timestamp = row
+            guild_id, member_id, expires = row
 
             member = self.bot.get_member(guild_id, member_id)
 
             if member is None:
                 continue
 
-            time = UnixTime(timestamp).passed_seconds()
-
-            if member not in self.mute_pool:
-                self.mute_pool.pool[member] = self.mute_pool.create_task(member, time)
-
-        await self.bot.db.execute("DELETE FROM `mute_buffer` WHERE `mute_buffer`.`time` <= UNIX_TIMESTAMP()",
-            with_commit=True)
+            time = UnixTime(expires).passed_seconds()
+            
+            self.mute_pool.pool[member] = self.mute_pool.create_task(member, time)
 
 
 def setup(bot):
