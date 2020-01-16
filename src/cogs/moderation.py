@@ -120,6 +120,7 @@ class EntryType(Enum):
     Ban = 3
     Clear = 4
 
+
 class ModerationCog(commands.Cog):
 
     def __init__(self, bot):
@@ -138,8 +139,11 @@ class ModerationCog(commands.Cog):
             info.reason, False, with_commit=True)
 
         if entry_type == EntryType.Unmute:
+            last_mute_id = await self.bot.db.execute("SELECT MAX(`id`) FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? AND `cases`.`type` = ?",
+                ctx.guild.id, member.id, EntryType.Mute.name)
+
             await self.bot.db.execute("UPDATE `cases` SET `removed` = ? WHERE `cases`.`id` = ?",
-                True, check, with_commit=True)
+                True, last_mute_id, with_commit=True)
 
     @commands.command()
     @bot_has_permissions(manage_roles=True)
