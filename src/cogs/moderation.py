@@ -6,10 +6,13 @@ from enum import Enum
 from datetime import timedelta
 from typing import Optional
 from collections import namedtuple
+from math import ceil
 
 from .utils.time import UnixTime
+from .utils.strings import markdown
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
-from .utils.converters import HumanTime, EqualMember, EqualRole
+from .utils.converters import HumanTime, EqualMember, EqualRole, IndexConverter, Index
+from .utils.constants import ModerationConstants
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
 
@@ -215,6 +218,56 @@ class ModerationCog(commands.Cog):
         else:
             await ctx.answer(ctx.lang["moderation"]["no_mute_role"])
 
+    @commands.command()
+    @is_moderator()
+    async def cases(self, ctx, member: Optional[discord.Member]=None, page: IndexConverter=Index(0)):
+        if member is not None:
+            cases = await self.bot.db.execute("SELECT `id`, `author` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? LIMIT ? OFFSET ?",
+                ctx.guild.id, member.id, ModerationConstants.CASES_PER_PAGE, 
+                ModerationConstants.CASES_PER_PAGE * page.value, 
+                fetch_all=True)
+
+            count = await self.bot.db.execute("SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ?",
+                ctx.guild.id, member.id)
+
+            if cases is None or len(cases) == 0 and count == 0:
+                return await ctx.answer(ctx.lang["moderation"]["no_member_cases"].format(
+                    member.mention))
+        else:
+            cases = await self.bot.db.execute("SELECT `id`, `member` FROM `cases` WHERE `cases`.`server` = ? LIMIT ? OFFSET ?",
+                ctx.guild.id, ModerationConstants.CASES_PER_PAGE, 
+                ModerationConstants.CASES_PER_PAGE * page.value, 
+                fetch_all=True)
+
+            count = await self.bot.db.execute("SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ?",
+                ctx.guild.id)
+
+            if cases is None or len(cases) == 0 and count == 0:
+                return await ctx.answer(ctx.lang["moderation"]["no_guild_cases"].format(
+                    ctx.guild.name))
+
+        pages_amount = ceil(count / ModerationConstants.CASES_PER_PAGE)
+        
+        if pages_amount <= page.value:
+            return await ctx.answer(ctx.lang["moderation"]["no_cases_on_page"].format(
+                page.humanize()))
+
+        description = ""
+
+        for case_id, author_id in cases:
+            author = await self.bot.fetch_user(author_id)
+
+            if author is None:
+                continue
+
+            description += f'{markdown(case_id, "**")}. {str(author)}\n'
+
+        em = discord.Embed(title=ctx.lang["moderation"]["cases_title"].format(
+            (member or ctx.guild).name), description=description, colour=ctx.color)
+        em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{pages_amount}')
+
+        await ctx.send(embed=em)
+
     @commands.Cog.listener()
     async def on_ready(self):
         check = await self.bot.db.execute("SELECT `server`, `member`, `expires` FROM `cases` WHERE `cases`.`type` = ? AND `cases`.`expires` > UNIX_TIMESTAMP() AND `cases`.`removed` = ?",
@@ -223,9 +276,7 @@ class ModerationCog(commands.Cog):
         if check is None or len(check) == 0:
             return
 
-        for row in check:
-            guild_id, member_id, expires = row
-
+        for guild_id, member_id, expires in check:
             member = self.bot.get_member(guild_id, member_id)
 
             if member is None:

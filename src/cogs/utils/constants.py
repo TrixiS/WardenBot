@@ -26,3 +26,9 @@ class EmbedConstants:
 class StringConstants:
 
     DOT_SYMBOL = '•'
+
+
+class ModerationConstants:
+
+    CASES_PER_PAGE = 15
+
