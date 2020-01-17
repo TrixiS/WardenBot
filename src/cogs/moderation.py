@@ -252,15 +252,14 @@ class ModerationCog(commands.Cog):
             return await ctx.answer(ctx.lang["moderation"]["no_cases_on_page"].format(
                 page.humanize()))
 
-        description = ""
+        valid_cases = {}
 
-        for case_id, author_id in cases:
-            author = await self.bot.fetch_user(author_id)
+        for case_id, user_id in cases:
+            user = self.bot.get_user(user_id)
+            valid_cases[case_id] = str(user) if user is not None else ctx.lang["shared"]["left_member"]
 
-            if author is None:
-                continue
-
-            description += f'{markdown(case_id, "**")}. {str(author)}\n'
+        description = '\n'.join(f'{markdown(case_id, "**")}. {user}'
+            for case_id, user in valid_cases.items())
 
         em = discord.Embed(title=ctx.lang["moderation"]["cases_title"].format(
             (member or ctx.guild).name), description=description, colour=ctx.color)
