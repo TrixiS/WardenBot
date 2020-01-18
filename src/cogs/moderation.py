@@ -12,9 +12,9 @@ from .utils.time import UnixTime
 from .utils.strings import markdown
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
 from .utils.converters import HumanTime, EqualMember, EqualRole, IndexConverter, Index
-from .utils.constants import ModerationConstants, StringConstants
+from .utils.constants import ModerationConstants, StringConstants, EmbedConstants
 
-MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
+ActionInfo = namedtuple("ActionInfo", ["time", "reason"])
 
 
 class MuteRoles:
@@ -89,10 +89,10 @@ class MutePool:
 
     async def mute_task(self, member, time: int):
         await asyncio.sleep(time)
-        await self.remove_mute(member, MuteInfo(time=None, reason="Unmute"), 
+        await self.remove_mute(member, ActionInfo(time=None, reason="Unmute"), 
             auto=True)
 
-    async def add_mute(self, member: discord.Member, info: MuteInfo):        
+    async def add_mute(self, member: discord.Member, info: ActionInfo):        
         mute_role = await self.roles.get_mute_role(member.guild)
 
         if mute_role not in member.roles:
@@ -103,7 +103,7 @@ class MutePool:
         if time > 0:
             self.pool[member] = self.create_task(member, time)
 
-    async def remove_mute(self, member: discord.Member, info: MuteInfo, *, auto=False):
+    async def remove_mute(self, member: discord.Member, info: ActionInfo, *, auto=False):
         mute_role = await self.roles.get_mute_role(member.guild)
 
         if mute_role in member.roles:
@@ -124,6 +124,15 @@ class EntryType(Enum):
     Clear = 4
 
 
+class Reason(commands.Converter):
+
+    async def convert(self, ctx, arg):
+        if arg is None:
+            return ctx.lang["shared"]["no"]
+
+        return arg[:EmbedConstants.FIELD_VALUE_MAX_LEN]
+
+
 class ModerationCog(commands.Cog):
 
     def __init__(self, bot):
@@ -131,7 +140,7 @@ class ModerationCog(commands.Cog):
         self.roles = MuteRoles(bot)
         self.mute_pool = MutePool(bot.loop, self.roles)
 
-    async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: MuteInfo):
+    async def log_entry(self, ctx, entry_type: EntryType, member: discord.Member, info: ActionInfo):
         query = f"""
         SELECT (CASE WHEN (MAX(`id`) IS NULL)
         THEN 
@@ -158,12 +167,12 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def mute(self, ctx, member: EqualMember, time: Optional[HumanTime]=0, *, reason: str=None):
+    async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: Reason=None):
         if member in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
         
-        info = MuteInfo(
+        info = ActionInfo(
             time=UnixTime.now() + timedelta(seconds=time), 
             reason=reason or ctx.lang["shared"]["no"])
 
@@ -177,12 +186,12 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member, *, reason: str=None):
+    async def unmute(self, ctx, member: discord.Member, *, reason: Reason=None):
         if member not in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
-        info = MuteInfo(
+        info = ActionInfo(
             time=UnixTime.now(),
             reason=reason or ctx.lang["shared"]["no"])
 
