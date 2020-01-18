@@ -302,6 +302,22 @@ class ModerationCog(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    @is_moderator(kick_members=True)
+    @bot_has_permissions(kick_members=True)
+    async def kick(self, ctx, member: EqualMember, *, reason: Reason=None):
+        await ctx.answer(ctx.lang["moderation"]["kicked"].format(member.mention))
+        await member.kick(reason=reason)
+        await self.log_entry(ctx, EntryType.Kick, member, ActionInfo(time=UnixTime.now(), reason=reeason))
+
+    @commands.command
+    @is_moderator(ban_members=True)
+    @bot_has_permissions(ban_members=True)
+    async def ban(self, ctx, member: EqualMember, *, reason: Reason=None):
+        await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
+        await member.ban(reason=reason)
+        await self.log_entry(ctx, EntryType.Ban, member, ActionInfo(time=UnixTime.now(), reason=reason))
+
     @commands.Cog.listener()
     async def on_ready(self):
         check = await self.bot.db.execute("SELECT `server`, `member`, `expires` FROM `cases` WHERE `cases`.`type` = ? AND `cases`.`expires` > UNIX_TIMESTAMP() AND `cases`.`removed` = ?",
