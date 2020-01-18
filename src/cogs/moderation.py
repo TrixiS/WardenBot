@@ -124,13 +124,8 @@ class EntryType(Enum):
     Clear = 4
 
 
-class Reason(commands.Converter):
-
-    async def convert(self, ctx, arg):
-        if arg is None:
-            return ctx.lang["shared"]["no"]
-
-        return arg[:EmbedConstants.FIELD_VALUE_MAX_LEN]
+def entry_reason(arg: str) -> str:
+    return arg[:EmbedConstants.FIELD_VALUE_MAX_LEN]
 
 
 class ModerationCog(commands.Cog):
@@ -167,14 +162,15 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: Reason=None):
+    async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: entry_reason=None):
+        if reason is None:
+            reason = ctx.lang["shared"]["no"]
+
         if member in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["already_muted"].format(
                 member.mention))
         
-        info = ActionInfo(
-            time=UnixTime.now() + timedelta(seconds=time), 
-            reason=reason or ctx.lang["shared"]["no"])
+        info = ActionInfo(time=UnixTime.now() + timedelta(seconds=time), reason=reason)
 
         await self.mute_pool.add_mute(member, info) 
 
@@ -186,14 +182,15 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member, *, reason: Reason=None):
+    async def unmute(self, ctx, member: discord.Member, *, reason: entry_reason=None):
+        if reason is None:
+            reason = ctx.lang["shared"]["no"]
+
         if member not in self.mute_pool:
             return await ctx.answer(ctx.lang["moderation"]["not_muted"].format(
                 member.mention))
 
-        info = ActionInfo(
-            time=UnixTime.now(),
-            reason=reason or ctx.lang["shared"]["no"])
+        info = ActionInfo(time=UnixTime.now(), reason=reason)
 
         await self.mute_pool.remove_mute(member, info)
 
@@ -305,15 +302,21 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @is_moderator(kick_members=True)
     @bot_has_permissions(kick_members=True)
-    async def kick(self, ctx, member: EqualMember, *, reason: Reason=None):
+    async def kick(self, ctx, member: EqualMember, *, reason: entry_reason=None):
+        if reason is None:
+            reason = ctx.lang["shared"]["no"]
+
         await ctx.answer(ctx.lang["moderation"]["kicked"].format(member.mention))
         await member.kick(reason=reason)
-        await self.log_entry(ctx, EntryType.Kick, member, ActionInfo(time=UnixTime.now(), reason=reeason))
+        await self.log_entry(ctx, EntryType.Kick, member, ActionInfo(time=UnixTime.now(), reason=reason))
 
     @commands.command
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, member: EqualMember, *, reason: Reason=None):
+    async def ban(self, ctx, member: EqualMember, *, reason: entry_reason=None):
+        if reason is None:
+            reason = ctx.lang["shared"]["no"]
+
         await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
         await member.ban(reason=reason)
         await self.log_entry(ctx, EntryType.Ban, member, ActionInfo(time=UnixTime.now(), reason=reason))
