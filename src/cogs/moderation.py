@@ -12,7 +12,7 @@ from .utils.time import UnixTime
 from .utils.strings import markdown
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
 from .utils.converters import HumanTime, EqualMember, EqualRole, IndexConverter, Index
-from .utils.constants import ModerationConstants
+from .utils.constants import ModerationConstants, StringConstants
 
 MuteInfo = namedtuple("MuteInfo", ["time", "reason"])
 
@@ -218,11 +218,15 @@ class ModerationCog(commands.Cog):
         else:
             await ctx.answer(ctx.lang["moderation"]["no_mute_role"])
 
+    def user_repr(self, ctx, user_id, pred=str):
+        user = self.bot.get_user(user_id)
+        return pred(user) if user is not None else ctx.lang["shared"]["left_member"]
+
     @commands.command()
     @is_moderator()
     async def cases(self, ctx, member: Optional[discord.Member]=None, page: IndexConverter=Index(0)):
         if member is not None:
-            cases = await self.bot.db.execute("SELECT `id`, `author` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? LIMIT ? OFFSET ?",
+            cases = await self.bot.db.execute("SELECT `id`, `author`, `type` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? LIMIT ? OFFSET ?",
                 ctx.guild.id, member.id, ModerationConstants.CASES_PER_PAGE, 
                 ModerationConstants.CASES_PER_PAGE * page.value, 
                 fetch_all=True)
@@ -234,7 +238,7 @@ class ModerationCog(commands.Cog):
                 return await ctx.answer(ctx.lang["moderation"]["no_member_cases"].format(
                     member.mention))
         else:
-            cases = await self.bot.db.execute("SELECT `id`, `member` FROM `cases` WHERE `cases`.`server` = ? LIMIT ? OFFSET ?",
+            cases = await self.bot.db.execute("SELECT `id`, `member`, `type` FROM `cases` WHERE `cases`.`server` = ? LIMIT ? OFFSET ?",
                 ctx.guild.id, ModerationConstants.CASES_PER_PAGE, 
                 ModerationConstants.CASES_PER_PAGE * page.value, 
                 fetch_all=True)
@@ -252,18 +256,40 @@ class ModerationCog(commands.Cog):
             return await ctx.answer(ctx.lang["moderation"]["no_cases_on_page"].format(
                 page.humanize()))
 
-        valid_cases = {}
-
-        for case_id, user_id in cases:
-            user = self.bot.get_user(user_id)
-            valid_cases[case_id] = str(user) if user is not None else ctx.lang["shared"]["left_member"]
-
-        description = '\n'.join(f'{markdown(case_id, "**")}. {user}'
-            for case_id, user in valid_cases.items())
+        description = '\n'.join(f'{markdown(f"#{case_id}", "**")}. {self.user_repr(ctx, user_id)} {StringConstants.DOT_SYMBOL} {case_type}'
+            for case_id, user_id, case_type in cases)
 
         em = discord.Embed(title=ctx.lang["moderation"]["cases_title"].format(
             (member or ctx.guild).name), description=description, colour=ctx.color)
         em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{pages_amount}')
+
+        await ctx.send(embed=em)
+
+    @commands.command()
+    @is_moderator()
+    async def case(self, ctx, case_id: int):
+        case = await self.bot.db.execute("SELECT `author`, `member`, `type`, `expires`, `reason` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`id` = ?",
+            ctx.guild.id, case_id)
+
+        if case is None:
+            return await ctx.answer(ctx.lang["moderation"]["no_case_with_id"].format(
+                case_id))
+
+        description = f'{ctx.lang["moderation"]["case"]}: #{case_id} {StringConstants.DOT_SYMBOL} {case[2]}'
+
+        em = discord.Embed(
+            description=description,
+            colour=ctx.color)
+
+        author = self.user_repr(ctx, case[0])
+        member = self.user_repr(ctx, case[1])
+
+        expires = UnixTime(case[3])
+
+        em.add_field(name=ctx.lang["shared"]["member"], value=member)
+        em.add_field(name=ctx.lang["moderation"]["moderator"], value=author)
+        em.add_field(name=ctx.lang["shared"]["expires"], value=expires.humanize("%d.%m.%Y, %H:%S"))
+        em.add_field(name=ctx.lang["shared"]["reason"], value=case[4])
 
         await ctx.send(embed=em)
 
