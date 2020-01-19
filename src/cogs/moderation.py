@@ -317,7 +317,7 @@ class ModerationCog(commands.Cog):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
-        delete_message_days = min(max(max_message_days, 0), 7)
+        delete_message_days = min(max(delete_message_days, 0), 7)
 
         await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
         await member.ban(reason=reason, delete_message_days=delete_message_days)
