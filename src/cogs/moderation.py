@@ -314,12 +314,17 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, member: EqualMember, *, reason: entry_reason=None):
+    async def ban(self, ctx, member: EqualMember, delete_message_days: Optional[int]=0, *, reason: entry_reason=None):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
+        if delete_message_days > 7:
+            delete_message_days = 7
+        elif delete_message_days < 0:
+            delete_message_days = 0
+
         await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
-        await member.ban(reason=reason)
+        await member.ban(reason=reason, delete_message_days=delete_message_days)
         await self.log_entry(ctx, EntryType.Ban, member, ActionInfo(time=UnixTime.now(), reason=reason))
 
     @commands.command()
