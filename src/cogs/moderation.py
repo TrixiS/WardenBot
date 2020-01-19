@@ -363,10 +363,14 @@ class ModerationCog(commands.Cog):
         await self.purge(ctx, limit=amount, predicate=lambda m: True)
 
     @clear.command(name="embeds")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_embeds(self, ctx, amount: int):
         await self.purge(ctx, limit=amount, predicate=lambda m: len(m.embeds))
 
     @clear.command(name="files")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_files(self, ctx, amount: int):
    
         def check(m):
@@ -375,6 +379,8 @@ class ModerationCog(commands.Cog):
         await self.purge(ctx, limit=amount, predicate=check)
 
     @clear.command(name="images")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_images(self, ctx, amount: int):
 
         def check(m):
@@ -383,15 +389,21 @@ class ModerationCog(commands.Cog):
         await self.purge(ctx, limit=amount, predicate=check)
 
     @clear.command(name="user")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_user(self, ctx, user: discord.User, amount: int):
         await self.purge(ctx, limit=amount, predicate=lambda m: m.author == user)
     
     @clear.command(name="contains")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_contains(self, ctx, amount: int, *, text: str):
         await self.purge(ctx, limit=amount, 
             predicate=lambda m: m.content is not None and text in m.content)
 
     @clear.command(name="emojis")
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
     async def clear_emojis(self, ctx, amount: int):
         pattern = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
 
