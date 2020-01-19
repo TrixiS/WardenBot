@@ -67,8 +67,7 @@ def is_commander(*, check=all, **perms):
         if (await check_permissions(ctx, perms, check=check)):
             return True
 
-        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_commander"].format(
-            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_commander"])
 
     return commands.check(predicate)
 
@@ -88,7 +87,6 @@ def is_moderator(*, check=all, **perms):
         if (await check_permissions(ctx, perms, check=check)):
             return True
 
-        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_moderator"].format(
-            ', '.join(markdown(k.upper(), '**') for k in perms.keys())))
+        raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_moderator"])
 
     return commands.check(predicate)
