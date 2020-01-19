@@ -121,8 +121,7 @@ class EntryType(Enum):
     Unmute = 1
     Kick = 2
     Ban = 3
-    Clear = 4
-    Unban = 5
+    Unban = 4
 
 
 def entry_reason(arg: str) -> str:
@@ -318,10 +317,7 @@ class ModerationCog(commands.Cog):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
-        if delete_message_days > 7:
-            delete_message_days = 7
-        elif delete_message_days < 0:
-            delete_message_days = 0
+        delete_message_days = min(max(max_message_days, 0), 7)
 
         await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
         await member.ban(reason=reason, delete_message_days=delete_message_days)
