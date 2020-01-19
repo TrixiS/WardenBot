@@ -1,5 +1,6 @@
 import discord
 import asyncio
+import re
 
 from discord.ext import commands
 from enum import Enum
@@ -346,6 +347,58 @@ class ModerationCog(commands.Cog):
         await ctx.guild.unban(user, reason=reason)
         await self.log_entry(ctx, EntryType.Unban, user, 
             ActionInfo(time=UnixTime.now(), reason=reason))
+
+    async def purge(self, ctx, limit, predicate):
+        limit = max(min(limit, ModerationConstants.PURGE_LIMIT), 1)
+
+        deleted = await ctx.channel.purge(limit=limit + 1, check=predicate)
+
+        await ctx.answer(ctx.lang["moderation"]["deleted"].format(len(deleted), limit),
+            delete_after=5)
+
+    @commands.group(aliases=["clean", "purge"], invoke_without_command=True)
+    @is_moderator(manage_messages=True)
+    @bot_has_permissions(manage_messages=True)
+    async def clear(self, ctx, amount: int):
+        await self.purge(ctx, limit=amount, predicate=lambda m: True)
+
+    @clear.command(name="embeds")
+    async def clear_embeds(self, ctx, amount: int):
+        await self.purge(ctx, limit=amount, predicate=lambda m: len(m.embeds))
+
+    @clear.command(name="files")
+    async def clear_files(self, ctx, amount: int):
+   
+        def check(m):
+            return len(tuple(a for a in m.attachments if not (a.width or a.height)))
+   
+        await self.purge(ctx, limit=amount, predicate=check)
+
+    @clear.command(name="images")
+    async def clear_images(self, ctx, amount: int):
+
+        def check(m):
+            return len(tuple(a for a in m.attachments if a.width or a.height))
+
+        await self.purge(ctx, limit=amount, predicate=check)
+
+    @clear.command(name="user")
+    async def clear_user(self, ctx, user: discord.User, amount: int):
+        await self.purge(ctx, limit=amount, predicate=lambda m: m.author == user)
+    
+    @clear.command(name="contains")
+    async def clear_contains(self, ctx, amount: int, *, text: str):
+        await self.purge(ctx, limit=amount, 
+            predicate=lambda m: m.content is not None and text in m.content)
+
+    @clear.command(name="emojis")
+    async def clear_emojis(self, ctx, amount: int):
+        pattern = re.compile(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>')
+
+        def check(m):
+            return pattern.search(m.content)
+
+        await self.purge(ctx, limit=amount, predicate=check)
 
     @commands.Cog.listener()
     async def on_ready(self):
