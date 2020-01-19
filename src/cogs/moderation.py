@@ -122,6 +122,7 @@ class EntryType(Enum):
     Kick = 2
     Ban = 3
     Clear = 4
+    Unban = 5
 
 
 def entry_reason(arg: str) -> str:
@@ -310,7 +311,7 @@ class ModerationCog(commands.Cog):
         await member.kick(reason=reason)
         await self.log_entry(ctx, EntryType.Kick, member, ActionInfo(time=UnixTime.now(), reason=reason))
 
-    @commands.command
+    @commands.command()
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
     async def ban(self, ctx, member: EqualMember, *, reason: entry_reason=None):
@@ -320,6 +321,24 @@ class ModerationCog(commands.Cog):
         await ctx.answer(ctx.lang["moderation"]["banned"].format(member.mention))
         await member.ban(reason=reason)
         await self.log_entry(ctx, EntryType.Ban, member, ActionInfo(time=UnixTime.now(), reason=reason))
+
+    @commands.command()
+    @is_moderator(ban_members=True)
+    @bot_has_permissions(ban_members=True)
+    async def unban(self, ctx, user: discord.User, *, reason: entry_reason=None):
+        try:
+            await ctx.guild.fetch_ban(user)
+        except:
+            return await ctx.answer(ctx.lang["moderation"]["not_banned"].format(
+                user.mention))
+
+        if reason is None:
+            reason = ctx.lang["shared"]["no"]
+
+        await ctx.answer(ctx.lang["moderation"]["unbanned"].format(user.mention))
+        await ctx.guild.unban(user, reason=reason)
+        await self.log_entry(ctx, EntryType.Unban, user, 
+            ActionInfo(time=UnixTime.now(), reason=reason))
 
     @commands.Cog.listener()
     async def on_ready(self):
