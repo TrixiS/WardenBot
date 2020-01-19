@@ -30,5 +30,6 @@ class StringConstants:
 
 class ModerationConstants:
 
-    CASES_PER_PAGE = 15
+    CASES_PER_PAGE = 10
+    PURGE_LIMIT = 1000
 
