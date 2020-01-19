@@ -325,7 +325,13 @@ class ModerationCog(commands.Cog):
     @commands.command()
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
-    async def unban(self, ctx, user: discord.User, *, reason: entry_reason=None):
+    async def unban(self, ctx, user_id: int, *, reason: entry_reason=None):
+        try:
+            user = await self.bot.fetch_user(user_id)
+        except:
+            return await ctx.answer(ctx.lang["moderation"]["cant_find_user"].format(
+                user_id))
+        
         try:
             await ctx.guild.fetch_ban(user)
         except:
