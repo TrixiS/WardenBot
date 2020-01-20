@@ -66,12 +66,9 @@ class TwitchAlertsCog(commands.Cog):
     def embed_url(self, user):
         return f"[{user['display_name']}]({self.base_url}{user['name']})"
 
-    async def send_alert(self, channel, user, stream):
-        if not channel.permissions_for(channel.guild.me).send_messages:
-            return
-
-        lang = await self.bot.get_lang(channel.guild)
-        color = await self.bot.get_color(channel.guild)
+    async def send_alert(self, data, stream):
+        lang, color, channel = data
+        user = stream["channel"]
 
         em = discord.Embed(
             description=f"[{stream['channel']['status']}](https://twitch.tv/{user['name']}/)", 
@@ -86,30 +83,52 @@ class TwitchAlertsCog(commands.Cog):
 
         await channel.send(embed=em)
 
-    @tasks.loop(minutes=1, count=None)
-    async def anonse(self):
+    async def get_subscriptions(self):
         check = await self.bot.db.execute("SELECT `user_id` FROM `twitch` GROUP BY `user_id` HAVING COUNT(*) >= 1",
             fetch_all=True)
         
-        if check is None or len(check) == 0:
-            return
+        subscriptions = []
 
         for row in check:
-            user = self.client.users.get_by_id(row[0])
-
-            if user is None or len(user) == 0:
-                continue
-
             stream = self.client.streams.get_stream_by_user(row[0])
 
             if stream is None or len(stream) == 0 or stream["created_at"] < datetime.datetime.now():
                 continue
 
-            for guild in (await self.alerts.get_subscribed_guilds(row[0])):
-                anonse_channel = await self.alerts.get_anonse_channel(guild)
+            subscribed_guilds = await self.alerts.get_subscribed_guilds(row[0])
 
-                if anonse_channel is not None:
-                    await self.send_alert(anonse_channel, user, stream)
+            if len(subscribed_guilds):
+                subscriptions.append((stream, subscribed_guilds))
+
+        return subscriptions
+            
+    async def get_guild_data(self, guild):
+        lang = await self.bot.get_lang(guild)
+        color = await self.bot.get_color(guild)
+        anonse_channel = await self.alerts.get_anonse_channel(guild)
+
+        return lang, color, anonse_channel
+
+    @tasks.loop(minutes=1, count=None)
+    async def anonse(self):
+        subscriptions = await self.get_subscriptions()
+
+        guild_data = {}
+        all_guilds = set()
+
+        for row in subscriptions:
+            all_guilds.update(row[1])
+
+        for guild in all_guilds:
+            data = await self.get_guild_data(guild)
+
+            if data[2] is not None and data[2].permissions_for(guild.me).send_messages:
+                guild_data[guild] = data
+
+        for stream, guilds in subscriptions:
+            for guild in guilds:
+                if guild in guild_data:
+                    await self.send_alert(guild_data[guild], stream)
 
     @anonse.before_loop
     async def anonse_before(self):
