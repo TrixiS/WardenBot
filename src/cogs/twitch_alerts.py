@@ -7,9 +7,6 @@ from discord.ext import commands, tasks
 from twitch import TwitchClient
 from .utils.checks import is_commander
 
-# TODO (#1):
-#   add langs for moderation + twitch
-
 
 class Alerts:
 
