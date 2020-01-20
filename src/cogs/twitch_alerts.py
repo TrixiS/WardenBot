@@ -7,6 +7,9 @@ from discord.ext import commands, tasks
 from twitch import TwitchClient
 from .utils.checks import is_commander
 
+# TODO (#1):
+#   add langs for moderation + twitch
+
 
 class Alerts:
 
@@ -101,8 +104,6 @@ class TwitchAlertsCog(commands.Cog):
 
             if stream is None or len(stream) == 0 or stream["created_at"] < datetime.datetime.now():
                 continue
-
-            guilds = await self.alerts.get_subscribed_guilds(row[0])
 
             for guild in (await self.alerts.get_subscribed_guilds(row[0])):
                 anonse_channel = await self.alerts.get_anonse_channel(guild)
