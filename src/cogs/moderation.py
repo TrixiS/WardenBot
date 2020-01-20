@@ -353,7 +353,7 @@ class ModerationCog(commands.Cog):
 
         deleted = await ctx.channel.purge(limit=limit + 1, check=predicate)
 
-        await ctx.answer(ctx.lang["moderation"]["deleted"].format(len(deleted), limit),
+        await ctx.answer(ctx.lang["moderation"]["deleted"].format(len(deleted) - 1, limit),
             delete_after=5)
 
     @commands.group(aliases=["clean", "purge"], invoke_without_command=True)
