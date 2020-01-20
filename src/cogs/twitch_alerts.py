@@ -2,6 +2,7 @@ import discord
 import time
 import datetime
 import logging
+import pytz
 
 from discord.ext import commands, tasks
 from twitch import TwitchClient
@@ -89,7 +90,13 @@ class TwitchAlertsCog(commands.Cog):
         for row in check:
             stream = self.client.streams.get_stream_by_user(row[0])
 
-            if stream is None or len(stream) == 0 or stream["created_at"] < datetime.datetime.now():
+            if stream is None or len(stream) == 0:
+                continue
+
+            future_created = (stream["created_at"] + datetime.timedelta(minutes=1))
+            future_created.astimezone(pytz.utc)
+
+            if future_created < datetime.datetime.utcnow():
                 continue
 
             subscribed_guilds = await self.alerts.get_subscribed_guilds(row[0])
