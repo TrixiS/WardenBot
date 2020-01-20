@@ -113,6 +113,9 @@ class TwitchAlertsCog(commands.Cog):
     async def anonse(self):
         subscriptions = await self.get_subscriptions()
 
+        if len(subscriptions) == 0:
+            return
+
         guild_data = {}
         all_guilds = set()
 
