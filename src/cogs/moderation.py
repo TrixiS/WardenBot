@@ -353,8 +353,10 @@ class ModerationCog(commands.Cog):
 
         deleted = await ctx.channel.purge(limit=limit + 1, check=predicate)
 
-        if len(deleted):
-            await ctx.answer(ctx.lang["moderation"]["deleted"].format(len(deleted) - 1, limit),
+        true_deleted_count = len(deleted) - 1
+
+        if true_deleted_count:
+            await ctx.answer(ctx.lang["moderation"]["deleted"].format(true_deleted_count, limit),
                 delete_after=5)
         else:
             await ctx.answer(ctx.lang["moderation"]["no_messages_found"])
