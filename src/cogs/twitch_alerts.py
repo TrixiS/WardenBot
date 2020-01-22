@@ -201,4 +201,4 @@ class TwitchAlerts(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(TwitchAlertsCog(bot))
+    bot.add_cog(TwitchAlerts(bot))

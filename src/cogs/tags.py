@@ -115,4 +115,4 @@ class Tags(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(TagCog(bot))
+    bot.add_cog(Tags(bot))

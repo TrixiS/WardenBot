@@ -93,4 +93,4 @@ class General(Cog):
         await self._role_delete_pattern(ctx, "moderators", "deleted_moderator")
 
 def setup(bot):
-    bot.add_cog(GeneralCog(bot))
+    bot.add_cog(General(bot))

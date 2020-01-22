@@ -119,4 +119,4 @@ class Administration(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(AdminCog(bot))
+    bot.add_cog(Administration(bot))

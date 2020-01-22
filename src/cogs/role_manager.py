@@ -159,4 +159,4 @@ class RoleManager(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(RoleManagerCog(bot))
+    bot.add_cog(RoleManager(bot))

@@ -82,4 +82,4 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
 
 
 def setup(bot):
-    bot.add_cog(OwnerCog(bot))
+    bot.add_cog(Owner(bot))

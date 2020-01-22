@@ -86,4 +86,4 @@ class Ranks(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(RankCog(bot))
+    bot.add_cog(Ranks(bot))
