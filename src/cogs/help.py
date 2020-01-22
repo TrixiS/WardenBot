@@ -6,11 +6,7 @@ from .utils.constants import StringConstants
 from typing import Union, Optional
 
 
-# TODO (#1):
-#   rename all cogs like not NameCOG, use just Name
-#   but ignore helpcog on rename
-
-class HelpCog(commands.Cog):
+class Help(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

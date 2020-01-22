@@ -48,7 +48,7 @@ class Alerts:
         return guilds
 
 
-class TwitchAlertsCog(commands.Cog):
+class TwitchAlerts(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

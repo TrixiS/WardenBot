@@ -16,7 +16,7 @@ def insert_returns(body):
 		insert_returns(body[-1].body)
 
 
-class OwnerCog(Cog, command_attrs=dict(hidden=True)):
+class Owner(Cog, command_attrs=dict(hidden=True)):
 
     def __init__(self, bot):
         self.bot = bot

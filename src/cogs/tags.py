@@ -10,7 +10,7 @@ from .utils.time import UnixTime
 from .utils.constants import TagsConstants
 
 
-class TagCog(commands.Cog):
+class Tags(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
@@ -53,7 +53,9 @@ class TagCog(commands.Cog):
         await ctx.answer(ctx.lang["tags"]["dont_have_any"].format(member.mention, page.humanize()))            
 
     @tag.command(name="create")
-    async def tag_create(self, ctx, *, name: Check[commands.clean_content(), lambda x: len(x) <= TagsConstants.MAX_LEN]):
+    async def tag_create(self, ctx, *, name: str):
+        name = name[:TagsConstants.MAX_LEN]
+
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
             ctx.message.author.id, name)
 

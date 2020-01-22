@@ -129,7 +129,7 @@ def entry_reason(arg: str) -> str:
     return arg[:EmbedConstants.FIELD_VALUE_MAX_LEN]
 
 
-class ModerationCog(commands.Cog):
+class Moderation(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

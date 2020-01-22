@@ -5,7 +5,7 @@ from .utils.checks import is_commander
 from .utils.strings import markdown
 
 
-class GeneralCog(Cog):
+class General(Cog):
 
     def __init__(self, bot):
         self.bot = bot

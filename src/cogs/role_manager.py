@@ -7,7 +7,7 @@ from .utils.strings import join_or_default, collect_attributes
 from typing import Union
 
 
-class RoleManagerCog(commands.Cog):
+class RoleManager(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

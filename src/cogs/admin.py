@@ -5,7 +5,7 @@ from .utils.converters import Check
 from discord.ext import commands
 
 
-class AdminCog(commands.Cog):
+class Administration(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

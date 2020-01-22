@@ -7,7 +7,7 @@ from .utils.checks import is_commander
 from .utils.converters import EqualRole
 
 
-class RankCog(commands.Cog):
+class Ranks(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
