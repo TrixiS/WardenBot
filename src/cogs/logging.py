@@ -100,13 +100,13 @@ class Logging(commands.Cog):
         if before.content:
             em.add_field(
                 name=lang["logging"]["before_content"],
-                value=before.content, 
+                value=before.content[:EmbedConstants.FIELD_VALUE_MAX_LEN], 
                 inline=False)
 
         if after.content:
             em.add_field(
                 name=lang["logging"]["after_content"],
-                value=after.content,
+                value=after.content[:EmbedConstants.FIELD_VALUE_MAX_LEN],
                 inline=False)
 
         image = discord.utils.find(
