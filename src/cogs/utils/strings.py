@@ -17,7 +17,7 @@ def join_or_default(iterable, separator: str, default: str="") -> str:
     return result or default
 
 
-def collect_attributes(iterable, *args) -> str:
+def collect_attributes(iterable, *args):
     result = []
 
     for item in iterable:
@@ -25,3 +25,6 @@ def collect_attributes(iterable, *args) -> str:
 
     return result
 
+
+def human_choice(seq, *, first_sep: str=', ', second_sep: str):
+    return f"{first_sep.join(seq[:-1])} {second_sep} {seq[-1]}"
