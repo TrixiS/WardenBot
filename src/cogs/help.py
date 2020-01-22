@@ -35,6 +35,9 @@ class Help(commands.Cog):
                     f"{StringConstants.DOT_SYMBOL} {prepare_name(name)} -> " + human_choice(
                         tuple(map(lambda x: x.__qualname__, typ.__args__)), 
                         second_sep=ctx.lang["shared"]["or"]))
+            elif isinstance(typ, type(commands.Greedy)):
+                converted = prepare_argument(typ.converter, name, StringConstants.DOT_SYMBOL)
+                prepared.append(converted + "[]")
             else:
                 prepared.append(
                     prepare_argument(typ, name, StringConstants.DOT_SYMBOL))
