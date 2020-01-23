@@ -26,7 +26,6 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
     async def load_cog(self, ctx, *, cog: str):
         try:
             self.bot.load_extension(cog)
-
             await ctx.answer(ctx.lang["owner"]["load_success"].format(cog))
         except Exception as e:
             await ctx.answer(f"{type(e).__name__}\n{e}")
@@ -36,7 +35,6 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
     async def unload_cog(self, ctx, *, cog: str):
         try:
             self.bot.unload_extension(cog)
-
             await ctx.answer(ctx.lang["owner"]["unload_success"].format(cog))
         except Exception as e:
             await ctx.answer(f"{type(e).__name__}\n{e}")
@@ -44,8 +42,11 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
     @command(name="reload")
     @is_owner()
     async def reload_cog(self, ctx, *, cog: str):
-        await self.unload_cog.callback(self, ctx, cog=cog)
-        await self.load_cog.callback(self, ctx, cog=cog)
+        try:
+            self.bot.reload_extension(cog)
+            await ctx.answer(ctx.lang["owner"]["reload_success"].format(cog))
+        except Exception as e:
+            await ctx.answer(f"{type(e).__name__}\n{str(e)}")
 
     @command(name="eval")
     @is_owner()

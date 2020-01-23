@@ -1,6 +1,7 @@
 import discord
 
 from discord.ext import commands
+from typing import Optional
 from .utils.strings import markdown, join_or_default, collect_attributes
 from .utils.constants import StringConstants, RanksConstants
 from .utils.checks import is_commander, bot_has_permissions
@@ -14,7 +15,7 @@ class Ranks(commands.Cog):
 
     @commands.group(invoke_without_command=True, name="rank", aliases=["ranks"])
     @bot_has_permissions(manage_roles=True)
-    async def rank(self, ctx, *, role: EqualRole=None):
+    async def rank(self, ctx, *, role: Optional[EqualRole]):
         check = await self.bot.db.execute("SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
             ctx.guild.id, fetch_all=True)
 

@@ -163,7 +163,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: entry_reason=None):
+    async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: Optional[entry_reason]):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
@@ -183,7 +183,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @bot_has_permissions(manage_roles=True)
     @is_moderator(manage_roles=True)
-    async def unmute(self, ctx, member: discord.Member, *, reason: entry_reason=None):
+    async def unmute(self, ctx, member: discord.Member, *, reason: Optional[entry_reason]):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
@@ -303,7 +303,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @is_moderator(kick_members=True)
     @bot_has_permissions(kick_members=True)
-    async def kick(self, ctx, member: EqualMember, *, reason: entry_reason=None):
+    async def kick(self, ctx, member: EqualMember, *, reason: Optional[entry_reason]):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
@@ -314,7 +314,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, member: EqualMember, delete_message_days: Optional[int]=0, *, reason: entry_reason=None):
+    async def ban(self, ctx, member: EqualMember, delete_message_days: Optional[int]=0, *, reason: Optional[entry_reason]):
         if reason is None:
             reason = ctx.lang["shared"]["no"]
 
@@ -327,7 +327,7 @@ class Moderation(commands.Cog):
     @commands.command()
     @is_moderator(ban_members=True)
     @bot_has_permissions(ban_members=True)
-    async def unban(self, ctx, user_id: int, *, reason: entry_reason=None):
+    async def unban(self, ctx, user_id: int, *, reason: Optional[entry_reason]):
         try:
             user = await self.bot.fetch_user(user_id)
         except:

@@ -7,6 +7,8 @@ from .utils.converters import Uint
 from .utils.checks import is_commander
 from enum import Enum
 
+from typing import Optional
+
 # TODO (#2):
 #   make safe money append (db int bounds)
 
@@ -112,13 +114,13 @@ class Economy(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command(aliases=["dep"], cls=EconomyCommand)
-    async def deposit(self, ctx, amount: Uint(include_zero=False)=None):
+    async def deposit(self, ctx, amount: Optional[Uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
             amount = account.cash
 
-        if amount > account.cash:
+        if amount > account.cash or amount == 0:
             return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
 
         account.cash -= amount
@@ -129,13 +131,13 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(aliases=["with"], cls=EconomyCommand)
-    async def withdraw(self, ctx, amount: Uint(include_zero=False)=None):
+    async def withdraw(self, ctx, amount: Optional[Uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
             amount = account.bank
 
-        if amount > account.bank:
+        if amount > account.bank or amount == 0:
             return await ctx.answer(ctx.lang["economy"]["not_enough_bank"])
 
         account.bank -= amount

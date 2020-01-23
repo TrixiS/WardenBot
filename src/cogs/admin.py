@@ -3,6 +3,7 @@ import discord
 from .utils.checks import is_commander
 from .utils.converters import Check
 from discord.ext import commands
+from typing import Optional
 
 
 class Administration(commands.Cog):
@@ -48,7 +49,7 @@ class Administration(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def autorole(self, ctx, *, role: discord.Role=None):
+    async def autorole(self, ctx, *, role: Optional[discord.Role]):
         if role is not None:
             if role.id == ctx.guild.id:
                 raise commands.BadArgument(ctx.lang["errors"]["no_roles"])

@@ -3,6 +3,7 @@ import discord
 from discord.ext.commands import Cog, command, has_permissions, group
 from .utils.checks import is_commander
 from .utils.strings import markdown
+from typing import Optional
 
 
 class General(Cog):
@@ -22,7 +23,7 @@ class General(Cog):
 
     @command(name="lang")
     @is_commander()
-    async def lang(self, ctx, lang_code: str.lower=None):
+    async def lang(self, ctx, lang_code: Optional[str.lower]):
         supperted_langs = self.bot.langs.keys()
 
         if lang_code is None or lang_code not in supperted_langs:
@@ -38,7 +39,7 @@ class General(Cog):
 
     @command(name="embed-color")
     @is_commander()
-    async def embed_color(self, ctx, *, new_color: discord.Colour=None):
+    async def embed_color(self, ctx, *, new_color: Optional[discord.Colour]):
         if new_color is None:
             return await ctx.answer(str(ctx.color).upper())
 
@@ -72,7 +73,7 @@ class General(Cog):
 
     @group(invoke_without_command=True)
     @has_permissions(administrator=True)
-    async def commander(self, ctx, role: discord.Role=None):
+    async def commander(self, ctx, role: Optional[discord.Role]):
         await self._role_setup_pattern(ctx, role, "commanders", 
             "no_commander", "is_commander", "new_commander")
 
@@ -83,7 +84,7 @@ class General(Cog):
 
     @group(invoke_without_command=True)
     @has_permissions(administrator=True)
-    async def moderator(self, ctx, role: discord.Role=None):
+    async def moderator(self, ctx, role: Optional[discord.Role]):
         await self._role_setup_pattern(ctx, role, "moderators", 
             "no_moderator", "is_moderator", "new_moderator")
 
