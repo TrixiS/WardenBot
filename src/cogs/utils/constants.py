@@ -33,3 +33,7 @@ class ModerationConstants:
     CASES_PER_PAGE = 10
     PURGE_LIMIT = 1000
 
+
+class EconomyConstants:
+
+    DEFAULT_SYMBOL = ':dollar:'
