@@ -1,4 +1,5 @@
 import discord
+import logging
 
 from discord.ext import commands
 from .utils.constants import EconomyConstants
@@ -82,11 +83,11 @@ class MoneyTypeConverter(commands.Converter):
     async def convert(self, ctx, argument):
         argument = argument.lower()
 
-        if argument == MoneyType.Cash.name:
-            return MoneyType.Cash
+        if argument == ctx.lang["economy"]["cash"].lower():
+            return MoneyType.cash
         
-        if argument == MoneyType.Bank.name:
-            return MoneyType.Bank
+        if argument == ctx.lang["economy"]["bank"].lower():
+            return MoneyType.bank
 
         raise commands.BadArgument(ctx.lang["economy"]["incorrect_money_type"])
 
@@ -98,7 +99,7 @@ class Economy(commands.Cog):
         self.eco = _Economy(bot)
 
     def currency_fmt(self, currency, amount):
-        return f"{}**{:3,}**".format(currency, amount)
+        return "{}**{:3,}**".format(currency, amount)
 
     # make place showing in the footer
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
@@ -108,8 +109,8 @@ class Economy(commands.Cog):
         em = discord.Embed(colour=ctx.color)
         em.set_author(name=account.member.name, icon_url=account.member.avatar_url)
         em.add_field(name=ctx.lang["economy"]["cash"], value=self.currency_fmt(ctx.currency, account.cash))
-        em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, amount.bank))
-        em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, amount.sum))
+        em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, account.bank))
+        em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, account.sum))
 
         await ctx.send(embed=em)
 
@@ -127,7 +128,22 @@ class Economy(commands.Cog):
         account.bank += amount
 
         await account.save()
-        await ctx.answer(ctx.lang["economy"]["deposited"].format())
+        await ctx.answer(ctx.lang["economy"]["deposited"].format(
+            self.currency_fmt(ctx.currency, amount)))
+
+    @commands.command(name="add-money", cls=EconomyCommand)
+    @is_commander()
+    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: Uint(include_zero=False)):
+        account = await self.eco.get_money(member)
+
+        if money_type == MoneyType.bank:
+            account.bank += amount
+        elif money_type == MoneyType.cash:
+            account.cash += amount
+
+        await account.save()
+        await ctx.answer(ctx.lang["economy"]["add_money"].format(
+            member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
 
 def setup(bot):
