@@ -98,6 +98,22 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command(aliases=["dep"], cls=EconomyCommand)
+    async def deposit(self, ctx, amount: Uint(include_zero=False)=None):
+        account = await self.eco.get_money(ctx.author)
+
+        if amount is None:
+            amount = account.cash
+
+        if amount > account.cash:
+            return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
+
+        account.cash -= amount
+        account.bank += amount
+
+        await account.save()
+        await ctx.answer(ctx.lang["economy"]["deposited"].format())
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
