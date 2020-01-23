@@ -44,10 +44,7 @@ class _Economy:
         money = await self.bot.db.execute("SELECT `cash`, `bank` FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
             member.guild.id, member.id)
 
-        if money is None:
-            cash, bank = 0, 0
-        else:
-            cash, bank = money
+        cash, bank = money or (0, 0)
 
         return Account(self.bot, member, cash, bank)
 
