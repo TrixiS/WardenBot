@@ -103,16 +103,13 @@ class Economy(commands.Cog):
         self.bot = bot
         self.eco = _Economy(bot)
 
-    # push this single command after tests
-    # how can i check member's place in the table?
+    # make place showing in the footer
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
     async def balance(self, ctx, *, member: discord.Member=None):
         account = await self.eco.get_money(member or ctx.author)
 
-        em = discord.Embed(
-            description=ctx.lang["economy"]["balance"].format(account.member.mention),
-            colour=ctx.color)
-
+        em = discord.Embed(colour=ctx.color)
+        em.set_author(name=account.member.name, icon_url=account.member.avatar_url)
         em.add_field(name=ctx.lang["economy"]["cash"], value="{}**{:cash}**".format(ctx.currency, account))
         em.add_field(name=ctx.lang["economy"]["bank"], value="{}**{:bank}**".format(ctx.currency, account))
         em.add_field(name=ctx.lang["shared"]["sum"], value="{}**{:sum}**".format(ctx.currency, account))
