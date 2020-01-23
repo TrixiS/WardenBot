@@ -146,6 +146,26 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["withdrew"].format(
             self.currency_fmt(ctx.currency, amount)))
 
+    @commands.command(cls=EconomyCommand)
+    async def give(self, ctx, member: discord.Member, amount: Uint(include_zero=False)):
+        if member == ctx.author:
+            return await ctx.answer(ctx.lang["errors"]["cant_use_to_yourself"])
+        
+        author_account = await self.eco.get_money(ctx.author)
+        
+        if amount > author_account.cash:
+            return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
+
+        member_account = await self.eco.get_money(member)
+
+        author_account.cash -= amount
+        member_account.cash += amount
+
+        await author_account.save()
+        await member_account.save()
+        await ctx.answer(ctx.lang["economy"]["add_money"].format(
+            member.mention, self.currency_fmt(ctx.currency, amount), MoneyType.cash.name))
+
     @commands.command(name="add-money", cls=EconomyCommand)
     @is_commander()
     async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: Uint(include_zero=False)):
