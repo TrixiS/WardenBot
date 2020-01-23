@@ -6,7 +6,6 @@ from .utils.constants import EconomyConstants
 from .utils.converters import Uint
 from .utils.checks import is_commander
 from enum import Enum
-
 from typing import Optional
 
 # TODO (#2):
@@ -159,6 +158,20 @@ class Economy(commands.Cog):
 
         await account.save()
         await ctx.answer(ctx.lang["economy"]["add_money"].format(
+            member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
+
+    @commands.command(name="remove-money", cls=EconomyCommand)
+    @is_commander()
+    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: Uint(include_zero=False)):
+        account = await self.eco.get_money(member)
+
+        if money_type == MoneyType.bank:
+            account.bank -= amount
+        elif money_type == MoneyType.cash:
+            account.cash -= amount
+
+        await account.save()
+        await ctx.answer(ctx.lang["economy"]["remove_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
 
