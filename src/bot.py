@@ -8,7 +8,6 @@ from aiohttp import ClientSession
 from datetime import datetime
 from json import load as json_load
 from context import WardenContext
-from cogs.economy import EconomyCommand
 
 import logging
 import discord
@@ -102,6 +101,8 @@ class Warden(AutoShardedBot):
 
         ctx.lang = await self.get_lang(message.guild)
         ctx.color = await self.get_color(message.guild)
+
+        from cogs.economy import EconomyCommand
 
         if isinstance(ctx.command, EconomyCommand):
             economy_cog = self.get_cog("Economy")
