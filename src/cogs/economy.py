@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from .utils.constants import EconomyConstants
 from .utils.converters import Uint
+from .utils.checks import is_commander
+from enum import Enum
 
 # TODO (#2):
 #   make safe money append (db int bounds)
@@ -14,16 +16,6 @@ class Account:
         self.member = member
         self.cash = cash
         self.bank = bank
-
-    def __format__(self, format_spec):
-        fmt = "{:3,}"
-
-        if format_spec == "bank":
-            return fmt.format(self.bank)
-        elif format_spec == "cash":
-            return fmt.format(self.cash)
-        elif format_spec == "sum":
-            return fmt.format(self.sum)
 
     @property
     def sum(self):
@@ -79,11 +71,34 @@ class EconomyCommand(commands.Command):
     pass
 
 
+class MoneyType(Enum):
+
+    cash = 0
+    bank = 1
+
+
+class MoneyTypeConverter(commands.Converter):
+
+    async def convert(self, ctx, argument):
+        argument = argument.lower()
+
+        if argument == MoneyType.Cash.name:
+            return MoneyType.Cash
+        
+        if argument == MoneyType.Bank.name:
+            return MoneyType.Bank
+
+        raise commands.BadArgument(ctx.lang["economy"]["incorrect_money_type"])
+
+
 class Economy(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
         self.eco = _Economy(bot)
+
+    def currency_fmt(self, currency, amount):
+        return f"{}**{:3,}**".format(currency, amount)
 
     # make place showing in the footer
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
@@ -92,9 +107,9 @@ class Economy(commands.Cog):
 
         em = discord.Embed(colour=ctx.color)
         em.set_author(name=account.member.name, icon_url=account.member.avatar_url)
-        em.add_field(name=ctx.lang["economy"]["cash"], value="{}**{:cash}**".format(ctx.currency, account))
-        em.add_field(name=ctx.lang["economy"]["bank"], value="{}**{:bank}**".format(ctx.currency, account))
-        em.add_field(name=ctx.lang["shared"]["sum"], value="{}**{:sum}**".format(ctx.currency, account))
+        em.add_field(name=ctx.lang["economy"]["cash"], value=self.currency_fmt(ctx.currency, account.cash))
+        em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, amount.bank))
+        em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, amount.sum))
 
         await ctx.send(embed=em)
 
