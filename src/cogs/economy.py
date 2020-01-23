@@ -2,6 +2,7 @@ import discord
 
 from discord.ext import commands
 from .utils.constants import EconomyConstants
+from .utils.converters import Uint
 
 # TODO (#2):
 #   make safe money append (db int bounds)
@@ -17,42 +18,24 @@ class Account:
     def __format__(self, format_spec):
         fmt = "{:3,}"
 
-        if format_spec == 'bank':
+        if format_spec == "bank":
             return fmt.format(self.bank)
-        elif format_spec == 'cash':
+        elif format_spec == "cash":
             return fmt.format(self.cash)
-        elif format_spec == 'sum':
+        elif format_spec == "sum":
             return fmt.format(self.sum)
 
     @property
     def sum(self):
         return self.bank + self.cash
 
-    async def set_cash(self, new_value: int) -> None:
-        if self.cash == new_value:
-            return
-
-        check = await self.bot.db.execute("UPDATE `money` SET `cash` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            new_value, self.member.guild.id, self.member.id, with_commit=True)
+    async def save(self):
+        check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
+            self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
 
         if not check:
             await self.bot.db.execute("INSERT INTO `money` VALUES (?, ?, ?, ?)",
-                self.member.guild.id, self.member.id, new_value, 0, with_commit=True)
-
-        self.cash = new_value
-
-    async def set_bank(self, new_value: int) -> None:
-        if self.bank == new_value:
-            return
-
-        check = await self.bot.db.execute("UPDATE `money` SET `cash` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            new_value, self.member.guild.id, self.member.id, with_commit=True)
-
-        if not check:
-            await self.bot.db.execute("INSERT INTO `money` VALUES (?, ?, ?, ?)",
-                self.member.guild.id, self.member.id, 0, new_value, with_commit=True)
-
-        self.bank = new_value
+                self.member.guild.id, self.member.id, self.cash, self.bank, with_commit=True)
 
     async def delete(self) -> None:
         await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
@@ -83,7 +66,6 @@ class _Economy:
             return currency
         else:
             return EconomyConstants.DEFAULT_SYMBOL
-
 
         emoji = self.bot.get_emoji(int(currency))
 
