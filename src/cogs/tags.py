@@ -60,8 +60,12 @@ class Tags(commands.Cog):
             ctx.message.author.id, name)
 
         if check is None:
-            content = await commands.clean_content().convert(ctx,
-                await ctx.ask(ctx.lang["tags"]["content?"], 
+            content = await ctx.ask(ctx.lang["tags"]["content?"])
+
+            if content is None:
+                return
+
+            content = await commands.clean_content().convert(ctx, 
                 with_attachments=True, timeout=30.0))
 
             await self.bot.db.execute("INSERT INTO `tags` VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())",
