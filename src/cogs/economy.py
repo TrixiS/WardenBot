@@ -122,7 +122,7 @@ class Economy(commands.Cog):
         return "{}**{:3,}**".format(currency, amount)
 
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
-    async def balance(self, ctx, *, member: discord.Member=None):
+    async def balance(self, ctx, *, member: Optional[discord.Member]):
         account = await self.eco.get_money(member or ctx.author)
 
         em = discord.Embed(colour=ctx.color)
