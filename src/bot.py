@@ -31,10 +31,7 @@ class Warden(AutoShardedBot):
         self.uptime = None
         self.langs = {}
 
-        self._load_langs()
-        self._load_cogs()
-
-    def _load_langs(self):
+    def load_langs(self):
         langs = {}
 
         for path in self.langs_path.glob("*.json"):
@@ -44,7 +41,7 @@ class Warden(AutoShardedBot):
 
         self.langs = langs
 
-    def _load_cogs(self, reload=False):
+    def load_cogs(self, reload=False):
 
         def to_ext(path):
             parent = str(path.parent.parent.resolve().absolute())
