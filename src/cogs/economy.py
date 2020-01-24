@@ -230,7 +230,7 @@ class Economy(commands.Cog):
             await self.bot.db.execute("INSERT INTO `start_money` VALUES (?, ?, ?)",
                 ctx.guild.id, 
                 amount if money_type == MoneyType.cash else 0, 
-                amount if money_type == money_type.bank else 0,
+                amount if money_type == MoneyType.bank else 0,
                 with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["start_money_set"].format(
