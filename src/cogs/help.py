@@ -45,7 +45,7 @@ class Help(commands.Cog):
         return prepared
 
     @commands.command(name="help")
-    async def help_command(self, ctx, *, command_or_module):
+    async def help_command(self, ctx, *, command_or_module: str):
         cog = self.bot.get_cog(command_or_module)
 
         em = discord.Embed(colour=ctx.color)
