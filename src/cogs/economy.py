@@ -219,6 +219,22 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["remove_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
+    @commands.command(name="start-money", cls=EconomyCommand)
+    @is_commander()
+    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
+        check = await self.bot.db.execute("UPDATE `start_money` SET `{}` = ? WHERE `start_money`.`server` = ?".format(money_type.name),
+            amount, ctx.guild.id, with_commit=True)
+
+        if not check:
+            await self.bot.db.execute("INSERT INTO `start_money` VALUES (?, ?, ?)",
+                ctx.guild.id, 
+                amount if money_type == MoneyType.cash else 0, 
+                amount if money_type == money_type.bank else 0,
+                with_commit=True)
+
+        await ctx.answer(ctx.lang["economy"]["start_money_set"].format(
+            self.currency_fmt(ctx.currency, amount), money_type.name))
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
