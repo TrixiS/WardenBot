@@ -21,11 +21,11 @@ class WardenContext(Context):
             logging.error(str(e))
             await super().send(self.lang["errors"]["send_error"])
 
-    async def answer(self, message: str) -> None:
+    async def answer(self, message: str, **kwargs) -> None:
         em = Embed(colour=self.color, description=message)
         em.set_author(name=self.message.author.name, icon_url=self.message.author.avatar_url)
 
-        await self.send(embed=em)
+        await self.send(embed=em, **kwargs)
 
     async def ask(self, text: str, *, with_attachments=False, **kwargs) -> str:
         await self.send(f"{self.message.author.mention}, {text}")
