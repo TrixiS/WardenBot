@@ -30,12 +30,13 @@ class WardenContext(Context):
     async def ask(self, text: str, *, with_attachments=False, **kwargs) -> str:
         await self.send(f"{self.message.author.mention}, {text}")
 
-        content = ""
+        content = None
 
         try:
             check = kwargs.pop("check", lambda m: m.author == self.author)
+            timeout = kwargs.pop("timeout", 30.0)
 
-            msg = await self.bot.wait_for("message", **kwargs, check=check)
+            msg = await self.bot.wait_for("message", **kwargs, check=check, timeout=timeout)
 
             content = msg.content
             
