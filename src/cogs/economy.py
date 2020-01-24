@@ -235,6 +235,17 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["start_money_set"].format(
             self.currency_fmt(ctx.currency, amount), money_type.name))
 
+    @commands.command(name="delete-money")
+    @is_commander()
+    async def delete_money(self, ctx, member: discord.Member):
+        account = await self.eco.get_money(member)
+
+        if account.saved:
+            await account.delete()
+
+        await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
+            member.mention))
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
