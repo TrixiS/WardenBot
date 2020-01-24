@@ -49,6 +49,17 @@ class _Economy:
 
         return Account(self.bot, member, cash, bank)
 
+    async def get_place(self, member):
+        all_accounts = await self.bot.db.execute("SELECT `member` FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 ORDER BY `money`.`cash` + `money`.`bank` DESC",
+            member.guild.id, fetch_all=True)
+
+        member_case = (member.id, )
+
+        if all_accounts is None or len(all_accounts) == 0 or member_case not in all_accounts:
+            return 1
+
+        return all_accounts.index(member_case) + 1
+
     async def get_currency(self, guild):
         currency = await self.bot.db.execute("SELECT `symbol` FROM `currency` WHERE `currency`.`server` = ?",
             guild.id)
@@ -99,7 +110,6 @@ class Economy(commands.Cog):
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
 
-    # make place showing in the footer
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
     async def balance(self, ctx, *, member: discord.Member=None):
         account = await self.eco.get_money(member or ctx.author)
@@ -109,6 +119,10 @@ class Economy(commands.Cog):
         em.add_field(name=ctx.lang["economy"]["cash"], value=self.currency_fmt(ctx.currency, account.cash))
         em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, account.bank))
         em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, account.sum))
+
+        if account.sum > 0:
+            place = await self.eco.get_place(account.member)
+            em.set_footer(text=ctx.lang["economy"]["balance_place"].format(place))
 
         await ctx.send(embed=em)
 
