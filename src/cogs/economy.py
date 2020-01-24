@@ -3,7 +3,7 @@ import logging
 
 from discord.ext import commands
 from .utils.constants import EconomyConstants
-from .utils.converters import Uint
+from .utils.converters import uint
 from .utils.checks import is_commander
 from enum import Enum
 from typing import Optional
@@ -113,7 +113,7 @@ class Economy(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command(aliases=["dep"], cls=EconomyCommand)
-    async def deposit(self, ctx, amount: Optional[Uint]):
+    async def deposit(self, ctx, amount: Optional[uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -130,7 +130,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(aliases=["with"], cls=EconomyCommand)
-    async def withdraw(self, ctx, amount: Optional[Uint]):
+    async def withdraw(self, ctx, amount: Optional[uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -147,7 +147,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(cls=EconomyCommand)
-    async def give(self, ctx, member: discord.Member, amount: Uint(include_zero=False)):
+    async def give(self, ctx, member: discord.Member, amount: uint(include_zero=False)):
         if member == ctx.author:
             return await ctx.answer(ctx.lang["errors"]["cant_use_to_yourself"])
         
@@ -168,7 +168,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="add-money", cls=EconomyCommand)
     @is_commander()
-    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: Uint(include_zero=False)):
+    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint(include_zero=False)):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -182,7 +182,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="remove-money", cls=EconomyCommand)
     @is_commander()
-    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: Uint(include_zero=False)):
+    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint(include_zero=False)):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:

@@ -8,7 +8,7 @@ from asyncio import iscoroutinefunction as is_coro
 #   lang exception class
 #   change BadArgument(clx.lang...) to it
 
-class Uint(commands.Converter):
+class uint(commands.Converter):
 
     def __init__(self, include_zero=True):
         self.include_zero = include_zero
@@ -34,7 +34,7 @@ class Index:
         return self.value + 1
 
 
-class IndexConverter(Uint):
+class IndexConverter(uint):
 
     async def convert(self, ctx, arg):
         convertered = await super().convert(ctx, arg) - 1
