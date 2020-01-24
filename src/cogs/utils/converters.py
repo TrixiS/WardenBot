@@ -10,7 +10,7 @@ from asyncio import iscoroutinefunction as is_coro
 
 class uint(commands.Converter):
 
-    def __init__(self, include_zero=True):
+    def __init__(self, include_zero=False):
         self.include_zero = include_zero
 
     async def convert(self, ctx, arg):
