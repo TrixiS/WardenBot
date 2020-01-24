@@ -245,10 +245,8 @@ class Economy(commands.Cog):
         if accept is None or accept == ctx.lang["shared"]["no"].lower():
             return
 
-        account = await self.eco.get_money(member)
-
-        if account.saved:
-            await account.delete()
+        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
+            ctx.guild.id, member.id, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
