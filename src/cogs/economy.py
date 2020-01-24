@@ -8,8 +8,6 @@ from .utils.checks import is_commander
 from enum import Enum
 from typing import Optional
 
-# TODO (#2):
-#   make safe money append (db int bounds)
 
 class Account:
 
@@ -24,6 +22,9 @@ class Account:
         return self.bank + self.cash
 
     async def save(self):
+        self.cash = max(min(self.cash, self.bot.db.int_max_bound), self.bot.db.int_min_bound)
+        self.bank = max(min(self.bank, self.bot.db.int_max_bound), self.bot.db.int_min_bound)
+
         check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
 
@@ -31,7 +32,7 @@ class Account:
             await self.bot.db.execute("INSERT INTO `money` VALUES (?, ?, ?, ?)",
                 self.member.guild.id, self.member.id, self.cash, self.bank, with_commit=True)
 
-    async def delete(self) -> None:
+    async def delete(self):
         await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.member.guild.id, self.member.id, with_commit=True)
 
@@ -182,7 +183,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="add-money", cls=EconomyCommand)
     @is_commander()
-    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint(include_zero=False)):
+    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -196,7 +197,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="remove-money", cls=EconomyCommand)
     @is_commander()
-    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint(include_zero=False)):
+    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
