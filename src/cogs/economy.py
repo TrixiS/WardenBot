@@ -34,6 +34,8 @@ class Account:
             await self.bot.db.execute("INSERT INTO `money` VALUES (?, ?, ?, ?)",
                 self.member.guild.id, self.member.id, self.cash, self.bank, with_commit=True)
 
+        self.saved = True
+
     async def delete(self):
         await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.member.guild.id, self.member.id, with_commit=True)
@@ -52,10 +54,7 @@ class _Economy:
             start = await self.bot.db.execute("SELECT `cash`, `bank` FROM `start_money` WHERE `start_money`.`server` = ?",  
                 member.guild.id)
 
-            if start is not None:
-                cash, bank = start
-            else:
-                cash, bank = 0, 0
+            cash, bank = start or (0, 0)
         else:
             cash, bank = money
 
