@@ -11,11 +11,12 @@ from typing import Optional
 
 class Account:
 
-    def __init__(self, bot, member, cash, bank):
+    def __init__(self, bot, member, cash, bank, saved):
         self.bot = bot
         self.member = member
         self.cash = cash
         self.bank = bank
+        self.saved = saved
 
     @property
     def sum(self):
@@ -46,9 +47,18 @@ class _Economy:
         money = await self.bot.db.execute("SELECT `cash`, `bank` FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
             member.guild.id, member.id)
 
-        cash, bank = money or (0, 0)
+        if money is None:
+            start = await self.bot.db.execute("SELECT `cash`, `bank` FROM `start_money` WHERE `start_money`.`server` = ?",  
+                member.guild.id)
 
-        return Account(self.bot, member, cash, bank)
+            if start is not None:
+                cash, bank = start
+            else:
+                cash, bank = 0, 0
+        else:
+            cash, bank = money
+
+        return Account(self.bot, member, cash, bank, money is not None)
 
     async def get_place(self, member):
         all_accounts = await self.bot.db.execute("SELECT `member` FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 ORDER BY `money`.`cash` + `money`.`bank` DESC",
@@ -121,7 +131,7 @@ class Economy(commands.Cog):
         em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, account.bank))
         em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, account.sum))
 
-        if account.sum > 0:
+        if account.saved and account.sum > 0:
             place = await self.eco.get_place(account.member)
             em.set_footer(text=ctx.lang["economy"]["balance_place"].format(place))
 
