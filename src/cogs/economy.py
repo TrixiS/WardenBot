@@ -5,6 +5,7 @@ from discord.ext import commands
 from .utils.constants import EconomyConstants
 from .utils.converters import uint
 from .utils.checks import is_commander
+from .utils.strings import markdown
 from enum import Enum
 from typing import Optional
 
@@ -238,6 +239,12 @@ class Economy(commands.Cog):
     @commands.command(name="delete-money")
     @is_commander()
     async def delete_money(self, ctx, member: discord.Member):
+        accept = await ctx.ask(ctx.lang["economy"]["really_delete?"].format(markdown(member.name, "**")),
+            check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
+
+        if accept is None or accept == ctx.lang["shared"]["no"].lower():
+            return
+
         account = await self.eco.get_money(member)
 
         if account.saved:
