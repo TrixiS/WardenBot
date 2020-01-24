@@ -81,6 +81,13 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.answer(fmt.format(f"{type(e).__name__}: {str(e)}"))
 
+    @command()
+    @is_owner()
+    async def kill(self, ctx):
+        await self.bot.session.close()
+        await self.bot.logout()
+        exit()
+
 
 def setup(bot):
     bot.add_cog(Owner(bot))
