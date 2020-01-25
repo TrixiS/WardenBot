@@ -30,7 +30,7 @@ class Tags(commands.Cog):
             await ctx.answer(ctx.lang["tags"]["no"].format(name))
 
     @tag.command(name="check")
-    async def tag_check(self, ctx, member: Optional[discord.Member]=None, page: IndexConverter=Index(0)):
+    async def tag_check(self, ctx, member: Optional[discord.Member]=None, page: Optional[IndexConverter]=Index(0)):
         member = member or ctx.message.author
     
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? ORDER BY `tags`.`created` LIMIT ? OFFSET ?",
