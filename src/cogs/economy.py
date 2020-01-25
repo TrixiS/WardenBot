@@ -315,6 +315,34 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command(name="economy-stats", cls=EconomyCommand)
+    async def economy_stats(self, ctx):
+        sql = """
+        SELECT SUM(`cash`), SUM(`bank`), COUNT(*)
+        FROM `money`
+        WHERE `money`.`server` = ?
+        """
+
+        money = await self.bot.db.execute(sql, ctx.guild.id) or (0, 0, 0)
+
+        em = discord.Embed(colour=ctx.color)
+        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
+        em.set_footer(text=f"{ctx.lang['economy']['accounts']} {money[2]}")
+
+        em.add_field(
+            name=ctx.lang["economy"]["cash"], 
+            value=self.currency_fmt(ctx.currency, money[0]),
+            inline=False)
+        em.add_field(
+            name=ctx.lang["economy"]["bank"],
+            value=self.currency_fmt(ctx.currency, money[1]),
+            inline=False)
+        em.add_field(
+            name=ctx.lang["shared"]["sum"], 
+            value=self.currency_fmt(ctx.currency, sum(money)))
+        
+        await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
