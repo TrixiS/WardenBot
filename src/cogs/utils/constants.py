@@ -37,3 +37,4 @@ class ModerationConstants:
 class EconomyConstants:
 
     DEFAULT_SYMBOL = ':dollar:'
+    USER_PER_PAGE = 10
