@@ -271,10 +271,10 @@ class Economy(commands.Cog):
     @commands.command(aliases=["lb", "board", "top"], cls=EconomyCommand)
     async def leaderboard(self, ctx, page: Optional[IndexConverter]=Index(0)):
         sql = """
-        SELECT `member`, `money`.`cash` + `money`.`bank`
+        SELECT `member`, `money`.`cash` + `money`.`bank` as `money_sum`
         FROM `money`
-        WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0
-        ORDER BY `money`.`cash` + `money`.`bank` DESC
+        WHERE `money`.`server` = ? AND `money_sum` > 0
+        ORDER BY `money_sum` DESC
         LIMIT ? OFFSET ?
         """
 
