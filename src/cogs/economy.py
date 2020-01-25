@@ -7,7 +7,7 @@ from .utils.converters import uint
 from .utils.checks import is_commander
 from .utils.strings import markdown
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 
 class Account:
@@ -77,7 +77,7 @@ class _Economy:
 
         if currency is not None and currency.isalpha():
             return currency
-        else:
+        elif currency is None:
             return EconomyConstants.DEFAULT_SYMBOL
 
         emoji = self.bot.get_emoji(int(currency))
@@ -219,6 +219,21 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["remove_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
+    @commands.command(name="delete-money")
+    @is_commander()
+    async def delete_money(self, ctx, member: discord.Member):
+        accept = await ctx.ask(ctx.lang["economy"]["really_delete?"].format(markdown(member.name, "**")),
+            check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
+
+        if accept is None or accept == ctx.lang["shared"]["no"].lower():
+            return
+
+        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
+            ctx.guild.id, member.id, with_commit=True)
+
+        await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
+            member.mention))
+
     @commands.command(name="start-money", cls=EconomyCommand)
     @is_commander()
     async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
@@ -235,20 +250,20 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["start_money_set"].format(
             self.currency_fmt(ctx.currency, amount), money_type.name))
 
-    @commands.command(name="delete-money")
+    @commands.command(cls=EconomyCommand)
     @is_commander()
-    async def delete_money(self, ctx, member: discord.Member):
-        accept = await ctx.ask(ctx.lang["economy"]["really_delete?"].format(markdown(member.name, "**")),
-            check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
+    async def currency(self, ctx, symbol: Union[chr, discord.Emoji]):
+        to_insert = symbol if isinstance(symbol, str) else str(symbol.id)
 
-        if accept is None or accept == ctx.lang["shared"]["no"].lower():
-            return
+        check = await self.bot.db.execute("UPDATE `currency` SET `symbol` = ? WHERE `currency`.`server` = ?",
+            to_insert, ctx.guild.id, with_commit=True)
+        
+        if not check:
+            await self.bot.db.execute("INSERT INTO `currency` VALUES (?, ?)",
+                ctx.guild.id, to_insert, with_commit=True)
 
-        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            ctx.guild.id, member.id, with_commit=True)
-
-        await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
-            member.mention))
+        await ctx.answer(ctx.lang["economy"]["new_symbol"].format(
+            str(symbol), ctx.currency))
 
 
 def setup(bot):
