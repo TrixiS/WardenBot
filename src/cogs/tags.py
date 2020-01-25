@@ -66,7 +66,7 @@ class Tags(commands.Cog):
                 return
 
             content = await commands.clean_content().convert(ctx, 
-                with_attachments=True, timeout=30.0))
+                with_attachments=True, timeout=30.0)
 
             await self.bot.db.execute("INSERT INTO `tags` VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())",
                 ctx.message.author.id, name, content, 0, with_commit=True)
