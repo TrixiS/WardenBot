@@ -339,7 +339,7 @@ class Economy(commands.Cog):
             inline=False)
         em.add_field(
             name=ctx.lang["shared"]["sum"], 
-            value=self.currency_fmt(ctx.currency, sum(money)),
+            value=self.currency_fmt(ctx.currency, sum(money[:2])),
             inline=False)
         
         await ctx.send(embed=em)
