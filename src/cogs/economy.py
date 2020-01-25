@@ -75,17 +75,12 @@ class _Economy:
         currency = await self.bot.db.execute("SELECT `symbol` FROM `currency` WHERE `currency`.`server` = ?",
             guild.id)
 
-        if currency is not None and currency.isalpha():
-            return currency
-        elif currency is None:
+        emoji = self.bot.get_emoji(currency)
+
+        if emoji is None:
             return EconomyConstants.DEFAULT_SYMBOL
 
-        emoji = self.bot.get_emoji(int(currency))
-
-        if emoji is not None:
-            return str(emoji)
-        
-        return EconomyConstants.DEFAULT_SYMBOL
+        return str(emoji)
 
 
 class EconomyCommand(commands.Command):
@@ -252,15 +247,13 @@ class Economy(commands.Cog):
 
     @commands.command(cls=EconomyCommand)
     @is_commander()
-    async def currency(self, ctx, symbol: Union[chr, discord.Emoji]):
-        to_insert = symbol if isinstance(symbol, str) else str(symbol.id)
-
+    async def currency(self, ctx, symbol: discord.Emoji):
         check = await self.bot.db.execute("UPDATE `currency` SET `symbol` = ? WHERE `currency`.`server` = ?",
-            to_insert, ctx.guild.id, with_commit=True)
+            symbol.id, ctx.guild.id, with_commit=True)
         
         if not check:
             await self.bot.db.execute("INSERT INTO `currency` VALUES (?, ?)",
-                ctx.guild.id, to_insert, with_commit=True)
+                ctx.guild.id, symbol.id, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["new_symbol"].format(
             str(symbol), ctx.currency))
