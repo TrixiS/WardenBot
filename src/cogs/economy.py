@@ -283,37 +283,37 @@ class Economy(commands.Cog):
             EconomyConstants.USER_PER_PAGE * page.value,
             fetch_all=True)
 
-        if check is not None and len(check) > 0:
-            count = await self.bot.db.execute("SELECT COUNT(*) FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0",
-                ctx.guild.id)
+        if check is None or len(check) == 0:
+            return await ctx.answer(ctx.lang["economy"]["empty_page"].format(page.humanize()))
 
-            place = None
-            description = []
+        count = await self.bot.db.execute("SELECT COUNT(*) FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0",
+            ctx.guild.id)
 
-            for member_id, money_sum in check:
-                member = ctx.guild.get_member(member_id)
+        place = None
+        description = []
+
+        for member_id, money_sum in check:
+            member = ctx.guild.get_member(member_id)
                 
-                if place is None:
-                    place = await self.eco.get_place(PseudoMember(member_id, ctx.guild))
-                else:
-                    place += 1
+            if place is None:
+                place = await self.eco.get_place(PseudoMember(member_id, ctx.guild))
+            else:
+                place += 1
 
-                description.append("**{}**. {} {} {}".format(
-                    place, member.mention if member else ctx.lang["shared"]["left_member"],
-                    StringConstants.DOT_SYMBOL, self.currency_fmt(ctx.currency, money_sum)))
+            description.append("**{}**. {} {} {}".format(
+                place, member.mention if member else ctx.lang["shared"]["left_member"],
+                StringConstants.DOT_SYMBOL, self.currency_fmt(ctx.currency, money_sum)))
 
-            em = discord.Embed(
-                title=ctx.lang["economy"]["lb_title"].format(ctx.guild.name),
-                description='\n'.join(description),
-                colour=ctx.color)
+        em = discord.Embed(
+            title=ctx.lang["economy"]["lb_title"].format(ctx.guild.name),
+            description='\n'.join(description),
+            colour=ctx.color)
                 
-            em.set_footer(text="{} {}/{} | {} {}".format(
-                ctx.lang["shared"]["page"], page.humanize(), ceil(count / EconomyConstants.USER_PER_PAGE),
-                ctx.lang["economy"]["your_rank"], await self.eco.get_place(ctx.author)))
+        em.set_footer(text="{} {}/{} | {} {}".format(
+            ctx.lang["shared"]["page"], page.humanize(), ceil(count / EconomyConstants.USER_PER_PAGE),
+            ctx.lang["economy"]["your_rank"], await self.eco.get_place(ctx.author)))
 
-            return await ctx.send(embed=em)
-
-        await ctx.answer(ctx.lang["economy"]["empty_page"].format(page.humanize()))
+        await ctx.send(embed=em)
 
 
 def setup(bot):
