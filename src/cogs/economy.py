@@ -2,12 +2,13 @@ import discord
 import logging
 
 from discord.ext import commands
-from .utils.constants import EconomyConstants
-from .utils.converters import uint
+from .utils.constants import EconomyConstants, StringConstants
+from .utils.converters import uint, IndexConverter, Index
 from .utils.checks import is_commander
 from .utils.strings import markdown
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional
+from math import ceil
 
 
 class Account:
@@ -105,6 +106,15 @@ class MoneyTypeConverter(commands.Converter):
             return MoneyType.bank
 
         raise commands.BadArgument(ctx.lang["economy"]["incorrect_money_type"])
+
+
+class PseudoMember:
+
+    __slots__ = ("id", "guild")
+
+    def __init__(self, id, guild):
+        self.id = id
+        self.guild = guild
 
 
 class Economy(commands.Cog):
@@ -257,6 +267,53 @@ class Economy(commands.Cog):
 
         await ctx.answer(ctx.lang["economy"]["new_symbol"].format(
             str(symbol), ctx.currency))
+
+    @commands.command(aliases=["lb", "board", "top"], cls=EconomyCommand)
+    async def leaderboard(self, ctx, page: Optional[IndexConverter]=Index(0)):
+        sql = """
+        SELECT `member`, `money`.`cash` + `money`.`bank`
+        FROM `money`
+        WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0
+        ORDER BY `money`.`cash` + `money`.`bank` DESC
+        LIMIT ? OFFSET ?
+        """
+
+        check = await self.bot.db.execute(sql,
+            ctx.guild.id, EconomyConstants.USER_PER_PAGE, 
+            EconomyConstants.USER_PER_PAGE * page.value,
+            fetch_all=True)
+
+        if check is not None and len(check) > 0:
+            count = await self.bot.db.execute("SELECT COUNT(*) FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0",
+                ctx.guild.id)
+
+            place = None
+            description = []
+
+            for member_id, money_sum in check:
+                member = ctx.guild.get_member(member_id)
+                
+                if place is None:
+                    place = await self.eco.get_place(PseudoMember(member_id, ctx.guild))
+                else:
+                    place += 1
+
+                description.append("**{}**. {} {} {}".format(
+                    place, member.mention if member else ctx.lang["shared"]["left_member"],
+                    StringConstants.DOT_SYMBOL, self.currency_fmt(ctx.currency, money_sum)))
+
+            em = discord.Embed(
+                title=ctx.lang["economy"]["lb_title"].format(ctx.guild.name),
+                description='\n'.join(description),
+                colour=ctx.color)
+                
+            em.set_footer(text="{} {}/{} | {} {}".format(
+                ctx.lang["shared"]["page"], page.humanize(), ceil(count / EconomyConstants.USER_PER_PAGE),
+                ctx.lang["economy"]["your_rank"], await self.eco.get_place(ctx.author)))
+
+            return await ctx.send(embed=em)
+
+        await ctx.answer(ctx.lang["economy"]["empty_page"].format(page.humanize()))
 
 
 def setup(bot):
