@@ -1,6 +1,7 @@
 import discord
 
 from discord.ext import commands
+from typing import Optional
 from .utils.checks import is_commander
 from .utils.constants import EmbedConstants
 
@@ -18,7 +19,7 @@ class Logging(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def log(self, ctx, *, channel: discord.TextChannel=None):
+    async def log(self, ctx, *, channel: Optional[discord.TextChannel]=None):
         if channel is None:
             log_channel = await self.get_log_channel(ctx.guild)
 
