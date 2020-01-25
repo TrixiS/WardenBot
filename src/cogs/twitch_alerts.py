@@ -6,6 +6,7 @@ import pytz
 
 from discord.ext import commands, tasks
 from twitch import TwitchClient
+from typing import Optional
 from .utils.checks import is_commander
 
 
@@ -182,7 +183,7 @@ class TwitchAlerts(commands.Cog):
 
     @twitch.command(name="channel")
     @is_commander()
-    async def twitch_channel(self, ctx, channel: discord.TextChannel=None):
+    async def twitch_channel(self, ctx, channel: Optional[discord.TextChannel]=None):
         set_channel = await self.alerts.get_anonse_channel(ctx.guild)
 
         if channel is None:
