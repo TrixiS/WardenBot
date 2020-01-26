@@ -18,8 +18,8 @@ class Db:
     param_lit = '?'
     null = "NULL"
 
-    int_min_bound = -9223372036854775808
-    int_max_bound = 9223372036854775807
+    int_min_bound = -999999999999
+    int_max_bound = 999999999999
 
     def __init__(self, db_type, **kwargs):
         if db_type is DbType.SQLite:
@@ -35,6 +35,9 @@ class Db:
 
         self._lock = Lock()
         self._adapt()
+
+    def make_safe_value(self, number):
+        return max(min(number, self.int_max_bound), self.int_min_bound)
 
     def _adapt(self) -> None:
         if self.db_type is DbType.SQLite:

@@ -25,8 +25,8 @@ class Account:
         return self.bank + self.cash
 
     async def save(self):
-        self.cash = max(min(self.cash, self.bot.db.int_max_bound), self.bot.db.int_min_bound)
-        self.bank = max(min(self.bank, self.bot.db.int_max_bound), self.bot.db.int_min_bound)
+        self.cash = self.bot.db.make_safe_value(self.cash)
+        self.bank = self.bot.db.make_safe_value(self.bank)
 
         check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
@@ -124,6 +124,7 @@ class Economy(commands.Cog):
         self.eco = _Economy(bot)
 
     def currency_fmt(self, currency, amount):
+        amount = self.bot.db.make_safe_value(amount)
         return "{}**{:3,}**".format(currency, amount)
 
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
@@ -271,7 +272,7 @@ class Economy(commands.Cog):
     @commands.command(aliases=["lb", "board", "top"], cls=EconomyCommand)
     async def leaderboard(self, ctx, page: Optional[IndexConverter]=Index(0)):
         sql = """
-        SELECT `member`, `money`.`cash` + `money`.`bank` as `money_sum`
+        SELECT `member`, `money`.`cash` + `money`.`bank` AS `money_sum`
         FROM `money`
         WHERE `money`.`server` = ? AND `money_sum` > 0
         ORDER BY `money_sum` DESC
