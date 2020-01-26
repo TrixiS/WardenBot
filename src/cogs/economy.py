@@ -4,7 +4,7 @@ import logging
 from discord.ext import commands
 from .utils.constants import EconomyConstants, StringConstants
 from .utils.converters import uint, IndexConverter, Index
-from .utils.checks import is_commander
+from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 from enum import Enum
 from typing import Optional
@@ -352,6 +352,20 @@ class Economy(commands.Cog):
             inline=False)
         
         await ctx.send(embed=em)
+
+    @commands.command(name="economy-reset")
+    @has_permissions(administrator=True)
+    async def economy_reset(self, ctx):
+        accept = await ctx.ask(ctx.lang["economy"]["really_reset?"].format(ctx.guild.name),
+            check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
+
+        if accept is None or accept == ctx.lang["shared"]["no"].lower():
+            return
+
+        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ?",
+            ctx.guild.id, with_commit=True)
+
+        await ctx.answer(ctx.lang["economy"]["reset"])
 
 
 def setup(bot):
