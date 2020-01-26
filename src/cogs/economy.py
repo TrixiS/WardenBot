@@ -117,6 +117,15 @@ class PseudoMember:
         self.guild = guild
 
 
+class SafeUint(uint):
+
+    __qualname__ = "uint"
+
+    async def convert(self, ctx, arg):
+        converted = await super().convert(ctx, arg)
+        return ctx.bot.db.make_safe_value(converted)
+
+
 class Economy(commands.Cog):
 
     def __init__(self, bot):
@@ -124,7 +133,6 @@ class Economy(commands.Cog):
         self.eco = _Economy(bot)
 
     def currency_fmt(self, currency, amount):
-        amount = self.bot.db.make_safe_value(amount)
         return "{}**{:3,}**".format(currency, amount)
 
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
@@ -144,7 +152,7 @@ class Economy(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command(aliases=["dep"], cls=EconomyCommand)
-    async def deposit(self, ctx, amount: Optional[uint]):
+    async def deposit(self, ctx, amount: Optional[SafeUint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -161,7 +169,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(aliases=["with"], cls=EconomyCommand)
-    async def withdraw(self, ctx, amount: Optional[uint]):
+    async def withdraw(self, ctx, amount: Optional[SafeUint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -178,7 +186,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(cls=EconomyCommand)
-    async def give(self, ctx, member: discord.Member, amount: uint(include_zero=False)):
+    async def give(self, ctx, member: discord.Member, amount: SafeUint(include_zero=False)):
         if member == ctx.author:
             return await ctx.answer(ctx.lang["errors"]["cant_use_to_yourself"])
         
@@ -199,7 +207,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="add-money", cls=EconomyCommand)
     @is_commander()
-    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
+    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: SafeUint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -213,7 +221,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="remove-money", cls=EconomyCommand)
     @is_commander()
-    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
+    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: SafeUint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -242,7 +250,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="start-money", cls=EconomyCommand)
     @is_commander()
-    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
+    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: SafeUint(include_zero=True)):
         check = await self.bot.db.execute("UPDATE `start_money` SET `{}` = ? WHERE `start_money`.`server` = ?".format(money_type.name),
             amount, ctx.guild.id, with_commit=True)
 
