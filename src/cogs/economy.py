@@ -318,9 +318,10 @@ class Economy(commands.Cog):
             description='\n'.join(description),
             colour=ctx.color)
                 
-        em.set_footer(text="{} {}/{} | {} {}".format(
-            ctx.lang["shared"]["page"], page.humanize(), ceil(count / EconomyConstants.USER_PER_PAGE),
-            ctx.lang["economy"]["your_rank"], await self.eco.get_place(ctx.author)))
+        em.set_footer(text="{} {}/{}".format(
+            ctx.lang["shared"]["page"], 
+            page.humanize(), 
+            ceil(count / EconomyConstants.USER_PER_PAGE)))
 
         await ctx.send(embed=em)
 
@@ -353,6 +354,13 @@ class Economy(commands.Cog):
         
         await ctx.send(embed=em)
 
+    # TODO #1: maybe add ctx.confirm method
+    # TODO #2:
+    #   make CustomCooldown(commands.CooldownMapping)
+    #   if cc.time = None then get it from the db
+    #   cooldown set commands -> get bucket -> set data
+    #   decorator |
+    #   func._custom_cooldown = CustomCooldown(*args, **kwargs)
     @commands.command(name="economy-reset")
     @has_permissions(administrator=True)
     async def economy_reset(self, ctx):
