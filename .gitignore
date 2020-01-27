@@ -1,3 +1,6 @@
 venv/
 tests/
-src/config.py
+src/cogs/utils/config.py
+*.pyc
+database
+assets/
