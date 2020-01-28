@@ -25,14 +25,8 @@ class Account:
         return self.bank + self.cash
 
     async def save(self):
-        safe_cash = self.bot.db.make_safe_value(self.cash)
-        safe_bank = self.bot.db.make_safe_value(self.bank)
-
-        if self.saved and safe_cash == self.cash and safe_bank == self.bank:
-            return
-
-        self.cash = int(safe_cash)
-        self.bank = int(safe_bank)
+        self.cash = self.bot.db.make_safe_value(int(self.cash))
+        self.bank = self.bot.db.make_safe_value(int(self.bank))
 
         check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
@@ -88,6 +82,18 @@ class _Economy:
             return EconomyConstants.DEFAULT_SYMBOL
 
         return str(emoji)
+
+    async def give_income(self, member, income_value):
+        account = await self.get_money(member)
+
+        if income_value.is_percentage:
+            account.bank += account.bank * (income_value.amount / 100)
+        else:
+            account.bank += income_value.amount
+
+        await account.save()
+
+        logging.info(f"Give out -> {str(member)} {str(income_value)}")
 
 
 class EconomyCommand(commands.Command):
@@ -162,6 +168,11 @@ class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.eco = _Economy(bot)
+
+        self.income_giveout.start()
+
+    def cog_unload(self):
+        self.income_giveout.cancel()
 
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
@@ -466,7 +477,6 @@ class Economy(commands.Cog):
             role_or_member.mention, str(value) if value.is_percentage 
                 else self.currency_fmt(ctx.currency, value.amount)))
 
-    # TODO #7: add safe_int func into the database
     # TODO #8: make auto-update though git-hashes
     @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
@@ -480,6 +490,49 @@ class Economy(commands.Cog):
         else:
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 role_or_member.mention))
+
+    @tasks.loop(minutes=1)
+    async def income_giveout(self):
+        select_sql = """
+        SELECT `server`, `model`, `value`, `is_percentage`
+        FROM `income`
+        WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
+        """
+
+        update_sql = """
+        UPDATE `income`
+        SET `seen` = UNIX_TIMESTAMP()
+        WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
+        """
+
+        income_members = await self.bot.db.execute(select_sql, 0, fetch_all=True)
+
+        for guild_id, member_id, amount, is_percentage in income_members:
+            member = self.bot.get_member(guild_id, member_id)
+
+            if member is not None:
+                await self.eco.give_income(member, IncomeValue(amount, is_percentage))
+
+        await self.bot.db.execute(update_sql, 0, with_commit=True)
+
+        income_role = await self.bot.db.execute(select_sql, 1, fetch_all=True)
+
+        for guild_id, role_id, amount, is_percentage in income_role:
+            role = self.bot.get_role(guild_id, role_id)
+            
+            if role is None:
+                continue
+
+            income_value = IncomeValue(amount, is_percentage)
+
+            for member in role.members:
+                await self.eco.give_income(member, income_value)
+
+        await self.bot.db.execute(update_sql, 1, with_commit=True)
+
+    @income_giveout.before_loop
+    async def income_giveout_before(self):
+        await self.bot.wait_until_ready()
 
 
 def setup(bot):
