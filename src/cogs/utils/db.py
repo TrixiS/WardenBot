@@ -9,6 +9,10 @@ from random import random
 from time import time
 
 
+def int_timestamp() -> int:
+    return int(time())
+
+
 class DbType(Enum):
     SQLite  = 0
     MySQL   = 1
@@ -42,7 +46,7 @@ class Db:
     def _adapt(self) -> None:
         if self.db_type is DbType.SQLite:
             self.conn.create_function("rand", 0, random)
-            self.conn.create_function("unix_timestamp", 0, time)
+            self.conn.create_function("unix_timestamp", 0, int_timestamp)
 
     def _wrap_args(self, seq):
         for row in seq:
