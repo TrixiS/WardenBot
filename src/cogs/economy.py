@@ -3,7 +3,7 @@ import logging
 
 from discord.ext import commands
 from .utils.constants import EconomyConstants, StringConstants
-from .utils.converters import uint, IndexConverter, Index
+from .utils.converters import uint, IndexConverter, Index, HumanTime
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 from enum import Enum
@@ -132,12 +132,12 @@ class SafeUint(uint):
 
 class IncomeValue:
 
-    def __init__(self, amount, is_percent):
+    def __init__(self, amount, is_percentage):
         self.amount = amount
-        self.is_percent = is_percent
+        self.is_percentage = is_percentage
 
     def __str__(self):
-        return f"{self.amount}%" if self.is_percent else str(self.amount)
+        return f"{self.amount}%" if self.is_percentage else str(self.amount)
 
 
 class IncomeValueConverter(SafeUint):
@@ -405,12 +405,14 @@ class Economy(commands.Cog):
     @commands.group(cls=EconomyGroup, invoke_without_command=True)
     @is_commander()
     async def income(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
-        check = await self.bot.db.execute("SELECT `is_percent`, `value` FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
+        check = await self.bot.db.execute("SELECT `is_percentage`, `value`, `interval` FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
             ctx.guild.id, role_or_member.id)
 
         if check is None:
             return await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 role_or_member.mention))
+
+        value = IncomeValue(check[1], check[0])
 
         em = discord.Embed(
             title=ctx.lang["economy"]["income_title"].format(role_or_member.name),
@@ -420,46 +422,49 @@ class Economy(commands.Cog):
 
         em.add_field(
             name=ctx.lang["shared"]["amount"],
-            value=check[1], 
+            value=str(value) if value.is_percentage 
+                else self.currency_fmt(ctx.currency, value.amount), 
             inline=False)
 
         em.add_field(
-            name=ctx.lang["economy"]["is_percents"],
-            value=ctx.lang["shared"]["yes"] if check[0] else ctx.lang["shared"]["no"],
-            inline=False)
+            name=ctx.lang["economy"]["interval"],
+            value=f"{check[2]} {ctx.lang['shared']['seconds']}",
+            inline=True)
 
         await ctx.send(embed=em)
 
-    @income.command(name="add", cls=EconomyCommand)
+    @income.command(aliases=["add"], name="set", cls=EconomyCommand)
     @is_commander()
-    async def income_add(self, ctx, role_or_member: Union[discord.Role, discord.Member], value: IncomeValueConverter):
+    async def income_set(self, ctx, role_or_member: Union[discord.Role, discord.Member], value: IncomeValueConverter, interval: HumanTime):
         sql = """
         UPDATE `income` 
-        SET `value` = ?, `is_percent` = ?
+        SET `value` = ?, `is_percentage` = ?, `interval` = ?, `seen` = UNIX_TIMESTAMP()
         WHERE `income`.`server` = ? AND `income`.`model` = ?
         """
 
-        is_role = isinstance(role_or_member, discord.Role)
+        interval = max(interval, 60)
 
         check = await self.bot.db.execute(sql,
-            value.amount, value.is_percent, 
-            ctx.guild.id, role_or_member.id, 
-            with_commit=True)
+            value.amount, value.is_percentage,
+            interval, ctx.guild.id, 
+            role_or_member.id, with_commit=True)
 
         if not check:
-            await self.bot.db.execute("INSERT INTO `income` VALUES (?, ?, ?, ?, ?)",
+            await self.bot.db.execute("INSERT INTO `income` VALUES (?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
                 ctx.guild.id, role_or_member.id, 
-                value.amount, value.is_percent, 
-                is_role, with_commit=True)
+                value.amount, interval,
+                isinstance(role_or_member, discord.Role), 
+                value.is_percentage, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["set_income"].format(
-            role_or_member.mention, str(value) if value.is_percent 
+            role_or_member.mention, str(value) if value.is_percentage 
                 else self.currency_fmt(ctx.currency, value.amount)))
 
-    # TODO #4: use IncomeValue in income command
-    @income.command(name="delete", cls=EconomyCommand)
+    # TODO #7: add safe_int func into the database
+    # TODO #8: make auto-update though git-hashes
+    @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
-    async def income_delete(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
+    async def income_remove(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
         check = await self.bot.db.execute("DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
             ctx.guild.id, role_or_member.id, with_commit=True)
 
