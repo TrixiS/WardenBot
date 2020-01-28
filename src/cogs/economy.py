@@ -1,7 +1,7 @@
 import discord
 import logging
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 from .utils.constants import EconomyConstants, StringConstants
 from .utils.converters import uint, IndexConverter, Index, HumanTime
 from .utils.checks import is_commander, has_permissions
@@ -25,8 +25,14 @@ class Account:
         return self.bank + self.cash
 
     async def save(self):
-        self.cash = self.bot.db.make_safe_value(self.cash)
-        self.bank = self.bot.db.make_safe_value(self.bank)
+        safe_cash = self.bot.db.make_safe_value(self.cash)
+        safe_bank = self.bot.db.make_safe_value(self.bank)
+
+        if self.saved and safe_cash == self.cash and safe_bank == self.bank:
+            return
+
+        self.cash = int(safe_cash)
+        self.bank = int(safe_bank)
 
         check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
