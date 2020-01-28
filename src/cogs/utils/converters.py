@@ -53,7 +53,7 @@ class HumanTime(commands.Converter):
         
         try:
             total_seconds = int(arg[:-1]) * seconds_in[arg[-1]]
-            return min(max(1, total_seconds), sefl.SECONDS_IN_YEAR)
+            return min(max(1, total_seconds), self.SECONDS_IN_YEAR)
         except:
             raise commands.BadArgument(ctx.lang["errors"]["time_convert_failed"])
 
