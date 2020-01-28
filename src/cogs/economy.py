@@ -93,8 +93,6 @@ class _Economy:
 
         await account.save()
 
-        logging.info(f"Give out -> {str(member)} {str(income_value)}")
-
 
 class EconomyCommand(commands.Command):
     pass
