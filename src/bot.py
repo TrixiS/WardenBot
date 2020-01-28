@@ -73,6 +73,14 @@ class Warden(AutoShardedBot):
 
         return guild.get_member(member_id)
 
+    def get_role(self, guild_id, role_id):
+        guild = self.get_guild(guild_id)
+
+        if guild is None:
+            return
+
+        return guild.get_role(role_id)
+
     async def get_color(self, guild):
         color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
