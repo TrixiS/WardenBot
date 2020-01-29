@@ -110,6 +110,8 @@ class MoneyType(Enum):
 
 class MoneyTypeConverter(commands.Converter):
 
+    __qualname__ = "MoneyType"
+
     async def convert(self, ctx, argument):
         argument = argument.lower()
 
@@ -151,6 +153,8 @@ class IncomeValue:
 
 
 class IncomeValueConverter(SafeUint):
+
+    __qualname__ = "IncomeValue"
 
     async def convert(self, ctx, arg):
         if arg.endswith('%'):
@@ -489,6 +493,7 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 role_or_member.mention))
 
+    # make optimizing for guilds if it is None
     @tasks.loop(minutes=1)
     async def income_giveout(self):
         select_sql = """
@@ -518,7 +523,7 @@ class Economy(commands.Cog):
         for guild_id, role_id, amount, is_percentage in income_role:
             role = self.bot.get_role(guild_id, role_id)
             
-            if role is None:
+            if role is None or len(role.members) == 0:
                 continue
 
             income_value = IncomeValue(amount, is_percentage)
