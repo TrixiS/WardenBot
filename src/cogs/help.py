@@ -51,7 +51,7 @@ class Help(commands.Cog):
         em = discord.Embed(colour=ctx.color)
 
         def qualified_names(to_inspect):
-            for command in to_inspect.walk_commands():
+            for command in set(to_inspect.walk_commands()):
                 yield command.qualified_name
 
         if cog is not None:
