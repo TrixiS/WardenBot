@@ -94,7 +94,7 @@ class TwitchAlerts(commands.Cog):
             if stream is None or len(stream) == 0:
                 continue
 
-            future_created = stream["created_at"] + datetime.timedelta(seconds=30, minutes=1)
+            future_created = stream["created_at"] + datetime.timedelta(minutes=1)
             future_created.astimezone(pytz.utc)
 
             if future_created < datetime.datetime.utcnow():
