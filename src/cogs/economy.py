@@ -144,6 +144,8 @@ class SafeUint(uint):
 
 class IncomeValue:
 
+    __slots__ = ("amount", "is_percentage")
+
     def __init__(self, amount, is_percentage):
         self.amount = amount
         self.is_percentage = is_percentage
