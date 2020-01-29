@@ -104,6 +104,10 @@ class EconomyGroup(EconomyCommand, commands.Group):
     pass
 
 
+class CooldownCommand(commands.Command):
+    pass
+
+
 class MoneyType(Enum):
 
     cash = 0
