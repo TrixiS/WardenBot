@@ -222,6 +222,30 @@ class CustomCooldownBucket:
             return result
 
 
+def custom_cooldown():
+
+    async def predicate(ctx):
+        callback = ctx.command.callback
+
+        if not hasattr(callback, "custom_cooldown_buckets"):
+            setattr(callback, "custom_cooldown_buckets", [])
+
+        bucket = discord.utils.find(
+            lambda b: b.guild == ctx.guild and b.user == ctx.author and b.command == ctx.command,
+            callback.custom_cooldown_buckets)
+
+        if bucket is None:
+            bucket = CustomCooldownBucket(ctx)
+
+            await new_bucket.init()
+
+            callback.custom_cooldown_buckets.append(new_bucket)
+
+        return await bucket.use()
+
+    return commands.check(predicate)
+
+
 class Economy(commands.Cog):
 
     def __init__(self, bot):
