@@ -38,6 +38,8 @@ class Index:
 
 class IndexConverter(uint):
 
+    __qualname__ = "uint"
+
     async def convert(self, ctx, arg):
         convertered = await super().convert(ctx, arg) - 1
 
