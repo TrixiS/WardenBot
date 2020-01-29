@@ -10,6 +10,8 @@ from asyncio import iscoroutinefunction as is_coro
 
 class uint(commands.Converter):
 
+    __qualname__ = "uint"
+
     def __init__(self, include_zero=False):
         self.include_zero = include_zero
 
@@ -35,8 +37,6 @@ class Index:
 
 
 class IndexConverter(uint):
-
-    __qualname__ = "Index"
 
     async def convert(self, ctx, arg):
         convertered = await super().convert(ctx, arg) - 1
