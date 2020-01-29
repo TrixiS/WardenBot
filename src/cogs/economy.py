@@ -104,7 +104,7 @@ class EconomyGroup(EconomyCommand, commands.Group):
     pass
 
 
-class CooldownCommand(commands.Command):
+class EconomyGame(EconomyCommand):
     pass
 
 
