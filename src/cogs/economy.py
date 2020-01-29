@@ -520,9 +520,9 @@ class Economy(commands.Cog):
 
         await self.bot.db.execute(update_sql, 0, with_commit=True)
 
-        income_role = await self.bot.db.execute(select_sql, 1, fetch_all=True)
+        income_roles = await self.bot.db.execute(select_sql, 1, fetch_all=True)
 
-        for guild_id, role_id, amount, is_percentage in income_role:
+        for guild_id, role_id, amount, is_percentage in income_roles:
             role = self.bot.get_role(guild_id, role_id)
             
             if role is None or len(role.members) == 0:
