@@ -1,14 +1,16 @@
 import discord
 import logging
+import datetime
+import asyncio
 
 from discord.ext import commands, tasks
+from enum import Enum
+from typing import Optional, Union
+from math import ceil
 from .utils.constants import EconomyConstants, StringConstants
 from .utils.converters import uint, IndexConverter, Index, HumanTime
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
-from enum import Enum
-from typing import Optional, Union
-from math import ceil
 
 
 class Account:
@@ -165,7 +167,60 @@ class IncomeValueConverter(SafeUint):
             value = await super().convert(ctx, arg)
 
         return IncomeValue(value, arg.endswith('%'))
-        
+
+
+class CustomCooldownBucket:
+
+    def __init__(self, ctx):
+        self.bot = ctx.bot
+        self.user = ctx.author
+        self.guild = ctx.guild
+        self.command = ctx.command
+        self.semaphore = asyncio.Semaphore(1, loop=bot.loop)
+        self.max_uses = None
+        self.remaining_uses = None
+        self.reset_timedelta = None
+        self.reset_at = None
+
+    def update(new_reset_seconds, new_max_uses):
+        self.remaining_uses = new_max_uses
+        self.max_uses = new_max_uses
+        self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
+        self.reset_at = datetime.datetime.now() + self.reset_timedelta
+
+    async def init(self):
+        sql = """
+        SELECT `max_uses`, `reset_seconds`
+        FROM `cooldown`
+        WHERE `cooldown`.`server` = ? AND `cooldown`.`command` = ?
+        """
+
+        bucket_info = await self.bot.db.execute(sql, 
+            self.guild.id, self.command.qualified_name)
+
+        if bucket_info is not None:
+            max_uses, reset_seconds = bucket_info
+        else:
+            max_uses, reset_seconds = self.bot.config.default_cooldown
+
+        self.update(reset_seconds, max_uses)
+
+    async def use(self):
+        async with self.semaphore:
+            now = datetime.datetime.now()
+
+            result = False
+
+            if now >= self.reset_at:
+                self.remaining_uses = self.max_uses
+                self.reset_at = now + self.reset_timedelta
+
+            if self.remaining_uses > 0:
+                self.remaining_uses -= 1
+                result = True
+
+            return result
+
 
 class Economy(commands.Cog):
 
@@ -495,7 +550,6 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 role_or_member.mention))
 
-    # make optimizing for guilds if it is None
     @tasks.loop(minutes=1)
     async def income_giveout(self):
         select_sql = """
