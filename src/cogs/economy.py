@@ -643,7 +643,7 @@ class Economy(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def cooldown(self, ctx, command: CommandConverter(EconomyGame), max_uses: SafeUint, interval: HumanTime):
+    async def cooldown(self, ctx, max_uses: SafeUint, interval: HumanTime, *, command: CommandConverter(EconomyGame)):
         sql = """
         UPDATE `cooldown`
         SET `max_uses` = ?, `reset_seconds` = ?
