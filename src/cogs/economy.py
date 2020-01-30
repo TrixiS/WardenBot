@@ -186,10 +186,10 @@ class CustomCooldownBucket:
         self.reset_timedelta = None
         self.reset_at = None
 
-    def update(self, new_reset_seconds, new_max_uses):
-        self.remaining_uses = new_max_uses
-        self.max_uses = new_max_uses
-        self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
+    def update(self, *, new_reset_seconds=None, new_max_uses=None):
+        self.remaining_uses = new_max_uses or self.max_uses
+        self.max_uses = new_max_uses or self.max_uses
+        self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds or self.reset_seconds)
         self.reset_at = datetime.datetime.now() + self.reset_timedelta
 
     async def init(self):
@@ -207,7 +207,7 @@ class CustomCooldownBucket:
         else:
             max_uses, reset_seconds = self.bot.config.default_cooldown
 
-        self.update(reset_seconds, max_uses)
+        self.update(new_reset_seconds=reset_seconds, new_max_uses=max_uses)
 
     async def use(self):
         async with self.semaphore:
@@ -235,7 +235,7 @@ def custom_cooldown():
             setattr(callback, "custom_cooldown_buckets", [])
 
         bucket = discord.utils.find(
-            lambda b: b.guild == ctx.guild and b.user == ctx.author and b.command == ctx.command,
+            lambda b: b.guild == ctx.guild and b.user == ctx.author,
             callback.custom_cooldown_buckets)
 
         if bucket is None:
@@ -667,7 +667,7 @@ class Economy(commands.Cog):
 
         for bucket in command.callback.custom_cooldown_buckets:
             if bucket.guild == ctx.guild:
-                bucket.update(interval, max_uses)
+                bucket.update(new_reset_seconds=interval, new_max_uses=max_uses)
 
     @cooldown.command(name="for", aliases=["check"])
     async def cooldown_for(self, ctx, *, command: CommandConverter(EconomyGame)):
