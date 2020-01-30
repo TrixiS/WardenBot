@@ -225,7 +225,7 @@ class CustomCooldownBucket:
 
             return result
 
-
+# TODO: raise custom exception on cooldown fail
 def custom_cooldown():
 
     async def predicate(ctx):
@@ -254,17 +254,17 @@ class CommandConverter(commands.Converter):
 
     __qualname__ = "Command"
 
-    def __init__(self, cls=commands.Command)
+    def __init__(self, cls=commands.Command):
         self.cls = cls
 
     async def convert(self, ctx, arg):
-        command = self.bot.get_command(arg)
+        command = ctx.bot.get_command(arg)
 
         if command is None:
-            raise commands.BadArgument(ctx.lang["help"]["Command not found"])
+            raise commands.BadArgument(ctx.lang["help"]["command_not_found"])
 
         if not isinstance(command, self.cls):
-            raise commadns.BadArgument(ctx.lang["errors"]["ivalid_command"].format(
+            raise commands.BadArgument(ctx.lang["errors"]["ivalid_command"].format(
                 self.cls.__qualname__))
 
         return command
@@ -640,6 +640,34 @@ class Economy(commands.Cog):
     @income_giveout.before_loop
     async def income_giveout_before(self):
         await self.bot.wait_until_ready()
+
+    @commands.group(invoke_without_command=True)
+    @is_commander()
+    async def cooldown(self, ctx, command: CommandConverter(EconomyGame), max_uses: SafeUint, interval: HumanTime):
+        sql = """
+        UPDATE `cooldown`
+        SET `max_uses` = ?, `reset_seconds` = ?
+        WHERE `cooldown`.`server` = ? AND `cooldown`.`command` = ?
+        """
+        
+        check = await self.bot.db.execute(sql,
+            max_uses, interval, 
+            ctx.guild.id, str(command.qualified_name),
+            with_commit=True)
+
+        if not check:
+            await self.bot.db.execute("INSERT INTO `cooldown` VALUES (?, ?, ?, ?)",
+                ctx.guild.id, str(command.qualified_name), max_uses, interval, with_commit=True)
+
+        await ctx.answer(ctx.lang["economy"]["cooldown_updated"].format(
+            command.qualified_name))
+
+        if not hasattr(command.callback, "custom_cooldown_buckets"):
+            return
+
+        for bucket in command.callback.custom_cooldown_buckets:
+            if bucket.guild == ctx.guild:
+                bucket.update(interval, max_uses)
 
 
 def setup(bot):
