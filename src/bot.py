@@ -21,8 +21,8 @@ class Warden(AutoShardedBot):
         self.config = kwargs.pop("config", Config())
         
         self.path = Path(__file__).parent.resolve().absolute()
-        self.cogs_path = self.path.joinpath(self.config.cogs_path).resolve()
-        self.langs_path = Path(self.config.langs_path).absolute().resolve()
+        self.assets_path = Path(self.config.assets_path).resolve().absolute()
+        self.cogs_path = Path(self.config.cogs_path).resolve().absolute()
         
         self.session = ClientSession(loop=self.loop)
 
@@ -34,7 +34,7 @@ class Warden(AutoShardedBot):
     def load_langs(self):
         langs = {}
 
-        for path in self.langs_path.glob("*.json"):
+        for path in (self.assets_path / "langs").glob("*.json"):
             if path.is_file():
                 with path.open(encoding='utf-8', mode='r') as f:
                     langs[path.stem] = json_load(f)
