@@ -652,12 +652,12 @@ class Economy(commands.Cog):
         
         check = await self.bot.db.execute(sql,
             max_uses, interval, 
-            ctx.guild.id, str(command.qualified_name),
+            ctx.guild.id, command.qualified_name,
             with_commit=True)
 
         if not check:
             await self.bot.db.execute("INSERT INTO `cooldown` VALUES (?, ?, ?, ?)",
-                ctx.guild.id, str(command.qualified_name), max_uses, interval, with_commit=True)
+                ctx.guild.id, command.qualified_name, max_uses, interval, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["cooldown_updated"].format(
             command.qualified_name))
@@ -668,6 +668,35 @@ class Economy(commands.Cog):
         for bucket in command.callback.custom_cooldown_buckets:
             if bucket.guild == ctx.guild:
                 bucket.update(interval, max_uses)
+
+    @cooldown.command(name="for", aliases=["check"])
+    async def cooldown_for(self, ctx, *, command: CommandConverter(EconomyGame)):
+        sql = """
+        SELECT `max_uses`, `reset_seconds`
+        FROM `cooldown`
+        WHERE `cooldown`.`server` = ? AND `cooldown`.`command` = ?
+        """
+
+        cooldown_info = await self.bot.db.execute(sql,
+            ctx.guild.id, command.qualified_name) or self.bot.config.default_cooldown
+
+        em = discord.Embed(
+            title=ctx.lang["economy"]["cooldown_for"].format(command.qualified_name),
+            colour=ctx.color)
+
+        em.set_thumbnail(url=ctx.guild.icon_url)
+
+        em.add_field(
+            name=ctx.lang["economy"]["max_uses"],
+            value=cooldown_info[0],
+            inline=False)
+
+        em.add_field(
+            name=ctx.lang["economy"]["interval"],
+            value=f"{cooldown_info[1]} {ctx.lang['shared']['seconds']}",
+            inline=False)
+
+        await ctx.send(embed=em)
 
 
 def setup(bot):
