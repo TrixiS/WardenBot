@@ -27,13 +27,15 @@ class Help(commands.Cog):
         for name, typ in arugments:
             true_type = type(typ)
 
-            if (true_type == type(Union) and type(None) in typ.__args__) or \
-                true_type == type(Optional):
-                    prepared.append(prepare_argument(typ.__args__[0], name, '*'))
-            elif true_type == type(Union):
+            if true_type == type(Union):
+                if type(None) not in typ.__args__:
+                    args = typ.__args__
+                else:
+                    args = typ.__args__[:-1]
+
                 prepared.append(
                     f"{StringConstants.DOT_SYMBOL} {prepare_name(name)} -> " + human_choice(
-                        tuple(map(lambda x: x.__qualname__, typ.__args__)), 
+                        tuple(map(lambda x: x.__qualname__, args)), 
                         second_sep=ctx.lang["shared"]["or"]))
             elif isinstance(typ, type(commands.Greedy)):
                 converted = prepare_argument(typ.converter, name, StringConstants.DOT_SYMBOL)
