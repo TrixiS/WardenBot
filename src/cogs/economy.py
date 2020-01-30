@@ -250,6 +250,26 @@ def custom_cooldown():
     return commands.check(predicate)
 
 
+class CommandConverter(commands.Converter):
+
+    __qualname__ = "Command"
+
+    def __init__(self, cls=commands.Command)
+        self.cls = cls
+
+    async def convert(self, ctx, arg):
+        command = self.bot.get_command(arg)
+
+        if command is None:
+            raise commands.BadArgument(ctx.lang["help"]["Command not found"])
+
+        if not isinstance(command, self.cls):
+            raise commadns.BadArgument(ctx.lang["errors"]["ivalid_command"].format(
+                self.cls.__qualname__))
+
+        return command
+
+
 class Economy(commands.Cog):
 
     def __init__(self, bot):
