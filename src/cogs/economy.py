@@ -188,8 +188,13 @@ class CustomCooldownBucket:
 
     def update(self, *, new_reset_seconds=None, new_max_uses=None):
         self.remaining_uses = new_max_uses or self.max_uses
-        self.max_uses = new_max_uses or self.max_uses
-        self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds or self.reset_seconds)
+        
+        if new_max_uses is not None:
+            self.max_uses = new_max_uses
+        
+        if new_reset_seconds is not None:
+            self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
+        
         self.reset_at = datetime.datetime.now() + self.reset_timedelta
 
     async def init(self):
@@ -697,6 +702,30 @@ class Economy(commands.Cog):
             inline=False)
 
         await ctx.send(embed=em)
+
+    @cooldown.command(name="reset")
+    @is_commander()
+    async def cooldown_reset(self, ctx, role_or_member: Optional[Union[discord.Role, discord.Member]], *, command: CommandConverter(EconomyGame)):
+        if not hasattr(command.callback, "custom_cooldown_buckets"):
+            return await ctx.answer(ctx.lang["economy"]["no_cooldown"].format(
+                command.qualified_name))
+
+        buckets = filter(
+            lambda b: b.guild == ctx.guild, 
+            command.callback.custom_cooldown_buckets)
+
+        if role_or_member is not None:
+            if isinstance(role_or_member, discord.Role):
+                buckets = filter(lambda b: role_or_member in b.user.roles, buckets)
+            else:
+                buckets = filter(lambda b: b.user == role_or_member, buckets)
+
+        for bucket in buckets:
+            bucket.update()
+
+        await ctx.answer(ctx.lang["economy"]["cooldown_reset"].format(
+            command.qualified_name, 
+            (role_or_member and role_or_member.mention) or ctx.lang["shared"]["all_members"]))
 
 
 def setup(bot):
