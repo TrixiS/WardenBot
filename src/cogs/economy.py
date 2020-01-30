@@ -180,13 +180,13 @@ class CustomCooldownBucket:
         self.user = ctx.author
         self.guild = ctx.guild
         self.command = ctx.command
-        self.semaphore = asyncio.Semaphore(1, loop=bot.loop)
+        self.semaphore = asyncio.Semaphore(1, loop=ctx.bot.loop)
         self.max_uses = None
         self.remaining_uses = None
         self.reset_timedelta = None
         self.reset_at = None
 
-    def update(new_reset_seconds, new_max_uses):
+    def update(self, new_reset_seconds, new_max_uses):
         self.remaining_uses = new_max_uses
         self.max_uses = new_max_uses
         self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
@@ -241,9 +241,9 @@ def custom_cooldown():
         if bucket is None:
             bucket = CustomCooldownBucket(ctx)
 
-            await new_bucket.init()
+            await bucket.init()
 
-            callback.custom_cooldown_buckets.append(new_bucket)
+            callback.custom_cooldown_buckets.append(bucket)
 
         return await bucket.use()
 
