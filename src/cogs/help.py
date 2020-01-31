@@ -52,14 +52,19 @@ class Help(commands.Cog):
         return prepared
 
     @commands.command(name="help")
-    async def help_command(self, ctx, *, command_or_module: str):
-        cog = self.bot.get_cog(command_or_module)
-
+    async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)
 
+        if command_or_module is None:
+            em.title = ctx.lang["help"]["modules"].format(self.bot.user.name)
+            em.description = markdown('\n'.join(self.bot.cogs.keys()), "```")
+            return await ctx.send(embed=em)
+            
         def qualified_names(to_inspect):
             for command in set(to_inspect.walk_commands()):
                 yield command.qualified_name
+
+        cog = self.bot.get_cog(command_or_module)
 
         if cog is not None:
             em.title = ctx.lang["help"]["cog_commands"].format(cog.__class__.__name__)
