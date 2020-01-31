@@ -8,7 +8,7 @@ from math import ceil
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants
-from .utils.converters import SafeUint, IndexConverter, Index, HumanTime, CommandConverter
+from .utils.converters import NotAuthor, SafeUint, IndexConverter, Index, HumanTime, CommandConverter
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 
@@ -229,7 +229,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(cls=EconomyCommand)
-    async def give(self, ctx, member: discord.Member, amount: SafeUint(include_zero=False)):
+    async def give(self, ctx, member: NotAuthor, amount: SafeUint(include_zero=False)):
         if member == ctx.author:
             return await ctx.answer(ctx.lang["errors"]["cant_use_to_yourself"])
         
