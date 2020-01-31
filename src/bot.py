@@ -21,7 +21,7 @@ class Warden(AutoShardedBot):
         self.config = kwargs.pop("config", Config())
         
         self.path = Path(__file__).parent.resolve().absolute()
-        self.assets_path = Path(self.config.assets_path).resolve().absolute()
+        self.assets_path = self.path.parent / "assets"
         
         self.session = ClientSession(loop=self.loop)
 
