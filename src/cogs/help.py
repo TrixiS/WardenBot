@@ -77,8 +77,7 @@ class Help(commands.Cog):
 
         em.add_field(
             name=ctx.lang["help"]["arguments"], 
-            value=markdown('\n'.join(arguments_expl), "```") 
-                if len(arguments_expl) else markdown(ctx.lang["shared"]["no"], "```"),
+            value=markdown('\n'.join(arguments_expl) or ctx.lang["shared"]["no"], "```"),
             inline=False)
 
         em.add_field(
