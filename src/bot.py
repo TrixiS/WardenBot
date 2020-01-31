@@ -19,16 +19,12 @@ class Warden(AutoShardedBot):
         super().__init__(*args, **kwargs)
 
         self.config = kwargs.pop("config", Config())
-        
         self.path = Path(__file__).parent.resolve().absolute()
         self.assets_path = self.path.parent / "assets"
-        
         self.session = ClientSession(loop=self.loop)
-
         self.db = DataBase(self.config.db_type, **self.config.database_settings)
-
         self.uptime = None
-        self.langs = {}
+        self.langs = None
 
     def load_langs(self):
         langs = {}
