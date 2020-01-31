@@ -4,10 +4,6 @@ from discord.ext import commands
 from asyncio import iscoroutinefunction as is_coro
 
 
-# TODO (#3):
-#   lang exception class
-#   change BadArgument(clx.lang...) to it
-
 class CommandConverter(commands.Converter):
 
     __qualname__ = "Command"
@@ -91,14 +87,22 @@ class HumanTime(commands.Converter):
             raise commands.BadArgument(ctx.lang["errors"]["time_convert_failed"])
 
 
-class EqualMember(commands.MemberConverter):
+class NotAuthor(commands.MemberConverter):
 
-    async def convert(self, ctx, arg):
-        member = await super().convert(ctx, arg)
+    async def convert(self, ctx, argument):
+        member = await super().convert(ctx, argument)
 
         if member == ctx.author:
             raise commands.BadArgument(ctx.lang["errors"]["cant_use_to_yourself"])
 
+        return member
+
+
+class EqualMember(NotAuthor):
+
+    async def convert(self, ctx, arg):
+        member = await super().convert(ctx, arg)
+        
         if ctx.author == ctx.guild.owner:
             return member
 
