@@ -18,7 +18,7 @@ class DbType(Enum):
     MySQL   = 1
 
 
-class Db:
+class DataBase:
     param_lit = '?'
     null = "NULL"
 
@@ -28,7 +28,8 @@ class Db:
     def __init__(self, db_type, **kwargs):
         if db_type is DbType.SQLite:
             database = kwargs.pop("database")
-            self.conn = sqlite3.connect(database)
+            check_same = kwargs.pop("check_same_thread", True)
+            self.conn = sqlite3.connect(database, check_same_thread=check_same)
         elif db_type is DbType.MySQL:
             self.conn = pymysql.connect(**kwargs)
         else:

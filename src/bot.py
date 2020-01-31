@@ -26,7 +26,7 @@ class Warden(AutoShardedBot):
         
         self.session = ClientSession(loop=self.loop)
 
-        self.db = Db(self.config.db_type, **self.config.to_dict("database", "host", "user", "password"))
+        self.db = Db(self.config.db_type, **self.config.database_settings)
 
         self.uptime = None
         self.langs = {}
