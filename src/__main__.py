@@ -1,8 +1,11 @@
 import logging
 
+from os import system
 from bot import Warden
 from cogs.utils.config import Config
 from cogs.utils.global_checks import *
+
+system("git pull")
 
 logging.basicConfig(level=logging.INFO, format=f"%(levelname)s: %(message)s - %(asctime)s")
 #logging.getLogger("asyncio").setLevel(logging.CRITICAL)
