@@ -1,19 +1,17 @@
 import discord
 import logging
-import datetime
-import asyncio
 
 from discord.ext import commands, tasks
 from enum import Enum
 from typing import Optional, Union
 from math import ceil
+
+from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants
-from .utils.converters import uint, IndexConverter, Index, HumanTime
+from .utils.converters import uint, IndexConverter, Index, HumanTime, CommandConverter
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 
-# TODO #3:
-#   add embed_message global check**
 
 class Account:
 
@@ -106,7 +104,7 @@ class EconomyGroup(EconomyCommand, commands.Group):
     pass
 
 
-class EconomyGame(EconomyCommand):
+class EconomyGame(EconomyCommand, CooldownCommand):
     pass
 
 
@@ -173,108 +171,6 @@ class IncomeValueConverter(SafeUint):
             value = await super().convert(ctx, arg)
 
         return IncomeValue(value, arg.endswith('%'))
-
-
-class CustomCooldownBucket:
-
-    def __init__(self, ctx):
-        self.bot = ctx.bot
-        self.user = ctx.author
-        self.guild = ctx.guild
-        self.command = ctx.command
-        self.semaphore = asyncio.Semaphore(1, loop=ctx.bot.loop)
-        self.max_uses = None
-        self.remaining_uses = None
-        self.reset_timedelta = None
-        self.reset_at = None
-
-    def update(self, *, new_reset_seconds=None, new_max_uses=None):
-        if new_max_uses is not None:
-            self.max_uses = new_max_uses
-            self.remaining_uses = new_max_uses
-        
-        if new_reset_seconds is not None:
-            self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
-        
-        self.reset_at = datetime.datetime.now() + self.reset_timedelta
-
-    async def init(self):
-        sql = """
-        SELECT `max_uses`, `reset_seconds`
-        FROM `cooldown`
-        WHERE `cooldown`.`server` = ? AND `cooldown`.`command` = ?
-        """
-
-        bucket_info = await self.bot.db.execute(sql, 
-            self.guild.id, self.command.qualified_name)
-
-        if bucket_info is not None:
-            max_uses, reset_seconds = bucket_info
-        else:
-            max_uses, reset_seconds = self.bot.config.default_cooldown
-
-        self.update(new_reset_seconds=reset_seconds, new_max_uses=max_uses)
-
-    async def use(self):
-        async with self.semaphore:
-            now = datetime.datetime.now()
-
-            result = False
-
-            if now >= self.reset_at:
-                self.remaining_uses = self.max_uses
-                self.reset_at = now + self.reset_timedelta
-
-            if self.remaining_uses > 0:
-                self.remaining_uses -= 1
-                result = True
-
-            return result
-
-# TODO: raise custom exception on cooldown fail
-# TODO: move "custom_cooldown_bucket" to EconomyConstants
-def custom_cooldown():
-
-    async def predicate(ctx):
-        callback = ctx.command.callback
-
-        if not hasattr(callback, "custom_cooldown_buckets"):
-            setattr(callback, "custom_cooldown_buckets", [])
-
-        bucket = discord.utils.find(
-            lambda b: b.guild == ctx.guild and b.user == ctx.author,
-            callback.custom_cooldown_buckets)
-
-        if bucket is None:
-            bucket = CustomCooldownBucket(ctx)
-
-            await bucket.init()
-
-            callback.custom_cooldown_buckets.append(bucket)
-
-        return await bucket.use()
-
-    return commands.check(predicate)
-
-
-class CommandConverter(commands.Converter):
-
-    __qualname__ = "Command"
-
-    def __init__(self, cls=commands.Command):
-        self.cls = cls
-
-    async def convert(self, ctx, arg):
-        command = ctx.bot.get_command(arg)
-
-        if command is None:
-            raise commands.BadArgument(ctx.lang["help"]["command_not_found"])
-
-        if not isinstance(command, self.cls):
-            raise commands.BadArgument(ctx.lang["errors"]["ivalid_command"].format(
-                self.cls.__qualname__))
-
-        return command
 
 
 class Economy(commands.Cog):
@@ -583,7 +479,6 @@ class Economy(commands.Cog):
             role_or_member.mention, str(value) if value.is_percentage 
                 else self.currency_fmt(ctx.currency, value.amount)))
 
-    # TODO #8: make auto-update though git-hashes
     @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
     async def income_remove(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
@@ -661,10 +556,7 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["cooldown_updated"].format(
             command.qualified_name))
 
-        if not hasattr(command.callback, "custom_cooldown_buckets"):
-            return
-
-        for bucket in command.callback.custom_cooldown_buckets:
+        for bucket in command.custom_cooldown_buckets:
             if bucket.guild == ctx.guild:
                 bucket.update(new_reset_seconds=interval, new_max_uses=max_uses)
 
@@ -700,13 +592,9 @@ class Economy(commands.Cog):
     @cooldown.command(name="reset")
     @is_commander()
     async def cooldown_reset(self, ctx, role_or_member: Optional[Union[discord.Role, discord.Member]], *, command: CommandConverter(EconomyGame)):
-        if not hasattr(command.callback, "custom_cooldown_buckets"):
-            return await ctx.answer(ctx.lang["economy"]["no_cooldown"].format(
-                command.qualified_name))
-
         buckets = filter(
             lambda b: b.guild == ctx.guild, 
-            command.callback.custom_cooldown_buckets)
+            command.custom_cooldown_buckets)
 
         if role_or_member is not None:
             if isinstance(role_or_member, discord.Role):

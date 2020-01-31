@@ -8,6 +8,26 @@ from asyncio import iscoroutinefunction as is_coro
 #   lang exception class
 #   change BadArgument(clx.lang...) to it
 
+class CommandConverter(commands.Converter):
+
+    __qualname__ = "Command"
+
+    def __init__(self, cls=commands.Command):
+        self.cls = cls
+
+    async def convert(self, ctx, arg):
+        command = ctx.bot.get_command(arg)
+
+        if command is None:
+            raise commands.BadArgument(ctx.lang["help"]["command_not_found"])
+
+        if not isinstance(command, self.cls):
+            raise commands.BadArgument(ctx.lang["errors"]["ivalid_command"].format(
+                self.cls.__qualname__))
+
+        return command
+        
+
 class uint(commands.Converter):
 
     __qualname__ = "uint"
