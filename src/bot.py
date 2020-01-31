@@ -22,7 +22,6 @@ class Warden(AutoShardedBot):
         
         self.path = Path(__file__).parent.resolve().absolute()
         self.assets_path = Path(self.config.assets_path).resolve().absolute()
-        self.cogs_path = Path(self.config.cogs_path).resolve().absolute()
         
         self.session = ClientSession(loop=self.loop)
 
@@ -49,7 +48,7 @@ class Warden(AutoShardedBot):
 
             return multi_replace(path[len(parent) + 1:-3], ['\\', '/'], '.')
 
-        for path in self.cogs_path.glob("*.py"):
+        for path in (self.path / "cogs").glob("*.py"):
             if not path.is_file():
                 continue
 
