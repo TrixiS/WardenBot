@@ -1,4 +1,4 @@
-from cogs.utils.db import Db
+from cogs.utils.db import DataBase
 from cogs.utils.config import Config
 from cogs.utils.strings import multi_replace
 
@@ -26,7 +26,7 @@ class Warden(AutoShardedBot):
         
         self.session = ClientSession(loop=self.loop)
 
-        self.db = Db(self.config.db_type, **self.config.database_settings)
+        self.db = DataBase(self.config.db_type, **self.config.database_settings)
 
         self.uptime = None
         self.langs = {}
