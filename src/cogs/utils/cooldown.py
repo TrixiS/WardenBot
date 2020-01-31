@@ -70,8 +70,7 @@ class CustomCooldownBucket:
 
             return result
 
-# TODO: raise custom exception on cooldown fail
-# TODO: move "custom_cooldown_bucket" to EconomyConstants
+
 def custom_cooldown():
 
     async def predicate(ctx):
@@ -88,7 +87,11 @@ def custom_cooldown():
 
             command.custom_cooldown_buckets.append(bucket)
 
-        return await bucket.use()
+        if not await bucket.use():
+            raise commands.CheckFailure(ctx.lang["errors"]["on_cooldown"].format(
+                bucket.reset_at.strftime(r"%d.%m.%y %H:%S")))
+        
+        return True
 
     return commands.check(predicate)
 
