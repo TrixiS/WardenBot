@@ -24,14 +24,11 @@ class ErrorHandler(commands.Cog):
         else:
             message = str(error)
 
-        em = discord.Embed(
-            #title=ctx.lang["error_handler"]["title"].format(ctx.command.qualified_name),
-            #description=markdown(message.capitalize(), "```"),
-            colour=ctx.color)
+        em = discord.Embed(colour=ctx.color)
 
         em.add_field(
             name=ctx.lang["error_handler"]["title"].format(ctx.command.qualified_name),
-            value=message.capitalize())
+            value=message)
 
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
 
