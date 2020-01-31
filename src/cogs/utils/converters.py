@@ -105,7 +105,7 @@ class EqualMember(NotAuthor):
 
         if member.top_role >= ctx.guild.me.top_role:
             raise commands.BadArgument(ctx.lang["errors"]["member_over_bot"].format(
-                ctx.bot.user.name, member.mention))
+                ctx.bot.user.mention, member.mention))
 
         if ctx.author == ctx.guild.owner:
             return member
