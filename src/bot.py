@@ -107,12 +107,6 @@ class Warden(AutoShardedBot):
         ctx.lang = await self.get_lang(message.guild)
         ctx.color = await self.get_color(message.guild)
 
-        from cogs.economy import EconomyCommand
-
-        if isinstance(ctx.command, EconomyCommand):
-            economy_cog = self.get_cog("Economy")
-            ctx.currency = await economy_cog.eco.get_currency(message.guild)
-
         await self.invoke(ctx)
 
     async def on_message(self, message):

@@ -98,7 +98,10 @@ class _Economy:
 
 
 class EconomyCommand(commands.Command):
-    pass
+    
+    async def prepare(self, ctx):
+        await super().prepare(ctx)
+        ctx.currency = await ctx.cog.eco.get_currency(ctx.guild)
 
 
 class EconomyGroup(EconomyCommand, commands.Group):
