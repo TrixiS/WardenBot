@@ -47,6 +47,15 @@ class uint(commands.Converter):
         return arg
 
 
+class SafeUint(uint):
+
+    __qualname__ = "uint"
+
+    async def convert(self, ctx, arg):
+        converted = await super().convert(ctx, arg)
+        return ctx.bot.db.make_safe_value(converted)
+
+
 class Index:
 
     def __init__(self, value: int):
