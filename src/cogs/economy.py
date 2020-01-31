@@ -12,10 +12,12 @@ from .utils.converters import uint, IndexConverter, Index, HumanTime
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 
+# TODO #3:
+#   add embed_message global check**
 
 class Account:
 
-    def __init__(self, bot, member, cash, bank, saved):
+    def __init__(self, bot, member, cash=None, bank=None, saved=False):
         self.bot = bot
         self.member = member
         self.cash = cash
@@ -187,10 +189,9 @@ class CustomCooldownBucket:
         self.reset_at = None
 
     def update(self, *, new_reset_seconds=None, new_max_uses=None):
-        self.remaining_uses = new_max_uses or self.max_uses
-        
         if new_max_uses is not None:
             self.max_uses = new_max_uses
+            self.remaining_uses = new_max_uses
         
         if new_reset_seconds is not None:
             self.reset_timedelta = datetime.timedelta(seconds=new_reset_seconds)
@@ -231,6 +232,7 @@ class CustomCooldownBucket:
             return result
 
 # TODO: raise custom exception on cooldown fail
+# TODO: move "custom_cooldown_bucket" to EconomyConstants
 def custom_cooldown():
 
     async def predicate(ctx):
@@ -389,15 +391,16 @@ class Economy(commands.Cog):
 
     @commands.command(name="delete-money")
     @is_commander()
-    async def delete_money(self, ctx, member: discord.Member):
+    async def delete_money(self, ctx, *, member: discord.Member):
         accept = await ctx.ask(ctx.lang["economy"]["really_delete?"].format(markdown(member.name, "**")),
             check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
 
         if accept is None or accept == ctx.lang["shared"]["no"].lower():
             return
 
-        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            ctx.guild.id, member.id, with_commit=True)
+        account = Account(self.bot, member)
+
+        await account.delete()
 
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
@@ -507,16 +510,7 @@ class Economy(commands.Cog):
             inline=False)
         
         await ctx.send(embed=em)
-    # TODO #1: maybe add ctx.confirm method
-    # TODO #2:
-    #   make CustomCooldown(commands.CooldownMapping)
-    #   if cc.time = None then get it from the db
-    #   cooldown set commands -> get bucket -> set data
-    #   decorator |
-    #   func._custom_cooldown = CustomCooldown(*args, **kwargs)
-    #   check CustomCooldown from C# project
-    # TODO #3:
-    #   add embed_message global check**
+
     @commands.command(name="economy-reset")
     @has_permissions(administrator=True)
     async def economy_reset(self, ctx):
