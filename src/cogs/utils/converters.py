@@ -34,11 +34,11 @@ class uint(commands.Converter):
     async def convert(self, ctx, arg):
         arg = int(arg)
 
+        if arg <= 0 and not self.include_zero:
+            raise commands.BadArgument(ctx.lang["errors"]["arg_over_zero"])
+
         if arg < 0:
             raise commands.BadArgument(ctx.lang["errors"]["arg_over_or_equal_zero"])
-
-        if arg == 0 and not self.include_zero:
-            raise commands.BadArgument(ctx.lang["errors"]["arg_over_zero"])
 
         return arg
 
