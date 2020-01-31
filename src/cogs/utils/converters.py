@@ -103,7 +103,7 @@ class EqualMember(NotAuthor):
     async def convert(self, ctx, arg):
         member = await super().convert(ctx, arg)
 
-        if member.top_role >= ctx.bot.top_role:
+        if member.top_role >= ctx.guild.me.top_role:
             raise commands.BadArgument(ctx.lang["errors"]["member_over_bot"].format(
                 ctx.bot.user.name, member.mention))
 
