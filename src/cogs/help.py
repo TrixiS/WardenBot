@@ -19,7 +19,7 @@ class Help(commands.Cog):
         def prepare_name(name):
             return ' '.join(name.split('_')).capitalize()
 
-        def prepare_argument(typ, name: str, prefix: str) -> str:
+        def prepare_argument(typ: type, name: str, prefix: str) -> str:
             return f"{prefix} {prepare_name(name)} -> {prepare_type(typ)}"
 
         prepared = []
@@ -30,13 +30,18 @@ class Help(commands.Cog):
             if true_type == type(Union):
                 if type(None) not in typ.__args__:
                     args = typ.__args__
+                    prefix = StringConstants.DOT_SYMBOL
                 else:
                     args = typ.__args__[:-1]
+                    prefix = '*'
 
-                prepared.append(
-                    f"{StringConstants.DOT_SYMBOL} {prepare_name(name)} -> " + human_choice(
-                        tuple(map(lambda x: x.__qualname__, args)), 
-                        second_sep=ctx.lang["shared"]["or"]))
+                if len(args) > 1:
+                    prepared.append(
+                        f"{prefix} {prepare_name(name)} -> " + human_choice(
+                            tuple(map(lambda x: x.__qualname__, args)), 
+                            second_sep=ctx.lang["shared"]["or"]))
+                else:
+                    prepared.append(prepare_argument(args[0], name, prefix))
             elif isinstance(typ, type(commands.Greedy)):
                 converted = prepare_argument(typ.converter, name, StringConstants.DOT_SYMBOL)
                 prepared.append(converted + "[]")
