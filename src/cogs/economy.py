@@ -203,6 +203,7 @@ class Economy(commands.Cog):
         account.bank += amount
 
         await account.save()
+    
         await ctx.answer(ctx.lang["economy"]["deposited"].format(
             self.currency_fmt(ctx.currency, amount)))
 
@@ -220,6 +221,7 @@ class Economy(commands.Cog):
         account.cash += amount
 
         await account.save()
+
         await ctx.answer(ctx.lang["economy"]["withdrew"].format(
             self.currency_fmt(ctx.currency, amount)))
 
@@ -240,6 +242,7 @@ class Economy(commands.Cog):
 
         await author_account.save()
         await member_account.save()
+
         await ctx.answer(ctx.lang["economy"]["add_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), MoneyType.cash.name))
 
@@ -254,6 +257,7 @@ class Economy(commands.Cog):
             account.cash += amount
 
         await account.save()
+
         await ctx.answer(ctx.lang["economy"]["add_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
@@ -268,6 +272,7 @@ class Economy(commands.Cog):
             account.cash -= amount
 
         await account.save()
+
         await ctx.answer(ctx.lang["economy"]["remove_money"].format(
             member.mention, self.currency_fmt(ctx.currency, amount), money_type.name))
 
