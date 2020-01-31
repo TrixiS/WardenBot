@@ -64,7 +64,7 @@ class Help(commands.Cog):
         if cog is not None:
             em.title = ctx.lang["help"]["cog_commands"].format(cog.__class__.__name__)
             em.description = markdown(
-                '\n'.join(qualified_names(cog)), "```")
+                '\n'.join(qualified_names(cog)) or ctx.lang["shared"]["no"], "```")
             
             return await ctx.send(embed=em)
 
