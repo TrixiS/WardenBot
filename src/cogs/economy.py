@@ -11,6 +11,7 @@ from .utils.constants import EconomyConstants, StringConstants
 from .utils.converters import NotAuthor, SafeUint, IndexConverter, Index, HumanTime, CommandConverter
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
+from .utils.models import PseudoMember
 
 
 class Account:
@@ -128,15 +129,6 @@ class MoneyTypeConverter(commands.Converter):
             return MoneyType.bank
 
         raise commands.BadArgument(ctx.lang["economy"]["incorrect_money_type"])
-
-
-class PseudoMember:
-
-    __slots__ = ("id", "guild")
-
-    def __init__(self, id, guild):
-        self.id = id
-        self.guild = guild
 
 
 class IncomeValue:
