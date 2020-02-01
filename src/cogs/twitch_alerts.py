@@ -58,6 +58,7 @@ class TwitchAlerts(commands.Cog):
         self.bot = bot
         self.client = TwitchClient(client_id=bot.config.twitch_client_id)
         self.alerts = Alerts(bot)
+        self.latest_iter_time = self.utc_now()
         self.base_url = "https://twitch.tv/"
 
         self.anonse.start()
@@ -67,6 +68,9 @@ class TwitchAlerts(commands.Cog):
 
     def embed_url(self, user):
         return f"[{user['display_name']}]({self.base_url}{user['name']})"
+
+    def utc_now(self):
+        return datetime.datetime.utcnow().astimezone(pytz.utc)
 
     async def send_alert(self, data, stream):
         lang, color, channel = data
@@ -89,12 +93,10 @@ class TwitchAlerts(commands.Cog):
         check = await self.bot.db.execute("SELECT `user_id` FROM `twitch` GROUP BY `user_id` HAVING COUNT(*) >= 1",
             fetch_all=True)
         
-        subscriptions = []
+        if check is None or len(check) == 0:
+            return
 
-        # TODO: 
-        #   maybe do it with `seen` option
-        #   because of its possible slowness
-        now = (datetime.datetime.utcnow() - datetime.timedelta(seconds=52)).astimezone(pytz.utc)
+        subscriptions = []
 
         for row in check:
             stream = self.client.streams.get_stream_by_user(row[0])
@@ -104,7 +106,7 @@ class TwitchAlerts(commands.Cog):
 
             created = stream["created_at"].astimezone(pytz.utc)
 
-            if now > created:
+            if self.latest_iter_time > created:
                 continue
 
             subscribed_guilds = await self.alerts.get_subscribed_guilds(row[0])
@@ -125,7 +127,7 @@ class TwitchAlerts(commands.Cog):
     async def anonse(self):
         subscriptions = await self.get_subscriptions()
 
-        if len(subscriptions) == 0:
+        if subscriptions is None or len(subscriptions) == 0:
             return
 
         guild_data = {}
@@ -144,6 +146,8 @@ class TwitchAlerts(commands.Cog):
             for guild in guilds:
                 if guild in guild_data:
                     await self.send_alert(guild_data[guild], stream)
+
+        self.latest_iter_time = self.utc_now()
 
     @anonse.before_loop
     async def anonse_before(self):
