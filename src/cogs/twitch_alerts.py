@@ -9,6 +9,9 @@ from twitch import TwitchClient
 from typing import Optional
 from .utils.checks import is_commander
 
+# TODO:
+#   make request optimizing
+#   100 users per request
 
 class Alerts:
 
@@ -60,7 +63,7 @@ class TwitchAlerts(commands.Cog):
         self.anonse.start()
 
     def cog_unload(self):
-        self.anonse.cancel()
+        self.anonse.stop()
 
     def embed_url(self, user):
         return f"[{user['display_name']}]({self.base_url}{user['name']})"
@@ -88,16 +91,21 @@ class TwitchAlerts(commands.Cog):
         
         subscriptions = []
 
+        # TODO: 
+        #   maybe do it with `seen` option
+        #   because of its possible slowness
+        now = (datetime.datetime.utcnow() - datetime.timedelta(seconds=52)).astimezone(pytz.utc)
+
         for row in check:
             stream = self.client.streams.get_stream_by_user(row[0])
 
             if stream is None or len(stream) == 0:
                 continue
 
-            future_created = stream["created_at"] + datetime.timedelta(minutes=1)
-            future_created.astimezone(pytz.utc)
+            created = stream["created_at"].astimezone(pytz.utc)
 
-            if future_created < datetime.datetime.utcnow():
+            if now > created:
+                logging.info(f"Skipped - {stream['channel']['name']} -> {str(created)} {str(now)}")
                 continue
 
             subscribed_guilds = await self.alerts.get_subscribed_guilds(row[0])
