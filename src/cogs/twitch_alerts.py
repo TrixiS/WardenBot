@@ -105,7 +105,6 @@ class TwitchAlerts(commands.Cog):
             created = stream["created_at"].astimezone(pytz.utc)
 
             if now > created:
-                logging.info(f"Skipped - {stream['channel']['name']} -> {str(created)} {str(now)}")
                 continue
 
             subscribed_guilds = await self.alerts.get_subscribed_guilds(row[0])
