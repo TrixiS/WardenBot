@@ -54,6 +54,9 @@ class SafeUint(uint):
 
 class Index:
 
+    __slots__ = ("value")
+    __qualname__ = "uint"
+
     def __init__(self, value: int):
         self.value = value
 
