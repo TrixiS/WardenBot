@@ -38,3 +38,8 @@ class EconomyConstants:
 
     DEFAULT_SYMBOL = ':dollar:'
     USER_PER_PAGE = 10
+
+
+class TwitchAlertsConstants:
+
+    USER_PER_PAGE = 30
