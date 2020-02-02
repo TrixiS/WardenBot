@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from enum import Enum
 
+from .utils.constants import EmbedConstants
+
 
 class RextesterPLs(Enum):
 
@@ -69,6 +71,27 @@ class Fun(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.rextester_api_url = "https://rextester.com/rundotnet/api"
+
+    @commands.group(invoke_without_command=True)
+    async def rextester(self, ctx, prog_lang: RextesterPLConverter, *, code: str):
+        code = code.strip("`\n ")
+
+        req_data = {
+            "LanguageChoice": str(prog_lang.value),
+            "Program": code,
+            "Input": "",
+            "CompilerArgs": f"source_file.{prog_lang.name.lower()} -o a.out"
+        }
+
+        async with self.bot.session.post(self.rextester_api_url, data=req_data) as req:
+            data = await req.json()
+
+        if data["Errors"] is not None and len(data["Errors"]):
+            await ctx.answer(data["Errors"][:EmbedConstants.DESC_MAX_LEN])
+        elif data["Result"] is not None and len(data["Result"]):
+            await ctx.answer(data["Result"][:EmbedConstants.DESC_MAX_LEN])
+        else:
+            await ctx.answer(ctx.lang["fun"]["no_result"])
 
 
 def setup(bot):
