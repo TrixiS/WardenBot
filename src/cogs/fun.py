@@ -77,6 +77,7 @@ class Fun(commands.Cog):
     #   use Optional[code] then read code from a file
     #   file maxsize idk*
     @commands.group(invoke_without_command=True)
+    @commands.cooldown(5, 1, type=commands.BucketType.user)
     async def rextester(self, ctx, prog_lang: RextesterPLConverter, *, code: str):
         code = code.strip("`\n ")
 
@@ -98,6 +99,7 @@ class Fun(commands.Cog):
             await ctx.answer(ctx.lang["fun"]["no_result"])
 
     @rextester.command(name="langs")
+    @commands.cooldown(5, 1, type=commands.BucketType.user)
     async def rextester_langs(self, ctx):
         lang_info = map(lambda x: x[0], RextesterPLs.__members__.items())
         await ctx.answer(markdown(', '.join(lang_info), "```"))
