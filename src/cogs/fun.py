@@ -16,7 +16,7 @@ class RextesterPLs(Enum):
     Python = 5
     C = 6
     CPP = 7
-    Php = 8
+    PHP = 8
     Pascal = 9
     ObjectiveC = 10
     Haskell = 11
