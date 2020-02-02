@@ -106,10 +106,7 @@ class TwitchAlerts(commands.Cog):
                 stream.started_at, r"%Y-%m-%dT%H:%M:%S%z").astimezone(pytz.utc)
 
             if self.latest_iter_time > stream_started:
-                logging.info(f"Skip -> {user.display_name} {str(stream_started)} | {str(self.latest_iter_time)}")
                 continue
-            else:
-                logging.info(f"Queue -> {user.display_name} {str(stream_started)} | {str(self.latest_iter_time)}")
 
             subscribed_guilds = await self.alerts.get_subscribed_guilds(
                 int(stream.user_id))
@@ -137,7 +134,7 @@ class TwitchAlerts(commands.Cog):
         all_guilds = set()
 
         for row in subscriptions:
-            all_guilds.update(row[1])
+            all_guilds.update(row[2])
 
         for guild in all_guilds:
             data = await self.get_guild_data(guild)
