@@ -30,12 +30,12 @@ class RextesterPLs(Enum):
     Go = 20
     Scala = 21
     Scheme = 22
-    Nodejs = 23
+    NodeJS = 23
     Python3 = 24
     Octave = 25
     D = 30
     R = 31
-    Tcl = 32
+    TCL = 32
     MySQL = 33
     PostgreSQL = 34
     Oracle = 35
