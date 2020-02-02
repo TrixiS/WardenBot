@@ -99,10 +99,7 @@ class Fun(commands.Cog):
 
     @rextester.command(name="langs")
     async def rextester_langs(self, ctx):
-        lang_info = tuple(map(
-            lambda x: x[0], 
-            RextesterPLs.__members__.items()))
-        
+        lang_info = map(lambda x: x[0], RextesterPLs.__members__.items())
         await ctx.answer(markdown(', '.join(lang_info), "```"))
 
 
