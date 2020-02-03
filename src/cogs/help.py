@@ -51,6 +51,14 @@ class Help(commands.Cog):
 
         return prepared
 
+    def qualified_names(self, to_inspect):
+        for command in set(to_inspect.walk_commands()):
+            yield command.qualified_name
+
+    # TODO:
+    # fix _GenericAlias
+    # typ.__origin__
+    # __origin__._name
     @commands.command(name="help")
     async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)
@@ -60,16 +68,12 @@ class Help(commands.Cog):
             em.description = markdown('\n'.join(self.bot.cogs.keys()), "```")
             return await ctx.send(embed=em)
             
-        def qualified_names(to_inspect):
-            for command in set(to_inspect.walk_commands()):
-                yield command.qualified_name
-
         cog = self.bot.get_cog(command_or_module)
 
         if cog is not None:
             em.title = ctx.lang["help"]["cog_commands"].format(cog.__class__.__name__)
             em.description = markdown(
-                '\n'.join(qualified_names(cog)) or ctx.lang["shared"]["no"], "```")
+                '\n'.join(self.qualified_names(cog)) or ctx.lang["shared"]["no"], "```")
             
             return await ctx.send(embed=em)
 
@@ -88,7 +92,7 @@ class Help(commands.Cog):
         em.add_field(
             name=ctx.lang["help"]["subcommands"],
             value=markdown(
-                '\n'.join(qualified_names(command)) 
+                '\n'.join(self.qualified_names(command)) 
                 if isinstance(command, commands.Group) else ctx.lang["shared"]["no"], 
                 "```"),
             inline=False)
