@@ -2,8 +2,9 @@ import discord
 
 from discord.ext import commands
 from enum import Enum
+from typing import Optional
 
-from .utils.constants import EmbedConstants
+from .utils.constants import EmbedConstants, FunConstants
 from .utils.strings import markdown
 
 
@@ -73,12 +74,22 @@ class Fun(commands.Cog):
         self.bot = bot
         self.rextester_api_url = "https://rextester.com/rundotnet/api"
 
-    # TODO:
-    #   use Optional[code] then read code from a file
-    #   file maxsize idk*
-    @commands.group(invoke_without_command=True)
+    @commands.group(aliases=["rex"], invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.user)
-    async def rextester(self, ctx, prog_lang: RextesterPLConverter, *, code: str):
+    async def rextester(self, ctx, prog_lang: RextesterPLConverter, *, code: Optional[str]):
+        right_attachment = discord.utils.find(
+            lambda a: a.size <= FunConstants.ATTACH_MAX_SIZE,
+            ctx.message.attachments)
+        
+        if code is None and right_attachment is None:
+            return await ctx.answer(ctx.lang["fun"]["need_code"])
+        elif right_attachment is not None:
+            try:
+                code = (await right_attachment.read()).decode("utf-8")
+            except:
+                return await ctx.answer(ctx.lang["fun"]["invalid_attachment"].format(
+                    FunConstants.ATTACH_MAX_SIZE / 1000000))
+        
         code = code.strip("`\n ")
 
         req_data = {
@@ -99,7 +110,6 @@ class Fun(commands.Cog):
             await ctx.answer(ctx.lang["fun"]["no_result"])
 
     @rextester.command(name="langs")
-    @commands.cooldown(1, 5, type=commands.BucketType.user)
     async def rextester_langs(self, ctx):
         lang_info = map(lambda x: x[0], RextesterPLs.__members__.items())
         await ctx.answer(markdown(', '.join(lang_info), "```"))

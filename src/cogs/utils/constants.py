@@ -43,3 +43,8 @@ class EconomyConstants:
 class TwitchAlertsConstants:
 
     USER_PER_PAGE = 30
+
+
+class FunConstants:
+
+    ATTACH_MAX_SIZE = 1000000
