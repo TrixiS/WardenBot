@@ -7,6 +7,8 @@ from typing import Optional
 from .utils.constants import EmbedConstants, FunConstants
 from .utils.strings import markdown
 
+# TODO:
+#   choose command
 
 class RextesterPLs(Enum):
 
@@ -56,7 +58,7 @@ class RextesterPLConverter(commands.Converter):
     __qualname__ = "Programming language"
 
     async def convert(self, ctx, arg):
-        arg = arg.lower()
+        arg = arg.lower().replace('#', 'sharp').replace('++', 'pp')
 
         lang = discord.utils.find(
             lambda x: x[0].lower() == arg, 
@@ -81,15 +83,15 @@ class Fun(commands.Cog):
             lambda a: a.size <= FunConstants.ATTACH_MAX_SIZE,
             ctx.message.attachments)
         
-        if code is None and right_attachment is None:
-            return await ctx.answer(ctx.lang["fun"]["need_code"])
-        elif right_attachment is not None:
+        if code is None and right_attachment is not None:
             try:
                 code = (await right_attachment.read()).decode("utf-8")
             except:
                 return await ctx.answer(ctx.lang["fun"]["invalid_attachment"].format(
                     FunConstants.ATTACH_MAX_SIZE / 1000000))
-        
+        elif code is None:
+            return await ctx.answer(ctx.lang["fun"]["need_code"])    
+
         code = code.strip("`\n ")
 
         req_data = {
