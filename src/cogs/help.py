@@ -25,9 +25,7 @@ class Help(commands.Cog):
         prepared = []
 
         for name, typ in arugments:
-            true_type = type(typ)
-
-            if true_type == type(Union):
+            if hasattr(typ, "__origin__") and typ.__origin__._name == "Union":
                 if type(None) not in typ.__args__:
                     args = typ.__args__
                     prefix = StringConstants.DOT_SYMBOL
@@ -55,10 +53,6 @@ class Help(commands.Cog):
         for command in set(to_inspect.walk_commands()):
             yield command.qualified_name
 
-    # TODO:
-    # fix _GenericAlias
-    # typ.__origin__
-    # __origin__._name
     @commands.command(name="help")
     async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)
