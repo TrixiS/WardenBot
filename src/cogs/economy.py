@@ -90,7 +90,7 @@ class _Economy:
         account = await self.get_money(member)
 
         if income_value.is_percentage:
-            account.bank += account.bank * (income_value.amount / 100)
+            account.bank += ceil(account.bank * (income_value.amount / 100))
         else:
             account.bank += income_value.amount
 
@@ -354,7 +354,7 @@ class Economy(commands.Cog):
                 place += 1
 
             description.append("**{}**. {} {} {}".format(
-                place, member.mention if member else ctx.lang["shared"]["left_member"],
+                place, (member and member.mention) or ctx.lang["shared"]["left_member"],
                 StringConstants.DOT_SYMBOL, self.currency_fmt(ctx.currency, money_sum)))
 
         em = discord.Embed(
