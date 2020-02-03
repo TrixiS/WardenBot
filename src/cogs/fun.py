@@ -80,7 +80,7 @@ class Fun(commands.Cog):
     @commands.cooldown(1, 5, type=commands.BucketType.user)
     async def rextester(self, ctx, prog_lang: RextesterPLConverter, *, code: Optional[str]):
         right_attachment = discord.utils.find(
-            lambda a: a.size <= FunConstants.ATTACH_MAX_SIZE,
+            lambda a: 0 < a.size <= FunConstants.ATTACH_MAX_SIZE,
             ctx.message.attachments)
         
         if code is None and right_attachment is not None:
@@ -92,11 +92,9 @@ class Fun(commands.Cog):
         elif code is None:
             return await ctx.answer(ctx.lang["fun"]["need_code"])    
 
-        code = code.strip("`\n ")
-
         req_data = {
             "LanguageChoice": str(prog_lang.value),
-            "Program": code,
+            "Program": code.strip("`\n "),
             "Input": "",
             "CompilerArgs": f"source_file.{prog_lang.name.lower()} -o a.out"
         }
