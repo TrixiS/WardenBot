@@ -62,7 +62,46 @@ class _Economy:
         else:
             cash, bank = money
 
-        return Account(self.bot, member, cash, bank, money is not None)
+        account = Account(self.bot, member, cash, bank, money is not None)
+        await self.get_income(account)
+        
+        return account
+
+    async def get_income(self, account):
+        select_sql = """
+        SELECT `income`.`value`, `is_percentage` 
+            (UNIX_TIMESTAMP() - `income`.`seen`) / `income`.`interval`
+        FROM `income`
+        WHERE `income`.`server` = ? AND `income`.`member` = ?
+            AND `income`.`seen` + `income`.`interval` >= UNIX_TIMESTAMP()
+        """
+
+        income = await self.bot.db.execute(
+            select_sql, 
+            account.member.guild.id, 
+            account.member.id)
+
+        if income is None:
+            return 0
+
+        update_sql = """
+        UPDATE `income`
+        SET `seen` = UNIX_TIMESTAMP()
+        WHERE `income`.`server` = ? AND `income`.`member` = ?
+        """
+
+        await self.bot.db.execute(
+            update_sql,
+            account.member.guild.id,
+            account.member.id,
+            with_commit=True)
+
+        amount, is_percentage, ticks = income
+
+        if is_percentage:
+            account.bank += ceil(account.bank * (amount / 100)) * ticks
+        else:
+            account.bank += amount * ticks
 
     async def get_place(self, member):
         all_accounts = await self.bot.db.execute("SELECT `member` FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 ORDER BY `money`.`cash` + `money`.`bank` DESC",
@@ -85,16 +124,6 @@ class _Economy:
             return EconomyConstants.DEFAULT_SYMBOL
 
         return str(emoji)
-
-    async def give_income(self, member, income_value):
-        account = await self.get_money(member)
-
-        if income_value.is_percentage:
-            account.bank += ceil(account.bank * (income_value.amount / 100))
-        else:
-            account.bank += income_value.amount
-
-        await account.save()
 
 
 class EconomyCommand(commands.Command):
@@ -483,44 +512,49 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 role_or_member.mention))
 
-    @tasks.loop(minutes=1)
-    async def income_giveout(self):
-        select_sql = """
-        SELECT `server`, `model`, `value`, `is_percentage`
-        FROM `income`
-        WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
-        """
+    # TODO:
+    #   data executemany optimizing
+    #   make income without loop
+    #   just get in on balance check
+    #   time() - seen / interval
+    # @tasks.loop(minutes=1)
+    # async def income_giveout(self):
+    #     select_sql = """
+    #     SELECT `server`, `model`, `value`, `is_percentage`
+    #     FROM `income`
+    #     WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
+    #     """
 
-        update_sql = """
-        UPDATE `income`
-        SET `seen` = UNIX_TIMESTAMP()
-        WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
-        """
+    #     update_sql = """
+    #     UPDATE `income`
+    #     SET `seen` = UNIX_TIMESTAMP()
+    #     WHERE `income`.`is_role` = ? AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
+    #     """
 
-        income_members = await self.bot.db.execute(select_sql, 0, fetch_all=True)
+    #     income_members = await self.bot.db.execute(select_sql, 0, fetch_all=True)
 
-        for guild_id, member_id, amount, is_percentage in income_members:
-            member = self.bot.get_member(guild_id, member_id)
+    #     for guild_id, member_id, amount, is_percentage in income_members:
+    #         member = self.bot.get_member(guild_id, member_id)
 
-            if member is not None:
-                await self.eco.give_income(member, IncomeValue(amount, is_percentage))
+    #         if member is not None:
+    #             await self.eco.give_income(member, IncomeValue(amount, is_percentage))
 
-        await self.bot.db.execute(update_sql, 0, with_commit=True)
+    #     await self.bot.db.execute(update_sql, 0, with_commit=True)
 
-        income_roles = await self.bot.db.execute(select_sql, 1, fetch_all=True)
+    #     income_roles = await self.bot.db.execute(select_sql, 1, fetch_all=True)
 
-        for guild_id, role_id, amount, is_percentage in income_roles:
-            role = self.bot.get_role(guild_id, role_id)
+    #     for guild_id, role_id, amount, is_percentage in income_roles:
+    #         role = self.bot.get_role(guild_id, role_id)
             
-            if role is None or len(role.members) == 0:
-                continue
+    #         if role is None or len(role.members) == 0:
+    #             continue
 
-            income_value = IncomeValue(amount, is_percentage)
+    #         income_value = IncomeValue(amount, is_percentage)
 
-            for member in role.members:
-                await self.eco.give_income(member, income_value)
+    #         for member in role.members:
+    #             await self.eco.give_income(member, income_value)
 
-        await self.bot.db.execute(update_sql, 1, with_commit=True)
+    #     await self.bot.db.execute(update_sql, 1, with_commit=True)
 
     @income_giveout.before_loop
     async def income_giveout_before(self):
