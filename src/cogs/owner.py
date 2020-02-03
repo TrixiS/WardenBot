@@ -1,8 +1,9 @@
 import discord
 import ast
 
+from discord.ext import commands
+
 from .utils.checks import is_owner
-from discord.ext.commands import command, Cog
 
 
 def insert_returns(body):
@@ -16,12 +17,12 @@ def insert_returns(body):
 		insert_returns(body[-1].body)
 
 
-class Owner(Cog, command_attrs=dict(hidden=True)):
+class Owner(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
 
-    @command(name="load")
+    @commands.command(name="load")
     @is_owner()
     async def load_cog(self, ctx, *, cog: str):
         try:
@@ -30,7 +31,7 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.answer(f"{type(e).__name__}\n{e}")
 
-    @command(name="unload")
+    @commands.command(name="unload")
     @is_owner()
     async def unload_cog(self, ctx, *, cog: str):
         try:
@@ -39,7 +40,7 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.answer(f"{type(e).__name__}\n{e}")
 
-    @command(name="reload")
+    @commands.command(name="reload")
     @is_owner()
     async def reload_cog(self, ctx, *, cog: str):
         try:
@@ -48,7 +49,7 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.answer(f"{type(e).__name__}\n{str(e)}")
 
-    @command(name="eval")
+    @commands.command(name="eval")
     @is_owner()
     async def eval(self, ctx, *, code: str):
         fn_name = "_eval_expr"
@@ -81,7 +82,7 @@ class Owner(Cog, command_attrs=dict(hidden=True)):
         except Exception as e:
             await ctx.answer(fmt.format(f"{type(e).__name__}: {str(e)}"))
 
-    @command()
+    @commands.command()
     @is_owner()
     async def kill(self, ctx):
         await self.bot.session.close()
