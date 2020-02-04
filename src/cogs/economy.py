@@ -12,6 +12,7 @@ from .utils.converters import NotAuthor, SafeUint, IndexConverter, Index, HumanT
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 from .utils.models import PseudoMember
+from .utils.db import DbType
 
 
 class Account:
@@ -353,11 +354,20 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["lb", "board", "top"], cls=EconomyCommand)
     async def leaderboard(self, ctx, page: Optional[IndexConverter]=Index(0)):
-        sql = """
+        sqlite_where = """
+        WHERE `money`.`server` = ? AND `money_sum` > 0
+        """
+
+        mysql_where = """
+        WHERE `money`.`server` = ?
+        HAVING `money_sum` > 0
+        """
+        
+        sql = f"""
         SELECT `member`, `money`.`cash` + `money`.`bank` AS `money_sum`
         FROM `money`
-        WHERE `money`.`server` = ? AND `money_sum` > 0
-        ORDER BY `money_sum` DESC
+        {sqlite_where if self.bot.db.db_type == DbType.SQLite else mysql_where}
+        ORDER BY `money_sum` DESC 
         LIMIT ? OFFSET ?
         """
 
@@ -507,7 +517,7 @@ class Economy(commands.Cog):
     @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
     async def income_remove(self, ctx, *, member: discord.Member):
-        check = await self.bot.db.execute("DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
+        check = await self.bot.db.execute("DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`member` = ?",
             ctx.guild.id, member.id, with_commit=True)
 
         if check:
