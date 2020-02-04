@@ -231,7 +231,7 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def cases(self, ctx, member: Optional[discord.Member]=None, page: IndexConverter=Index(0)):
+    async def cases(self, ctx, member: Optional[discord.Member]=None, page: Optional[IndexConverter]=Index(0)):
         if member is not None:
             cases = await self.bot.db.execute("SELECT `id`, `author`, `type` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? LIMIT ? OFFSET ?",
                 ctx.guild.id, member.id, ModerationConstants.CASES_PER_PAGE, 
