@@ -69,11 +69,11 @@ class _Economy:
 
     async def get_income(self, account):
         select_sql = """
-        SELECT `income`.`value`, `is_percentage` 
+        SELECT `income`.`amount`, `is_percentage`,
             (UNIX_TIMESTAMP() - `income`.`seen`) / `income`.`interval`
         FROM `income`
         WHERE `income`.`server` = ? AND `income`.`member` = ?
-            AND `income`.`seen` + `income`.`interval` >= UNIX_TIMESTAMP()
+            AND `income`.`seen` + `income`.`interval` <= UNIX_TIMESTAMP()
         """
 
         income = await self.bot.db.execute(
@@ -81,8 +81,10 @@ class _Economy:
             account.member.guild.id, 
             account.member.id)
 
+        logging.info(str(income))
+
         if income is None:
-            return 0
+            return
 
         update_sql = """
         UPDATE `income`
@@ -102,6 +104,8 @@ class _Economy:
             account.bank += ceil(account.bank * (amount / 100)) * ticks
         else:
             account.bank += amount * ticks
+
+        await account.save()
 
     async def get_place(self, member):
         all_accounts = await self.bot.db.execute("SELECT `member` FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 ORDER BY `money`.`cash` + `money`.`bank` DESC",
@@ -185,7 +189,7 @@ class IncomeValueConverter(SafeUint):
         else:
             value = await super().convert(ctx, arg)
 
-        return IncomeValue(value, arg.endswith('%'))
+        return IncomeValue(ctx.bot.db.make_safe_value(value), arg.endswith('%'))
 
 
 class Economy(commands.Cog):
@@ -193,11 +197,6 @@ class Economy(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.eco = _Economy(bot)
-
-        self.income_giveout.start()
-
-    def cog_unload(self):
-        self.income_giveout.cancel()
 
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
@@ -448,18 +447,23 @@ class Economy(commands.Cog):
     #   use executemany here for roles' members
     @commands.group(cls=EconomyGroup, invoke_without_command=True)
     @is_commander()
-    async def income(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
-        check = await self.bot.db.execute("SELECT `is_percentage`, `value`, `interval` FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
-            ctx.guild.id, role_or_member.id)
+    async def income(self, ctx, *, member: discord.Member):
+        sql = """
+        SELECT `amount`, `is_percentage`, `interval`
+        FROM `income` 
+        WHERE `income`.`server` = ? AND `income`.`member` = ?
+        """
+
+        check = await self.bot.db.execute(sql, ctx.guild.id, member.id)
 
         if check is None:
             return await ctx.answer(ctx.lang["economy"]["no_income"].format(
-                role_or_member.mention))
+                member.mention))
 
-        value = IncomeValue(check[1], check[0])
+        value = IncomeValue(check[0], check[1])
 
         em = discord.Embed(
-            title=ctx.lang["economy"]["income_title"].format(role_or_member.name),
+            title=ctx.lang["economy"]["income_title"].format(member.name),
             colour=ctx.color)
         
         em.set_thumbnail(url=ctx.guild.icon_url)
@@ -479,43 +483,42 @@ class Economy(commands.Cog):
 
     @income.command(aliases=["add"], name="set", cls=EconomyCommand)
     @is_commander()
-    async def income_set(self, ctx, role_or_member: Union[discord.Role, discord.Member], value: IncomeValueConverter, interval: HumanTime):
+    async def income_set(self, ctx, member: discord.Member, value: IncomeValueConverter, interval: HumanTime):
         sql = """
-        UPDATE `income` 
-        SET `value` = ?, `is_percentage` = ?, `interval` = ?, `seen` = UNIX_TIMESTAMP()
-        WHERE `income`.`server` = ? AND `income`.`model` = ?
+        UPDATE `income`
+        SET `amount` = ?, `interval` = ?, `is_percentage` = ?, `seen` = UNIX_TIMESTAMP()
+        WHERE `income`.`server` = ? AND `income`.`member` = ?
         """
 
-        interval = max(interval, 60)
-
-        check = await self.bot.db.execute(sql,
-            value.amount, value.is_percentage,
-            interval, ctx.guild.id, 
-            role_or_member.id, with_commit=True)
+        check = await self.bot.db.execute(
+            sql, value.amount, 
+            interval, value.is_percentage, 
+            ctx.guild.id, member.id,
+            with_commit=True)
 
         if not check:
-            await self.bot.db.execute("INSERT INTO `income` VALUES (?, ?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
-                ctx.guild.id, role_or_member.id, 
-                value.amount, interval,
-                isinstance(role_or_member, discord.Role), 
-                value.is_percentage, with_commit=True)
+            await self.bot.db.execute(
+                "INSERT INTO `income` VALUES (?, ?, ?, ?, ?, UNIX_TIMESTAMP())",
+                ctx.guild.id, member.id,
+                value.amount, value.is_percentage,
+                interval, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["set_income"].format(
-            role_or_member.mention, str(value) if value.is_percentage 
+            member.mention, str(value) if value.is_percentage 
                 else self.currency_fmt(ctx.currency, value.amount)))
 
     @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
-    async def income_remove(self, ctx, *, role_or_member: Union[discord.Role, discord.Member]):
+    async def income_remove(self, ctx, *, member: discord.Member):
         check = await self.bot.db.execute("DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`model` = ?",
-            ctx.guild.id, role_or_member.id, with_commit=True)
+            ctx.guild.id, member.id, with_commit=True)
 
         if check:
             await ctx.answer(ctx.lang["economy"]["income_deleted"].format(
-                role_or_member.mention))
+                member.mention))
         else:
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
-                role_or_member.mention))
+                member.mention))
 
 
 def setup(bot):
