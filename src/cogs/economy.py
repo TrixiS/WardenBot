@@ -63,6 +63,7 @@ class _Economy:
             cash, bank = money
 
         account = Account(self.bot, member, cash, bank, money is not None)
+        
         await self.get_income(account)
         
         return account
@@ -443,8 +444,6 @@ class Economy(commands.Cog):
 
         await ctx.answer(ctx.lang["economy"]["reset"])
 
-    # TODO:
-    #   use executemany here for roles' members
     @commands.group(cls=EconomyGroup, invoke_without_command=True)
     @is_commander()
     async def income(self, ctx, *, member: discord.Member):
