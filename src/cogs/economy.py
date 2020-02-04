@@ -354,19 +354,15 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["lb", "board", "top"], cls=EconomyCommand)
     async def leaderboard(self, ctx, page: Optional[IndexConverter]=Index(0)):
-        sqlite_where = """
-        WHERE `money`.`server` = ? AND `money_sum` > 0
-        """
+        if self.bot.db.db_type == DbType.SQLite:
+            where = "WHERE `money`.`server` = ? AND `money_sum` > 0"
+        elif self.bot.db.db_type == DbType.MySQL:
+            where = "WHERE `money`.`server` = ?\nHAVING `money_sum` > 0"
 
-        mysql_where = """
-        WHERE `money`.`server` = ?
-        HAVING `money_sum` > 0
-        """
-        
         sql = f"""
         SELECT `member`, `money`.`cash` + `money`.`bank` AS `money_sum`
         FROM `money`
-        {sqlite_where if self.bot.db.db_type == DbType.SQLite else mysql_where}
+        {where}
         ORDER BY `money_sum` DESC 
         LIMIT ? OFFSET ?
         """
