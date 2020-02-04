@@ -12,7 +12,7 @@ from math import ceil
 from .utils.time import UnixTime
 from .utils.strings import markdown
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
-from .utils.converters import HumanTime, EqualMember, EqualRole, IndexConverter, Index
+from .utils.converters import SafeUint, HumanTime, EqualMember, EqualRole, IndexConverter, Index
 from .utils.constants import ModerationConstants, StringConstants, EmbedConstants
 
 ActionInfo = namedtuple("ActionInfo", ["time", "reason"])
@@ -274,9 +274,14 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @is_moderator()
-    async def case(self, ctx, case_id: int):
-        case = await self.bot.db.execute("SELECT `author`, `member`, `type`, `expires`, `reason` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`id` = ?",
-            ctx.guild.id, case_id)
+    async def case(self, ctx, case_id: SafeUint):
+        sql = """
+        SELECT `author`, `member`, `type`, `expires`, `reason`
+        FROM `cases`
+        WHERE `cases`.`server` = ? AND `cases`.`id` = ?
+        """
+
+        case = await self.bot.db.execute(sql, ctx.guild.id, case_id)
 
         if case is None:
             return await ctx.answer(ctx.lang["moderation"]["no_case_with_id"].format(
