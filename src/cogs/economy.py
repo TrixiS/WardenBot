@@ -82,8 +82,6 @@ class _Economy:
             account.member.guild.id, 
             account.member.id)
 
-        logging.info(str(income))
-
         if income is None:
             return
 
