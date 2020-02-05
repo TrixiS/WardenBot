@@ -20,7 +20,7 @@ class ErrorHandler(commands.Cog):
     # TODO: add lang support for d.py exceptions
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if not isinstance(error, commands.CommandError):
+        if isinstance(error, commands.CommandError):
             message = getattr(error, "message", str(error))
 
             em = discord.Embed(colour=ctx.color)
