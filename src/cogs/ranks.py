@@ -85,12 +85,14 @@ class Ranks(commands.Cog):
                 with_commit=True)
 
         em = discord.Embed(colour=ctx.color, title=ctx.lang["ranks"]["title"])
+        
         em.add_field(
             name=ctx.lang["shared"]["added"], 
             value=join_or_default(
                 collect_attributes(added, "mention"), ', ', 
                 ctx.lang["shared"]["no"]), 
             inline=False)
+
         em.add_field(
             name=ctx.lang["shared"]["deleted"],
             value=join_or_default(
