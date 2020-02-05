@@ -1,5 +1,6 @@
 import discord
 import ast
+import os
 
 from discord.ext import commands
 
@@ -88,6 +89,16 @@ class Owner(commands.Cog):
         await self.bot.session.close()
         await self.bot.logout()
         exit()
+
+    @commands.command()
+    @is_owner()
+    async def cls(self, ctx):
+        if os.name == "nt":
+            os.system("cls")
+        else:
+            os.system("clear")
+
+        await ctx.answer(ctx.lang["owner"]["cls"])
 
 
 def setup(bot):
