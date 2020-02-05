@@ -52,26 +52,36 @@ class Ranks(commands.Cog):
     @is_commander()
     @bot_has_permissions(manage_roles=True)
     async def rank_toggle(self, ctx, roles: commands.Greedy[discord.Role]):
-        roles = [role for role in roles if role < ctx.guild.me.top_role]
+        roles = tuple(role for role in roles if role < ctx.guild.me.top_role)
 
         if len(roles) == 0:
             return await ctx.answer(ctx.lang["errors"]["no_roles"])
         
-        check = await self.bot.db.execute("SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
+        check = await self.bot.db.execute(
+            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
             ctx.guild.id, fetch_all=True)
 
         ranks_roles = tuple(ctx.guild.get_role(c[0]) for c in check)
 
         deleted = {role for role in roles if role in ranks_roles and role is not None}
-        added = list(set(roles) ^ deleted)[:RanksConstants.ROLES_MAX_COUNT]
+        added = tuple(set(roles) ^ deleted)[:RanksConstants.ROLES_MAX_COUNT]
 
-        for role in deleted:
-            await self.bot.db.execute("DELETE FROM `ranks` WHERE `ranks`.`server` = ? AND `ranks`.`role` = ?",
-                ctx.guild.id, role.id, with_commit=True)
+        delete_sql = """
+        DELETE 
+        FROM `ranks`
+        WHERE `ranks`.`server` = ? AND `ranks`.`role` IN ({})
+        """
 
-        for role in added:
-            await self.bot.db.execute("INSERT INTO `ranks` VALUES (?, ?)",
-                ctx.guild.id, role.id, with_commit=True)
+        if len(deleted):
+            await self.bot.db.execute(
+                delete_sql.format(', '.join(map(lambda r: str(r.id), deleted))),
+                ctx.guild.id, with_commit=True)
+
+        if len(added):
+            await self.bot.db.executemany(
+                "INSERT INTO `ranks` VALUES (?, ?)",
+                ((ctx.guild.id, role.id) for role in added), 
+                with_commit=True)
 
         em = discord.Embed(colour=ctx.color, title=ctx.lang["ranks"]["title"])
         em.add_field(
