@@ -105,11 +105,9 @@ class Fun(commands.Cog):
         offset = EmbedConstants.DESC_MAX_LEN - len("```")
 
         if data["Errors"] is not None and len(data["Errors"]):
-            await ctx.answer(markdown(
-                data["Errors"][:offset], "```"))
+            await ctx.answer(markdown(data["Errors"][:offset], "```"))
         elif data["Result"] is not None and len(data["Result"]):
-            await ctx.answer(markdown(
-                data["Result"][:offset], "```"))
+            await ctx.answer(markdown(data["Result"][:offset], "```"))
         else:
             await ctx.answer(ctx.lang["fun"]["no_result"])
 
