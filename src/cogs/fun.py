@@ -114,6 +114,16 @@ class Fun(commands.Cog):
         lang_info = map(lambda x: x[0], RextesterPLs.__members__.items())
         await ctx.answer(markdown(', '.join(lang_info), "```"))
 
+    @commands.command(aliases=["ava"])
+    async def avatar(self, ctx, member: Optional[discord.Member]):
+        em = discord.Embed(
+            title=ctx.lang["fun"]["avatar"].format((member or ctx.author).name),
+            colour=ctx.color)
+
+        em.set_image(url=(member or ctx.author).avatar_url)
+
+        await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
