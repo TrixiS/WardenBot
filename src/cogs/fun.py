@@ -39,9 +39,6 @@ class RextesterPLs(Enum):
     D = 30
     R = 31
     TCL = 32
-    MySQL = 33
-    PostgreSQL = 34
-    Oracle = 35
     Swift = 37
     Bash = 38
     Ada = 39
@@ -113,7 +110,7 @@ class Fun(commands.Cog):
 
     @rextester.command(name="langs")
     async def rextester_langs(self, ctx):
-        lang_info = map(lambda x: x[0], RextesterPLs.__members__.items())
+        lang_info = sorted(RextesterPLs.__members__.keys())
         await ctx.answer(markdown(', '.join(lang_info), "```"))
 
     @commands.command(aliases=["ava"])
