@@ -16,8 +16,9 @@ class Ranks(commands.Cog):
     @commands.group(invoke_without_command=True, name="rank", aliases=["ranks"])
     @bot_has_permissions(manage_roles=True)
     async def rank(self, ctx, *, role: Optional[EqualRole]):
-        check = await self.bot.db.execute("SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
-            ctx.guild.id, fetch_all=True)
+        check = await self.bot.db.execute(
+            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ? LIMIT ?",
+            ctx.guild.id, RanksConstants.ROLES_MAX_COUNT, fetch_all=True)
 
         if check is None or not len(check):
             return await ctx.answer(ctx.lang["ranks"]["no_ranks"])
@@ -58,8 +59,8 @@ class Ranks(commands.Cog):
             return await ctx.answer(ctx.lang["errors"]["no_roles"])
         
         check = await self.bot.db.execute(
-            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
-            ctx.guild.id, fetch_all=True)
+            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ? LIMIT ?",
+            ctx.guild.id, RanksConstants.ROLES_MAX_COUNT, fetch_all=True)
 
         ranks_roles = tuple(ctx.guild.get_role(c[0]) for c in check)
 
