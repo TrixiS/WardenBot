@@ -14,6 +14,9 @@ from .utils.strings import markdown
 from .utils.models import PseudoMember
 from .utils.db import DbType
 
+# TODO:
+#   make SQL refactoring
+
 
 class Account:
 
