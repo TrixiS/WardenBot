@@ -102,10 +102,14 @@ class Fun(commands.Cog):
         async with self.bot.session.post(self.rextester_api_url, data=req_data) as req:
             data = await req.json()
 
+        offset = EmbedConstants.DESC_MAX_LEN - len("```")
+
         if data["Errors"] is not None and len(data["Errors"]):
-            await ctx.answer(data["Errors"][:EmbedConstants.DESC_MAX_LEN])
+            await ctx.answer(markdown(
+                data["Errors"][:offset], "```"))
         elif data["Result"] is not None and len(data["Result"]):
-            await ctx.answer(data["Result"][:EmbedConstants.DESC_MAX_LEN])
+            await ctx.answer(markdown(
+                data["Result"][:offset], "```"))
         else:
             await ctx.answer(ctx.lang["fun"]["no_result"])
 
