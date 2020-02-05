@@ -14,9 +14,6 @@ from .utils.strings import markdown
 from .utils.models import PseudoMember
 from .utils.db import DbType
 
-# TODO:
-#   make SQL refactoring
-
 
 class Account:
 
@@ -32,20 +29,31 @@ class Account:
         return self.bank + self.cash
 
     async def save(self):
+        update_sql = """
+        UPDATE `money` 
+        SET `cash` = ?, `bank` = ? 
+        WHERE `money`.`server` = ? AND `money`.`member` = ?
+        """
+
         self.cash = self.bot.db.make_safe_value(int(self.cash))
         self.bank = self.bot.db.make_safe_value(int(self.bank))
 
-        check = await self.bot.db.execute("UPDATE `money` SET `cash` = ?, `bank` = ? WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            self.cash, self.bank, self.member.guild.id, self.member.id, with_commit=True)
+        check = await self.bot.db.execute(
+            update_sql, self.cash, 
+            self.bank, self.member.guild.id, 
+            self.member.id, with_commit=True)
 
         if not check:
-            await self.bot.db.execute("INSERT INTO `money` VALUES (?, ?, ?, ?)",
-                self.member.guild.id, self.member.id, self.cash, self.bank, with_commit=True)
+            await self.bot.db.execute(
+                "INSERT INTO `money` VALUES (?, ?, ?, ?)",
+                self.member.guild.id, self.member.id, 
+                self.cash, self.bank, with_commit=True)
 
         self.saved = True
 
     async def delete(self):
-        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
+        await self.bot.db.execute(
+            "DELETE FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
             self.member.guild.id, self.member.id, with_commit=True)
 
 
@@ -55,11 +63,26 @@ class _Economy:
         self.bot = bot
 
     async def get_money(self, member):
-        money = await self.bot.db.execute("SELECT `cash`, `bank` FROM `money` WHERE `money`.`server` = ? AND `money`.`member` = ?",
-            member.guild.id, member.id)
+        select_money_sql = """
+        SELECT `cash`, `bank` 
+        FROM `money` 
+        WHERE `money`.`server` = ? AND `money`.`member` = ?
+        """
+
+        money = await self.bot.db.execute(
+            select_money_sql,
+            member.guild.id, 
+            member.id)
 
         if money is None:
-            start = await self.bot.db.execute("SELECT `cash`, `bank` FROM `start_money` WHERE `start_money`.`server` = ?",  
+            select_start_sql = """
+            SELECT `cash`, `bank` 
+            FROM `start_money` 
+            WHERE `start_money`.`server` = ?
+            """
+
+            start = await self.bot.db.execute(
+                select_start_sql,  
                 member.guild.id)
 
             cash, bank = start or (0, 0)
@@ -111,8 +134,16 @@ class _Economy:
         await account.save()
 
     async def get_place(self, member):
-        all_accounts = await self.bot.db.execute("SELECT `member` FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 ORDER BY `money`.`cash` + `money`.`bank` DESC",
-            member.guild.id, fetch_all=True)
+        select_place_sql = """
+        SELECT `member` 
+        FROM `money` 
+        WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0 
+        ORDER BY `money`.`cash` + `money`.`bank` DESC
+        """
+
+        all_accounts = await self.bot.db.execute(
+            select_place_sql, member.guild.id, 
+            fetch_all=True)
 
         member_case = (member.id, )
 
@@ -122,7 +153,8 @@ class _Economy:
         return all_accounts.index(member_case) + 1
 
     async def get_currency(self, guild):
-        currency = await self.bot.db.execute("SELECT `symbol` FROM `currency` WHERE `currency`.`server` = ?",
+        currency = await self.bot.db.execute(
+            "SELECT `symbol` FROM `currency` WHERE `currency`.`server` = ?",
             guild.id)
 
         emoji = self.bot.get_emoji(currency)
@@ -329,11 +361,19 @@ class Economy(commands.Cog):
     @commands.command(name="start-money", cls=EconomyCommand)
     @is_commander()
     async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: SafeUint(include_zero=True)):
-        check = await self.bot.db.execute("UPDATE `start_money` SET `{}` = ? WHERE `start_money`.`server` = ?".format(money_type.name),
+        update_sql = """
+        UPDATE `start_money` 
+        SET `{}` = ? 
+        WHERE `start_money`.`server` = ?
+        """
+        
+        check = await self.bot.db.execute(
+            update_sql.format(money_type.name),
             amount, ctx.guild.id, with_commit=True)
 
         if not check:
-            await self.bot.db.execute("INSERT INTO `start_money` VALUES (?, ?, ?)",
+            await self.bot.db.execute(
+                "INSERT INTO `start_money` VALUES (?, ?, ?)",
                 ctx.guild.id, 
                 amount if money_type == MoneyType.cash else 0, 
                 amount if money_type == MoneyType.bank else 0,
@@ -345,11 +385,13 @@ class Economy(commands.Cog):
     @commands.command(cls=EconomyCommand)
     @is_commander()
     async def currency(self, ctx, symbol: discord.Emoji):
-        check = await self.bot.db.execute("UPDATE `currency` SET `symbol` = ? WHERE `currency`.`server` = ?",
+        check = await self.bot.db.execute(
+            "UPDATE `currency` SET `symbol` = ? WHERE `currency`.`server` = ?",
             symbol.id, ctx.guild.id, with_commit=True)
         
         if not check:
-            await self.bot.db.execute("INSERT INTO `currency` VALUES (?, ?)",
+            await self.bot.db.execute(
+                "INSERT INTO `currency` VALUES (?, ?)",
                 ctx.guild.id, symbol.id, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["new_symbol"].format(
@@ -378,8 +420,13 @@ class Economy(commands.Cog):
         if check is None or len(check) == 0:
             return await ctx.answer(ctx.lang["economy"]["empty_page"].format(page.humanize()))
 
-        count = await self.bot.db.execute("SELECT COUNT(*) FROM `money` WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0",
-            ctx.guild.id)
+        select_count_sql = """
+        SELECT COUNT(*) 
+        FROM `money` 
+        WHERE `money`.`server` = ? AND `money`.`cash` + `money`.`bank` > 0
+        """
+
+        count = await self.bot.db.execute(select_count_sql, ctx.guild.id)
 
         place = None
         description = []
@@ -446,7 +493,8 @@ class Economy(commands.Cog):
         if accept is None or accept == ctx.lang["shared"]["no"].lower():
             return
 
-        await self.bot.db.execute("DELETE FROM `money` WHERE `money`.`server` = ?",
+        await self.bot.db.execute(
+            "DELETE FROM `money` WHERE `money`.`server` = ?",
             ctx.guild.id, with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["reset"])
