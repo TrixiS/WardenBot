@@ -42,10 +42,10 @@ class Warden(AutoShardedBot):
             parent = str(path.parent.parent.resolve().absolute())
             path = str(path.resolve().absolute())
 
-            return multi_replace(path[len(parent) + 1:-3], ['\\', '/'], '.')
+            return multi_replace(path[len(parent) + 1:-3], ('\\', '/'), '.')
 
         for path in (self.path / "cogs").glob("*.py"):
-            if not path.is_file():
+            if not path.is_file() or path.name.startswith('_') or path.name.endswith('_'):
                 continue
 
             try:
