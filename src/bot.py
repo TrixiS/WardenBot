@@ -79,6 +79,9 @@ class Warden(AutoShardedBot):
     def is_owner(self, user):
         return user.id in self.config.owners
 
+    def run(self):
+        super().run(self.config.bot_token, reconnect=True)
+
     async def get_color(self, guild):
         color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
