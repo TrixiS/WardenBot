@@ -2,7 +2,7 @@ import logging
 
 from os import system
 from bot import Warden
-from cogs.utils.config import Config
+from config import Config
 from cogs.utils.global_checks import *
 
 system("git pull")

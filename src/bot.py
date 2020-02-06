@@ -1,5 +1,4 @@
 from cogs.utils.db import DataBase
-from cogs.utils.config import Config
 from cogs.utils.strings import multi_replace
 
 from discord.ext.commands import AutoShardedBot
@@ -18,7 +17,7 @@ class Warden(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.config = kwargs.pop("config", Config())
+        self.config = kwargs.pop("config")
         self.path = Path(__file__).parent.resolve().absolute()
         self.assets_path = self.path.parent / "assets"
         self.session = ClientSession(loop=self.loop)
