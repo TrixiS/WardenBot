@@ -422,6 +422,36 @@ class Moderation(commands.Cog):
 
         await self.purge(ctx, limit=amount, predicate=check)
 
+    @commands.group(invoke_without_command=True)
+    async def role(self, ctx, *, role: discord.Role):
+        # TODO:
+        #   make info command for roles
+        pass
+
+    @role.command(name="give")
+    @is_moderator(manage_roles=True)
+    @bot_has_permissions(manage_roles=True)
+    async def role_add(self, ctx, role: EqualRole, member: discord.Member):
+        if role not in member.roles:
+            await member.add_roles(role)
+            await ctx.answer(ctx.lang["moderation"]["role_given"].format(
+                member.mention, role.mention))
+        else:
+            await ctx.answer(ctx.lang["moderation"]["already_has_role"].format(
+                member.mention, role.mention))
+
+    @role.command(name="remove")
+    @is_moderator(manage_roles=True)
+    @bot_has_permissions(manage_roles=True)
+    async def role_remove(self, ctx, role: EqualRole, member: discord.Member):
+        if role in member.roles:
+            await member.remove_roles(role)
+            await ctx.answer(ctx.lang["moderation"]["role_removed"].format(
+                member.mention, role.mention))
+        else:
+            await ctx.answer(ctx.lang["moderation"]["not_has_role"].format(
+                member.mention, role.mention))
+
     @commands.Cog.listener()
     async def on_ready(self):
         check = await self.bot.db.execute("SELECT `server`, `member`, `expires` FROM `cases` WHERE `cases`.`type` = ? AND `cases`.`expires` > UNIX_TIMESTAMP() AND `cases`.`removed` = ?",
