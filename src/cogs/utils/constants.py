@@ -48,3 +48,4 @@ class TwitchAlertsConstants:
 class FunConstants:
 
     ATTACH_MAX_SIZE = 1000000
+    REX_API_URL = "https://rextester.com/rundotnet/api"

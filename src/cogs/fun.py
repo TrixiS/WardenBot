@@ -69,7 +69,6 @@ class Fun(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.rextester_api_url = "https://rextester.com/rundotnet/api"
 
     @commands.group(aliases=["rex"], invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.user)
@@ -94,8 +93,10 @@ class Fun(commands.Cog):
             "CompilerArgs": f"source_file.{prog_lang.name.lower()} -o a.out"
         }
 
-        async with self.bot.session.post(self.rextester_api_url, data=req_data) as req:
-            data = await req.json()
+        async with self.bot.session.post(
+            FunConstants.REX_API_URL, 
+            data=req_data) as req:
+                data = await req.json()
 
         offset = EmbedConstants.DESC_MAX_LEN - len("```")
 
