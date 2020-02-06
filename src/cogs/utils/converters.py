@@ -116,7 +116,7 @@ class EqualMember(NotAuthor):
         member_perms = ctx.channel.permissions_for(member)
         author_perms = ctx.channel.permissions_for(ctx.author)
 
-        if author_perms <= member_perms:
+        if author_perms <= member_perms and not ctx.bot.is_owner(ctx.author):
             raise commands.BadArgument(
                 ctx.lang["errors"]["member_has_eq_over_perms"].format(member.mention))
 
@@ -128,10 +128,11 @@ class EqualRole(commands.RoleConverter):
     async def convert(self, ctx, arg):
         role = await super().convert(ctx, arg)
 
-        if role >= ctx.author.top_role or role >= ctx.guild.me.top_role:
-            raise commands.BadArgument(
-                ctx.lang["errors"]["role_over_top_role"].format(
-                    role.mention, ctx.bot.user.mention))
+        if (role >= ctx.author.top_role and not ctx.bot.is_owner(ctx.author)) or \
+            role >= ctx.guild.me.top_role or role.managed:
+                raise commands.BadArgument(
+                    ctx.lang["errors"]["role_over_top_role"].format(
+                        role.mention, ctx.bot.user.mention))
 
         return role
 
