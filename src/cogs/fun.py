@@ -1,4 +1,5 @@
 import discord
+import random
 
 from discord.ext import commands
 from enum import Enum
@@ -7,8 +8,6 @@ from typing import Optional
 from .utils.constants import EmbedConstants, FunConstants
 from .utils.strings import markdown
 
-# TODO:
-#   choose command
 
 class RextesterPLs(Enum):
 
@@ -30,7 +29,6 @@ class RextesterPLs(Enum):
     JavaScript = 17
     Lisp = 18
     Prolog = 19
-    Go = 20
     Scala = 21
     Scheme = 22
     NodeJS = 23
@@ -122,6 +120,13 @@ class Fun(commands.Cog):
         em.set_image(url=(member or ctx.author).avatar_url)
 
         await ctx.send(embed=em)
+
+    @commands.command()
+    async def choose(self, ctx, *args):
+        if len(args) == 0:
+            await ctx.answer(ctx.lang["fun"]["choose_seq"])
+        else:
+            await ctx.send(random.choice(args))
 
 
 def setup(bot):
