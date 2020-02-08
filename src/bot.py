@@ -10,6 +10,7 @@ from context import WardenContext
 
 import logging
 import discord
+import subprocess
 
 
 class Warden(AutoShardedBot):
@@ -22,8 +23,12 @@ class Warden(AutoShardedBot):
         self.assets_path = self.path.parent / "assets"
         self.session = ClientSession(loop=self.loop)
         self.db = DataBase(self.config.db_type, **self.config.database_settings)
+        self.plugin_loader = None
         self.uptime = None
         self.langs = None
+
+    def __del__(self):
+        self.plugin_loader.terminate()
 
     def load_langs(self):
         langs = {}
@@ -59,6 +64,13 @@ class Warden(AutoShardedBot):
             except Exception as e:
                 logging.error(f"Failed to load extension {ext_path}:\n{str(e)}")
 
+    def load_plugins(self):
+        if not self.config.use_csharp_plugins:
+            return
+
+        plugins_path = (self.path / "plugins").resolve().absolute()
+        self.plugin_loader = subprocess.Popen(f"dotnet {self.config.csharp_plugins_loader} {str(plugins_path)}")      
+
     def get_member(self, guild_id, member_id):
         guild = self.get_guild(guild_id)
 
@@ -80,6 +92,10 @@ class Warden(AutoShardedBot):
 
     def run(self):
         super().run(self.config.bot_token, reconnect=True)
+
+    async def close(self):
+        await self.session.close()
+        await super().close()
 
     async def get_color(self, guild):
         color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
