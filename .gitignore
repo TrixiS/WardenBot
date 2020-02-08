@@ -1,6 +1,11 @@
-venv/
 tests/
-src/cogs/utils/config.py
+config.py
 *.pyc
 database
 assets/
+py37/
+todo_list.txt
+db_init.sql
+src/plugins
+src/plugin_loader/bin/
+src/plugin_loader/obj/
