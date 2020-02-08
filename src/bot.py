@@ -28,7 +28,8 @@ class Warden(AutoShardedBot):
         self.langs = None
 
     def __del__(self):
-        self.plugin_loader.terminate()
+        if self.plugin_loader is not None:
+            self.plugin_loader.terminate()
 
     def load_langs(self):
         langs = {}
