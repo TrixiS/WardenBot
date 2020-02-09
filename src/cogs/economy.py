@@ -186,6 +186,27 @@ class MoneyType(Enum):
     bank = 1
 
 
+class GameResult(Enum):
+
+    fail = 0
+    success = 1
+
+
+class GameResultConverter(commands.Converter):
+
+    async def convert(self, ctx, arg):
+        arg = arg.lower()
+
+        result = discord.utils.find(
+            lambda x: x[0].lower() == arg,
+            GameResult.__members__.items())
+
+        if result is None:
+            raise commands.BadArgument(ctx.lang["economy"]["invalid_game_result"])
+
+        return result[1]
+
+
 class MoneyTypeConverter(commands.Converter):
 
     __qualname__ = "MoneyType"
@@ -582,19 +603,26 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 member.mention))
 
+    # TODO:
+    #   add gamequal support, so drop table
     @commands.group(invoke_without_command=True)
     @is_commander()
     async def story(self, ctx, story_id: SafeUint):
+        sql = """
+        SELECT `text`, `type`, `author`, `result_type`
+        FROM `story`
+        WHERE `story`.`server` = ? AND `story`.`id` = ?
+        """
+
         check = await self.bot.db.execute(
-            "SELECT `text`, `type`, `author` FROM `story` WHERE `story`.`server` = ? AND `story`.`id` = ?",
-            ctx.guild.id, story_id)
+            sql, ctx.guild.id, story_id)
 
         if check is None:
             return await ctx.answer(ctx.lang["economy"]["no_story"].format(
                 story_id))
 
         em = discord.Embed(
-            title=ctx.lang["economy"]["story"].format(check[1]),
+            title=ctx.lang["economy"]["story"].format(check[1], check[3]),
             description=check[0], 
             colour=ctx.color)
 
@@ -608,7 +636,7 @@ class Economy(commands.Cog):
 
     @story.command(name="add")
     @is_commander()
-    async def story_add(self, ctx, command: CommandConverter(cls=EconomyGame), *, text: str):
+    async def story_add(self, ctx, command: CommandConverter(cls=EconomyGame), result_type: GameResultConverter, *, text: str):
         if r"{money}" not in text:
             return await ctx.answer(ctx.lang["economy"]["need_marker"])
 
@@ -617,9 +645,9 @@ class Economy(commands.Cog):
             ctx.guild.id)
 
         await self.bot.db.execute(
-            "INSERT INTO `story` VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO `story` VALUES (?, ?, ?, ?, ?, ?)",
             story_id, ctx.guild.id, ctx.author.id, 
-            command.qualified_name.lower(), 
+            command.qualified_name.lower(), result_type.name.lower(),
             text[:EmbedConstants.DESC_MAX_LEN], with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["add_story"].format(story_id))
