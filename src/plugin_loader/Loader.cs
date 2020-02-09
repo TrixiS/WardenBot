@@ -73,6 +73,8 @@ namespace PluginLoader
 
             var assemblies = this.assemblyLoader.LoadAssemblies(paths).Where(a => a != null);
 
+            this.registeredPlugins.Clear();
+
             foreach (Assembly assembly in assemblies)
             {
                 var plugins = this.GetPlugins(assembly);
@@ -82,7 +84,7 @@ namespace PluginLoader
 
                 foreach (var plugin in plugins)
                 {
-                    if (reload && this.runningPlugins.Keys.Contains(plugin))
+                    if (reload && this.runningPlugins.ContainsKey(plugin))
                         this.KillPluginExecution(plugin);
                     
                     this.registeredPlugins.Add(plugin);
