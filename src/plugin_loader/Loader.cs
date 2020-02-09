@@ -7,12 +7,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using WardenAPI.Plugins;
 
-// TODO:
-//    add OriginalType to AssemblyPlugin
-
-// TODO:
-//  remove TaskTokenPair, use just TokenSource
-
 namespace PluginLoader
 {
     public class Loader
@@ -20,7 +14,7 @@ namespace PluginLoader
         public readonly string PluginsFilePath;
         public IEnumerable<IPlugin> RegisteredPlugins => this.registeredPlugins.Select(p => p.Plugin);
         
-        private readonly Dictionary<AssemblyPlugin, TaskTokenPair> runningPlugins;
+        private readonly Dictionary<AssemblyPlugin, CancellationTokenSource> runningPlugins;
         private readonly List<AssemblyPlugin> registeredPlugins;
         private readonly AssemblyLoader assemblyLoader;
 
@@ -29,7 +23,7 @@ namespace PluginLoader
             this.PluginsFilePath = pluginsPath;
             this.assemblyLoader = assemblyLoader;
             this.registeredPlugins = new List<AssemblyPlugin>();
-            this.runningPlugins = new Dictionary<AssemblyPlugin, TaskTokenPair>();
+            this.runningPlugins = new Dictionary<AssemblyPlugin, CancellationTokenSource>();
         }
 
         private string[] GetPluginsPaths()
@@ -42,7 +36,7 @@ namespace PluginLoader
             if (!this.runningPlugins.ContainsKey(plugin))
                 return;
 
-            this.runningPlugins[plugin].TokenSource.Cancel();
+            this.runningPlugins[plugin].Cancel();
             this.runningPlugins.Remove(plugin);
         }
 
@@ -107,11 +101,11 @@ namespace PluginLoader
                 {
                     await plugin.Plugin.RunAsync(tokenSource.Token);
 
-                    if (this.runningPlugins.Keys.Contains(plugin))
+                    if (this.runningPlugins.ContainsKey(plugin))
                         this.runningPlugins.Remove(plugin);
                 });
                 
-                this.runningPlugins[plugin] = new TaskTokenPair(pluginTask, tokenSource);
+                this.runningPlugins[plugin] = tokenSource;
             }
             
             await Task.Yield();

@@ -3,7 +3,7 @@
   <component name="ContentModelStore">
     <e p="C:\Users\Morozov\.Rider2019.3\system\extResources" t="IncludeRecursive" />
     <e p="C:\Users\Morozov\.Rider2019.3\system\resharper-host\local\Transient\ReSharperHost\v193\SolutionCaches\_.19.00" t="ExcludeRecursive" />
-    <e p="D:\python\WardenRewrite2.0\src\PluginLoader" t="IncludeRecursive">
+    <e p="D:\python\WardenRewrite2.0\src\plugin_loader" t="IncludeRecursive">
       <e p="AssemblyLoader.cs" t="Include" />
       <e p="AssemblyPlugin.cs" t="Include" />
       <e p="bin" t="ExcludeRecursive" />
@@ -18,7 +18,6 @@
       <e p="packages" t="ExcludeRecursive" />
       <e p="PluginLoader.csproj" t="IncludeRecursive" />
       <e p="Program.cs" t="Include" />
-      <e p="TaskTokenPair.cs" t="Include" />
     </e>
   </component>
 </project>
