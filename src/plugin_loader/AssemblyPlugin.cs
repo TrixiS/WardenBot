@@ -10,8 +10,8 @@ namespace PluginLoader
 
         public bool Equals(AssemblyPlugin other)
         {
-            return other?.PluginAssembly == this?.PluginAssembly && 
-                   other?.Plugin.GetType() == this?.Plugin.GetType();
+            return other.PluginAssembly == this.PluginAssembly && 
+                   other.Plugin.GetType() == this.Plugin.GetType();
         }
     }
 }
