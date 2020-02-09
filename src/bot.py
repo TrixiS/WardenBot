@@ -69,7 +69,7 @@ class Warden(AutoShardedBot):
         if not self.config.use_csharp_plugins:
             return
 
-        plugins_path = (self.path / "plugins").resolve().absolute()
+        plugins_path = (self.assets_path / "plugins")
         self.plugin_loader = subprocess.Popen(f"dotnet {self.config.csharp_plugins_loader} {str(plugins_path)}")      
 
     def get_member(self, guild_id, member_id):
