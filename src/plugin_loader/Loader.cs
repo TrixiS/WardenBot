@@ -84,7 +84,7 @@ namespace PluginLoader
 
                 foreach (var plugin in plugins)
                 {
-                    if (reload && this.runningPlugins.ContainsKey(plugin))
+                    if (reload)
                         this.KillPluginExecution(plugin);
                     
                     this.registeredPlugins.Add(plugin);
