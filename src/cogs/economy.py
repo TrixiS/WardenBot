@@ -7,7 +7,7 @@ from typing import Optional, Union
 from math import ceil
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
-from .utils.constants import EconomyConstants, StringConstants
+from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
 from .utils.converters import NotAuthor, SafeUint, IndexConverter, Index, HumanTime, CommandConverter
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
@@ -242,9 +242,16 @@ class Economy(commands.Cog):
 
         em = discord.Embed(colour=ctx.color)
         em.set_author(name=account.member.name, icon_url=account.member.avatar_url)
-        em.add_field(name=ctx.lang["economy"]["cash"], value=self.currency_fmt(ctx.currency, account.cash))
-        em.add_field(name=ctx.lang["economy"]["bank"], value=self.currency_fmt(ctx.currency, account.bank))
-        em.add_field(name=ctx.lang["shared"]["sum"], value=self.currency_fmt(ctx.currency, account.sum))
+        
+        em.add_field(
+            name=ctx.lang["economy"]["cash"], 
+            value=self.currency_fmt(ctx.currency, account.cash))
+        em.add_field(
+            name=ctx.lang["economy"]["bank"], 
+            value=self.currency_fmt(ctx.currency, account.bank))
+        em.add_field(
+            name=ctx.lang["shared"]["sum"], 
+            value=self.currency_fmt(ctx.currency, account.sum))
 
         if account.sum > 0:
             if account.saved:
@@ -564,7 +571,8 @@ class Economy(commands.Cog):
     @income.command(aliases=["delete"], name="remove", cls=EconomyCommand)
     @is_commander()
     async def income_remove(self, ctx, *, member: discord.Member):
-        check = await self.bot.db.execute("DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`member` = ?",
+        check = await self.bot.db.execute(
+            "DELETE FROM `income` WHERE `income`.`server` = ? AND `income`.`member` = ?",
             ctx.guild.id, member.id, with_commit=True)
 
         if check:
@@ -573,6 +581,60 @@ class Economy(commands.Cog):
         else:
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 member.mention))
+
+    @commands.group(invoke_without_command=True)
+    @is_commander()
+    async def story(self, ctx, story_id: SafeUint):
+        check = await self.bot.db.execute(
+            "SELECT `text`, `type`, `author` FROM `story` WHERE `story`.`server` = ? AND `story`.`id` = ?",
+            ctx.guild.id, story_id)
+
+        if check is None:
+            return await ctx.answer(ctx.lang["economy"]["no_story"].format(
+                story_id))
+
+        em = discord.Embed(
+            title=ctx.lang["economy"]["story"].format(check[1]),
+            description=check[0], 
+            colour=ctx.color)
+
+        author = ctx.guild.get_member(check[2])
+
+        em.set_author(
+            name=(author and str(author)) or ctx.guild.name, 
+            icon_url=(author and author.avatar_url) or ctx.guild.icon_url)
+
+        await ctx.send(embed=em)
+
+    @story.command(name="add")
+    @is_commander()
+    async def story_add(self, ctx, command: CommandConverter(cls=EconomyGame), *, text: str):
+        if r"{money}" not in text:
+            return await ctx.answer(ctx.lang["economy"]["need_marker"])
+
+        story_id = await self.bot.db.execute(
+            "SELECT COUNT(*) + 1 FROM `story` WHERE `story`.`server` = ?",
+            ctx.guild.id)
+
+        await self.bot.db.execute(
+            "INSERT INTO `story` VALUES (?, ?, ?, ?, ?)",
+            story_id, ctx.guild.id, ctx.author.id, 
+            command.qualified_name.lower(), 
+            text[:EmbedConstants.DESC_MAX_LEN], with_commit=True)
+
+        await ctx.answer(ctx.lang["economy"]["add_story"].format(story_id))
+
+    @story.command(name="delete", aliases=["remove"])
+    @is_commander()
+    async def story_delete(self, ctx, story_id: SafeUint):
+        check = await self.bot.db.execute(
+            "DELETE FROM `story` WHERE `story`.`server` = ? AND `story`.`id` = ?",
+            ctx.guild.id, story_id, with_commit=True)
+
+        if not check:
+            await ctx.answer(ctx.lang["economy"]["no_story"].format(story_id))
+        else:
+            await ctx.answer(ctx.lang["economy"]["delete_story"].format(story_id))
 
 
 def setup(bot):
