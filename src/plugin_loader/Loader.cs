@@ -11,17 +11,16 @@ namespace PluginLoader
 {
     public class Loader
     {
-        public string PluginsFilePath => this.pluginsFilePath;
+        public readonly string PluginsFilePath;
         public IEnumerable<IPlugin> RegisteredPlugins => this.registeredPlugins.Select(p => p.Plugin);
         
-        private readonly string pluginsFilePath;
         private readonly Dictionary<AssemblyPlugin, TaskTokenPair> runningPlugins;
         private readonly List<AssemblyPlugin> registeredPlugins;
         private readonly AssemblyLoader assemblyLoader;
 
         public Loader(string pluginsPath, AssemblyLoader assemblyLoader)
         {
-            this.pluginsFilePath = pluginsPath;
+            this.PluginsFilePath = pluginsPath;
             this.assemblyLoader = assemblyLoader;
             this.registeredPlugins = new List<AssemblyPlugin>();
             this.runningPlugins = new Dictionary<AssemblyPlugin, TaskTokenPair>();
@@ -29,7 +28,7 @@ namespace PluginLoader
 
         private string[] GetPluginsPaths()
         {
-            return Directory.GetFiles(this.pluginsFilePath, "*.dll");
+            return Directory.GetFiles(this.PluginsFilePath, "*.dll");
         }
         
         private void KillPluginExecution(AssemblyPlugin plugin)
@@ -69,7 +68,7 @@ namespace PluginLoader
             string[] paths = this.GetPluginsPaths();
             
             if (paths.Length == 0)
-                throw new Exception($"No plugins found in {this.pluginsFilePath}");
+                throw new Exception($"No plugins found in {this.PluginsFilePath}");
 
             var assemblies = this.assemblyLoader.LoadAssemblies(paths).Where(a => a != null);
 
