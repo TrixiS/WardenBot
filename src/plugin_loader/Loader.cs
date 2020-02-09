@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using WardenAPI.Plugins;
 
+// TODO:
+//    add OriginalType to AssemblyPlugin
+
+// TODO:
+//  remove TaskTokenPair, use just TokenSource
+
 namespace PluginLoader
 {
     public class Loader
