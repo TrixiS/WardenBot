@@ -1,11 +1,11 @@
-import logging
-
 from os import system
+
+system("git pull")
+
+import logging
 from bot import Warden
 from config import Config
 from cogs.utils.global_checks import *
-
-system("git pull")
 
 logging.basicConfig(level=logging.INFO, format=f"%(levelname)s: %(message)s - %(asctime)s")
 
