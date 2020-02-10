@@ -11,27 +11,19 @@ namespace PluginLoader
 {
     public class Loader
     {
-        public readonly string PluginsFilePath;
-        public IEnumerable<IPlugin> RegisteredPlugins => this.registeredPlugins.Select(p => p.Plugin);
+        public IEnumerable<IPlugin> RegisteredPlugins => 
+            this.runningPlugins.Keys.Select(p => p.Plugin);
         
         private readonly Dictionary<AssemblyPlugin, CancellationTokenSource> runningPlugins;
-        private readonly List<AssemblyPlugin> registeredPlugins;
         private readonly AssemblyLoader assemblyLoader;
 
-        public Loader(string pluginsPath, AssemblyLoader assemblyLoader)
+        public Loader(AssemblyLoader assemblyLoader)
         {
-            this.PluginsFilePath = pluginsPath;
             this.assemblyLoader = assemblyLoader;
-            this.registeredPlugins = new List<AssemblyPlugin>();
             this.runningPlugins = new Dictionary<AssemblyPlugin, CancellationTokenSource>();
         }
 
-        private string[] GetPluginsPaths()
-        {
-            return Directory.GetFiles(this.PluginsFilePath, "*.dll");
-        }
-        
-        private void KillPluginExecution(AssemblyPlugin plugin)
+        public void KillPluginExecution(AssemblyPlugin plugin)
         {
             if (!this.runningPlugins.ContainsKey(plugin))
                 return;
@@ -40,12 +32,27 @@ namespace PluginLoader
             this.runningPlugins.Remove(plugin);
         }
 
+        private void RunPlugin(AssemblyPlugin plugin)
+        {
+            var tokenSource = new CancellationTokenSource();
+
+            Task.Run(async () =>
+            {
+                await plugin.Plugin.RunAsync(tokenSource.Token);
+
+                if (this.runningPlugins.ContainsKey(plugin))
+                    this.runningPlugins.Remove(plugin);
+            });
+
+            this.runningPlugins[plugin] = tokenSource;
+        }
+        
         private IEnumerable<AssemblyPlugin> GetPlugins(Assembly assembly)
         {
             var pluginsTypes = assembly.ExportedTypes.Where(t => t.GetInterface(nameof(IPlugin)) != null);
 
             if (!pluginsTypes.Any())
-                return null;
+                return Enumerable.Empty<AssemblyPlugin>();
             
             List<AssemblyPlugin> plugins = new List<AssemblyPlugin>();
 
@@ -63,52 +70,28 @@ namespace PluginLoader
             return plugins;
         }
 
-        public void LoadPlugins(bool reload = false)
+        private IEnumerable<AssemblyPlugin> PluginsFromPath(string path)
         {
-            string[] paths = this.GetPluginsPaths();
+            Assembly[] assemblies = this.assemblyLoader.LoadAssemblies(
+                File.GetAttributes(path).HasFlag(FileAttributes.Directory)
+                ? Directory.GetFiles(path, "*.dll")
+                : new string[] { path });
             
-            if (paths.Length == 0)
-                throw new Exception($"No plugins found in {this.PluginsFilePath}");
+            if (!assemblies.Any())
+                throw new Exception($"No plugins found in {path}.");
 
-            var assemblies = this.assemblyLoader.LoadAssemblies(paths).Where(a => a != null);
-
-            this.registeredPlugins.Clear();
+            List<AssemblyPlugin> plugins = new List<AssemblyPlugin>();
 
             foreach (Assembly assembly in assemblies)
-            {
-                var plugins = this.GetPlugins(assembly);
+                plugins.AddRange(this.GetPlugins(assembly));
 
-                if (plugins == null)
-                    continue;
-
-                foreach (var plugin in plugins)
-                {
-                    if (reload)
-                        this.KillPluginExecution(plugin);
-                    
-                    this.registeredPlugins.Add(plugin);
-                }
-            }
+            return plugins;
         }
         
-        public async Task RunAsync()
+        public void RunPluginsFromPath(string path)
         {
-            foreach (var plugin in this.registeredPlugins)
-            {
-                var tokenSource = new CancellationTokenSource();
-                
-                Task pluginTask = Task.Run(async () =>
-                {
-                    await plugin.Plugin.RunAsync(tokenSource.Token);
-
-                    if (this.runningPlugins.ContainsKey(plugin))
-                        this.runningPlugins.Remove(plugin);
-                });
-                
-                this.runningPlugins[plugin] = tokenSource;
-            }
-            
-            await Task.Yield();
+            foreach (AssemblyPlugin plugin in this.PluginsFromPath(path))
+                this.RunPlugin(plugin);
         }
     }
 }

@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e57accb1-926a-457e-9ec0-205e251fd2cb" name="Default Changelist" comment="" />
+    <list default="true" id="e57accb1-926a-457e-9ec0-205e251fd2cb" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../../.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/economy.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/economy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/fun.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/fun.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/moderation.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/moderation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/owner.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/owner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/ranks.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/ranks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/twitch_alerts.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../cogs/utils/converters.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/utils/converters.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Loader.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Loader.cs" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -11,13 +22,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/Program.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/413ABAF0-1DDD-4B5C-BCDC-B75E71936063/d8/bd9d913e/IPlugin.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/2AF/RuntimeAssembly.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/AssemblyLoader.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/TaskTokenPair.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/256/jithelpers.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/AssemblyPlugin.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/1E0/ExceptionDispatchInfo.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/081372C7-3509-4D45-BD06-A6A9BC610C6B/D/AnyAll.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/3DC/List.cs" root0="SKIP_HIGHLIGHTING" />
@@ -26,11 +33,14 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/51/Activator.RuntimeType.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/32F/Path.Windows.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/31/RuntimeType.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Loader.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Program.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/AssemblyLoader.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/331/PathInternal.Windows.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/081372C7-3509-4D45-BD06-A6A9BC610C6B/E/AppendPrepend.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/AssemblyPlugin.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/39/String.Searching.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/21/Environment.CoreCLR.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Loader.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/29C/Assembly.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="IdeDocumentHistory">
@@ -39,14 +49,15 @@
         <option value="$PROJECT_DIR$/TestPlugin.cs" />
         <option value="$PROJECT_DIR$/TaskTokenPair.cs" />
         <option value="$PROJECT_DIR$/IPluginExtensions.cs" />
-        <option value="$PROJECT_DIR$/AssemblyLoader.cs" />
         <option value="$PROJECT_DIR$/AssemblyPlugin.cs" />
-        <option value="$PROJECT_DIR$/Loader.cs" />
         <option value="$PROJECT_DIR$/Program.cs" />
+        <option value="$PROJECT_DIR$/AssemblyLoader.cs" />
+        <option value="$PROJECT_DIR$/Loader.cs" />
       </list>
     </option>
   </component>
   <component name="ProjectId" id="1XUJTF4eHS64Nz5kZWpfcCMNUHo" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
@@ -103,6 +114,8 @@
       <updated>1581094749922</updated>
       <workItem from="1581094764672" duration="4746000" />
       <workItem from="1581161972179" duration="7861000" />
+      <workItem from="1581264656127" duration="173000" />
+      <workItem from="1581332882085" duration="3337000" />
     </task>
     <servers />
   </component>
@@ -111,6 +124,19 @@
   </component>
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="UnityUnitTestConfiguration" currentTestLauncher="NUnit" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
   <component name="WindowStateProjectService">
     <state width="1877" height="363" key="GridCell.Tab.0.bottom" timestamp="1581170131298">
       <screen x="0" y="0" width="1920" height="1080" />
@@ -200,9 +226,17 @@
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="461" y="183" key="SettingsEditor/1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1581094868248" />
-    <state x="616" y="250" key="run.anything.popup" timestamp="1581167361461">
+    <state x="769" y="458" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1581264829261">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="616" y="250" key="run.anything.popup/1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1581167361461" />
+    <state x="769" y="458" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1581264829261" />
+    <state x="616" y="250" key="run.anything.popup" timestamp="1581334192881">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="616" y="250" key="run.anything.popup/1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1581334192881" />
+    <state x="623" y="235" width="672" height="678" key="search.everywhere.popup" timestamp="1581336255695">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="623" y="235" width="672" height="678" key="search.everywhere.popup/1920.0.1920.1080/0.0.1920.1080@0.0.1920.1080" timestamp="1581336255695" />
   </component>
 </project>

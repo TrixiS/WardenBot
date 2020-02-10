@@ -6,10 +6,10 @@ namespace PluginLoader
     {
         public static async Task Main(string[] args)
         {
-            var pluginLoader = new Loader(args[0], new AssemblyLoader());
+            var pluginLoader = new Loader(new AssemblyLoader());
 
-            pluginLoader.LoadPlugins();
-            await pluginLoader.RunAsync();
+            pluginLoader.RunPluginsFromPath(args[0]);
+
             await Task.Delay(-1);
         }
     }
