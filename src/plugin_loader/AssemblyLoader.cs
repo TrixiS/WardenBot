@@ -5,7 +5,7 @@ namespace PluginLoader
 {
     public class AssemblyLoader
     {
-        public Assembly[] LoadAssemblies(string[] paths)
+        public Assembly[] LoadAssemblies(params string[] paths)
         {   
             var assemblies = new Assembly[paths.Length];
 
