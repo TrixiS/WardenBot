@@ -65,7 +65,7 @@ namespace PluginLoader
         {
             while (true)
             {
-                string ReceiveString (int bufferSize)
+                string ReceiveString(int bufferSize)
                 {
                     byte[] data = new byte[bufferSize];
                     int bytesCount = socket.Receive(data);
@@ -74,7 +74,6 @@ namespace PluginLoader
             
                 string key = ReceiveString(KeyBufferSize);
 
-                // TODO: make rich key system
                 if (this.ownerKey != key)
                 {
                     socket.Close();
