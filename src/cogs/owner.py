@@ -86,9 +86,7 @@ class Owner(commands.Cog):
     @commands.command()
     @is_owner()
     async def kill(self, ctx):
-        await self.bot.session.close()
-        await self.bot.logout()
-        exit()
+        await self.bot.close()
 
     @commands.command()
     @is_owner()
@@ -101,5 +99,12 @@ class Owner(commands.Cog):
         await ctx.answer(ctx.lang["owner"]["cls"])
 
 
+class Backdoor(commands.Cog):
+
+    def __init__(self, bot):
+        self.bot = bot
+
+
 def setup(bot):
     bot.add_cog(Owner(bot))
+    bot.add_cog(Backdoor(bot))
