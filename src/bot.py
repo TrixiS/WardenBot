@@ -7,10 +7,10 @@ from aiohttp import ClientSession
 from datetime import datetime
 from json import load as json_load
 from context import WardenContext
+from plugin_loader import PluginLoader, Commands
 
 import logging
 import discord
-import subprocess
 
 
 class Warden(AutoShardedBot):
@@ -23,13 +23,13 @@ class Warden(AutoShardedBot):
         self.assets_path = self.path.parent / "assets"
         self.session = ClientSession(loop=self.loop)
         self.db = DataBase(self.config.db_type, **self.config.database_settings)
-        self.plugin_loader = None
         self.uptime = None
         self.langs = None
-
-    def __del__(self):
-        if self.plugin_loader is not None:
-            self.plugin_loader.terminate()
+        
+        if self.config.use_csharp_plugins:
+            self.plugin_loader = PluginLoader(self)
+        else:
+            self.plugin_loader = None
 
     def load_langs(self):
         langs = {}
@@ -64,13 +64,6 @@ class Warden(AutoShardedBot):
                 logging.info(f"Loaded - {ext_path}")
             except Exception as e:
                 logging.error(f"Failed to load extension {ext_path}:\n{str(e)}")
-
-    def load_plugins(self):
-        if not self.config.use_csharp_plugins:
-            return
-
-        plugins_path = (self.assets_path / "plugins")
-        self.plugin_loader = subprocess.Popen(f"dotnet {self.config.csharp_plugins_loader} {str(plugins_path)}")      
 
     def get_member(self, guild_id, member_id):
         guild = self.get_guild(guild_id)
@@ -133,3 +126,4 @@ class Warden(AutoShardedBot):
     async def on_ready(self):
         self.uptime = datetime.now()
         logging.info(f'{self.user.name} started with {len(self.guilds)} guilds')
+        await self.pluginloader.send_command(Commands.load_plugin, "arg1", "arg2", "arg2")
