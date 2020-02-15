@@ -10,7 +10,16 @@ namespace PluginLoader
             var assemblies = new Assembly[paths.Length];
 
             for (int i = 0; i < paths.Length; i++)
-                assemblies[i] = Assembly.LoadFrom(paths[i]);
+            {
+                try
+                {
+                    assemblies[i] = Assembly.LoadFile(paths[i]);
+                }
+                catch 
+                { 
+                    continue;
+                }
+            }
 
             return assemblies;
         }

@@ -77,7 +77,7 @@ namespace PluginLoader
                 ? Directory.GetFiles(path, "*.dll")
                 : new string[] { path });
             
-            if (!assemblies.Any())
+            if (!assemblies.Any() || assemblies == null)
                 throw new Exception($"No plugins found in {path}.");
 
             List<AssemblyPlugin> plugins = new List<AssemblyPlugin>();
