@@ -1,5 +1,6 @@
 from cogs.utils.db import DataBase
 from cogs.utils.strings import multi_replace
+from cogs.utils.plugin_loader import PluginLoader
 
 from discord.ext.commands import AutoShardedBot
 from pathlib import Path
@@ -7,7 +8,6 @@ from aiohttp import ClientSession
 from datetime import datetime
 from json import load as json_load
 from context import WardenContext
-from plugin_loader import PluginLoader
 
 import logging
 import discord
