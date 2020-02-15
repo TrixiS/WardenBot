@@ -18,6 +18,5 @@ bot.add_check(has_message_perms)
 
 bot.load_cogs()
 bot.load_langs()
-bot.load_plugins()
 
 bot.run()
