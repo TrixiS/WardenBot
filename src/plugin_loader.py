@@ -14,11 +14,11 @@ class PluginLoader:
 
     def __init__(self, bot):
         self.bot = bot
+        self.process = subprocess.Popen(f"dotnet {self.bot.config.csharp_plugins_loader}" \
+            f" {str(bot.assets_path / 'plugins')}" \
+            f" {self.bot.config.plugin_loader_owner_key}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(self.bot.config.plugin_loader_address)
-        self.process = subprocess.Popen(f"dotnet {self.config.csharp_plugins_loader}" \
-            f" {str(bot.assets_path / 'plugins')}" \
-            f" {self.config.plugin_loader_owner_key}")
 
     def __del__(self):
         self.process.terminate()

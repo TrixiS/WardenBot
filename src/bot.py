@@ -7,7 +7,7 @@ from aiohttp import ClientSession
 from datetime import datetime
 from json import load as json_load
 from context import WardenContext
-from plugin_loader import PluginLoader, Commands
+from plugin_loader import PluginLoader
 
 import logging
 import discord
@@ -126,4 +126,3 @@ class Warden(AutoShardedBot):
     async def on_ready(self):
         self.uptime = datetime.now()
         logging.info(f'{self.user.name} started with {len(self.guilds)} guilds')
-        await self.pluginloader.send_command(Commands.load_plugin, "arg1", "arg2", "arg2")
