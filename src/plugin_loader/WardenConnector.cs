@@ -63,15 +63,15 @@ namespace PluginLoader
 
         private void Operate(Socket socket)
         {
+            string ReceiveString(int bufferSize)
+            {
+                byte[] data = new byte[bufferSize];
+                int bytesCount = socket.Receive(data);
+                return this.stringDecoder.DecodeString(bytesCount, data);
+            }
+            
             while (true)
             {
-                string ReceiveString(int bufferSize)
-                {
-                    byte[] data = new byte[bufferSize];
-                    int bytesCount = socket.Receive(data);
-                    return this.stringDecoder.DecodeString(bytesCount, data);
-                }
-            
                 string key = ReceiveString(KeyBufferSize);
 
                 if (this.ownerKey != key)
