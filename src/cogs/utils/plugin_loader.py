@@ -16,7 +16,8 @@ class PluginLoader:
         self.bot = bot
         self.process = subprocess.Popen(f"dotnet {self.bot.config.csharp_plugins_loader}" \
             f" {str(bot.assets_path / 'plugins')}" \
-            f" {self.bot.config.plugin_loader_owner_key}")
+            f" {self.bot.config.plugin_loader_owner_key}" \
+            f" {self.bot.config.plugin_loader_address[1]}")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect(self.bot.config.plugin_loader_address)
 

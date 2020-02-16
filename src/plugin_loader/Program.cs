@@ -14,8 +14,7 @@ namespace PluginLoader
         {
             loader.RunPluginsFromPath(args[0]);
 
-            // TODO: use port from args \\ Int32.Parse(args[2]);
-            var connector = new WardenConnector("127.0.0.1", 6969, args[1]);
+            var connector = new WardenConnector("127.0.0.1", int.Parse(args[2]), args[1]);
 
             connector.OnCommandReceived += OnCommandReceived;
             connector.Start();
