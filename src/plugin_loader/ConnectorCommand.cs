@@ -2,6 +2,7 @@
 {
     internal enum ConnectorCommand : int
     {
-        LoadPlugin = 0
+        LoadPlugin = 0,
+        UnloadPlugin = 1
     }
 }

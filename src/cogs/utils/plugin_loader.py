@@ -7,7 +7,8 @@ from enum import Enum
 
 class LoaderCommands(Enum):
 
-    load_plugin = 0
+    load = 0
+    unload = 1
 
 
 class PluginLoader:
