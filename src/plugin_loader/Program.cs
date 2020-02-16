@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
  // TODO:
@@ -29,13 +32,26 @@ namespace PluginLoader
 
         private static void OnCommandReceived(object sender, ConnectorEventArgs e)
         {
-            // use switch here
-            // maybe Args[1] for concrent plugin
-            // maybe kill command for all tasks
-            
-            if (e.Command == ConnectorCommand.LoadPlugin)
+            // TODO: kill command for all tasks
+            switch (e.Command)
             {
-                loader.RunPluginsFromPath(e.Args[0]);
+                case ConnectorCommand.LoadPlugin:
+                {
+                    loader.RunPluginsFromPath(e.Args[0]);
+                    break;
+                }
+                case ConnectorCommand.UnloadPlugin:
+                {
+                    Assembly source = Assembly.LoadFile(e.Args[0]);
+                    Type pluginType = null;
+
+                    if (e.Args.Length > 1)
+                        pluginType = source.ExportedTypes.FirstOrDefault(t => t.Name == e.Args[1]);
+
+                    loader.KillPluginExecution(source, pluginType);
+                                    
+                    break;
+                }
             }
         }
     }
