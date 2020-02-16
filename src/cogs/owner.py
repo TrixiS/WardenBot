@@ -3,6 +3,8 @@ import ast
 import os
 
 from discord.ext import commands
+from pathlib import Path
+
 from .utils.plugin_loader import LoaderCommands
 from .utils.checks import is_owner
 
@@ -28,7 +30,7 @@ class LoaderCommandConverter(commands.Converter):
             LoaderCommands.__members__.items())
 
         if command is None:
-            raise
+            raise commands.BadArgument(ctx.lang["owner"]["invalid_loader_command"])
     
         return command[1]
 
@@ -115,8 +117,10 @@ class Owner(commands.Cog):
 
     @commands.command()
     @is_owner()
-    async def loader_command(self, ctx, command: LoaderCommandConverter, *args: str):
+    async def loader(self, ctx, command: LoaderCommandConverter, *args):
         await self.bot.plugin_loader.send_command(command, *args)
+        await ctx.answer(ctx.lang["owner"]["loader_command_executed"].format(
+            command.name))
 
 
 class Backdoor(commands.Cog):
