@@ -11,9 +11,9 @@ namespace PluginLoader
 {
     public class Loader
     {
-        public IEnumerable<IPlugin> RegisteredPlugins => 
+        public IEnumerable<IPlugin> RegisteredPlugins =>
             this.runningPlugins.Keys.Select(p => p.Plugin);
-        
+
         private readonly Dictionary<AssemblyPlugin, CancellationTokenSource> runningPlugins;
         private readonly AssemblyLoader assemblyLoader;
 
@@ -23,13 +23,29 @@ namespace PluginLoader
             this.runningPlugins = new Dictionary<AssemblyPlugin, CancellationTokenSource>();
         }
 
-        public void KillPluginExecution(AssemblyPlugin plugin)
+        public void KillPluginExecution(Assembly assembly, Type pluginType = null)
         {
-            if (!this.runningPlugins.ContainsKey(plugin))
+            if (!this.runningPlugins.Any())
                 return;
 
-            this.runningPlugins[plugin].Cancel();
-            this.runningPlugins.Remove(plugin);
+            IEnumerable<AssemblyPlugin> toRemove;
+            
+            if (pluginType != null)
+            {
+                toRemove = this.runningPlugins.Keys.Where(p =>
+                    p.PluginAssembly == assembly && p.Plugin.GetType() == pluginType);
+            }
+            else
+            {
+                toRemove = this.runningPlugins.Keys.Where(p => 
+                    p.PluginAssembly == assembly);
+            }
+
+            foreach (var plugin in toRemove)
+            {
+                this.runningPlugins[plugin].Cancel();
+                this.runningPlugins.Remove(plugin);
+            }
         }
 
         private void RunPlugin(AssemblyPlugin plugin)
@@ -46,20 +62,20 @@ namespace PluginLoader
 
             this.runningPlugins[plugin] = tokenSource;
         }
-        
+
         private IEnumerable<AssemblyPlugin> GetPlugins(Assembly assembly)
         {
             var pluginsTypes = assembly.ExportedTypes.Where(t => t.GetInterface(nameof(IPlugin)) != null);
 
             if (!pluginsTypes.Any())
                 return Enumerable.Empty<AssemblyPlugin>();
-            
+
             List<AssemblyPlugin> plugins = new List<AssemblyPlugin>();
 
             foreach (Type pluginType in pluginsTypes)
             {
                 IPlugin plugin = (IPlugin) Activator.CreateInstance(pluginType);
-                
+
                 plugins.Add(new AssemblyPlugin
                 {
                     Plugin = plugin,
@@ -74,9 +90,9 @@ namespace PluginLoader
         {
             Assembly[] assemblies = this.assemblyLoader.LoadAssemblies(
                 File.GetAttributes(path).HasFlag(FileAttributes.Directory)
-                ? Directory.GetFiles(path, "*.dll")
-                : new string[] { path });
-            
+                    ? Directory.GetFiles(path, "*.dll")
+                    : new string[] {path});
+
             if (!assemblies.Any() || assemblies == null)
                 throw new Exception($"No plugins found in {path}.");
 
@@ -87,7 +103,7 @@ namespace PluginLoader
 
             return plugins;
         }
-        
+
         public void RunPluginsFromPath(string path)
         {
             foreach (AssemblyPlugin plugin in this.PluginsFromPath(path))
