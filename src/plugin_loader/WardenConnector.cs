@@ -10,11 +10,6 @@ using Newtonsoft.Json.Linq;
 
 namespace PluginLoader
 {
-    internal enum ConnectorCommand : int
-    {
-        LoadPlugin = 0
-    }
-    
     internal class ConnectorEventArgs : EventArgs
     {
         internal ConnectorCommand Command { get; set; }

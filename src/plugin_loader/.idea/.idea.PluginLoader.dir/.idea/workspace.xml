@@ -6,12 +6,12 @@
       <change beforePath="$PROJECT_DIR$/../cogs/economy.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/economy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/fun.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/fun.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/moderation.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/moderation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../cogs/owner.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/owner.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/ranks.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/ranks.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/twitch_alerts.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/utils/converters.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/utils/converters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/WardenConnector.cs" beforeDir="false" afterPath="$PROJECT_DIR$/WardenConnector.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,6 +43,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/32F/Path.Windows.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/331/PathInternal.Windows.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/WardenConnector.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/ConnectorCommand.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/39/String.Searching.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/76/EventArgs.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/SourcesCache/947CFA9E-93C5-4D21-8EE6-CD975672A1F8/29C/Assembly.cs" root0="SKIP_HIGHLIGHTING" />
@@ -58,8 +59,9 @@
         <option value="$PROJECT_DIR$/CommandInvoker.cs" />
         <option value="$PROJECT_DIR$/AssemblyLoader.cs" />
         <option value="$PROJECT_DIR$/Loader.cs" />
-        <option value="$PROJECT_DIR$/WardenConnector.cs" />
         <option value="$PROJECT_DIR$/Program.cs" />
+        <option value="$PROJECT_DIR$/WardenConnector.cs" />
+        <option value="$PROJECT_DIR$/ConnectorCommand.cs" />
       </list>
     </option>
   </component>
@@ -127,7 +129,7 @@
       <workItem from="1581585607510" duration="9290000" />
       <workItem from="1581675120255" duration="6820000" />
       <workItem from="1581766273113" duration="8160000" />
-      <workItem from="1581833840231" duration="872000" />
+      <workItem from="1581833840231" duration="3715000" />
     </task>
     <servers />
   </component>

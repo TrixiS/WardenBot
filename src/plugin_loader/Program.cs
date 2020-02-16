@@ -1,8 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
  // TODO:
 //    make one solution and repo for all plugins
 //    one plugin -> one project
+
+// TODO:
+//    make check for plugins if loaded
+//    maybe add error send system
 
 namespace PluginLoader
 {
@@ -24,6 +29,10 @@ namespace PluginLoader
 
         private static void OnCommandReceived(object sender, ConnectorEventArgs e)
         {
+            // use switch here
+            // maybe Args[1] for concrent plugin
+            // maybe kill command for all tasks
+            
             if (e.Command == ConnectorCommand.LoadPlugin)
             {
                 loader.RunPluginsFromPath(e.Args[0]);
