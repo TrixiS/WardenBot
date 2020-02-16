@@ -7,7 +7,6 @@
       <e p="AssemblyLoader.cs" t="Include" />
       <e p="AssemblyPlugin.cs" t="Include" />
       <e p="bin" t="ExcludeRecursive" />
-      <e p="CommandInvoker.cs" t="Include" />
       <e p="Loader.cs" t="Include" />
       <e p="obj" t="ExcludeRecursive">
         <e p="Debug" t="Include">

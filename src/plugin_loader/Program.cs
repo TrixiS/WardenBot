@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
  // TODO:
 //    make one solution and repo for all plugins
@@ -8,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PluginLoader
 {
-    class Program
+    static class Program
     {
         private static Loader loader = new Loader(new AssemblyLoader());
         
@@ -16,6 +14,7 @@ namespace PluginLoader
         {
             loader.RunPluginsFromPath(args[0]);
 
+            // TODO: use port from args \\ Int32.Parse(args[2]);
             var connector = new WardenConnector("127.0.0.1", 6969, args[1]);
 
             connector.OnCommandReceived += OnCommandReceived;
@@ -26,7 +25,7 @@ namespace PluginLoader
 
         private static void OnCommandReceived(object sender, ConnectorEventArgs e)
         {
-            if (e.Command == "load_plugin")
+            if (e.Command == ConnectorCommand.LoadPlugin)
             {
                 loader.RunPluginsFromPath(e.Args[0]);
             }

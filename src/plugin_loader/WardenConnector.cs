@@ -10,9 +10,14 @@ using Newtonsoft.Json.Linq;
 
 namespace PluginLoader
 {
+    internal enum ConnectorCommand : int
+    {
+        LoadPlugin = 0
+    }
+    
     internal class ConnectorEventArgs : EventArgs
     {
-        internal string Command { get; set; }
+        internal ConnectorCommand Command { get; set; }
         internal string[] Args { get; set; }
         internal Socket Socket { get; set; }
     }
@@ -85,7 +90,7 @@ namespace PluginLoader
                 this.OnCommandReceived?.Invoke(null, new ConnectorEventArgs
                 {
                     Socket = socket,
-                    Command = (string) json["Command"],
+                    Command = (ConnectorCommand) (int) json["Command"],
                     Args = json["Args"].ToObject<string[]>()
                 });
             }

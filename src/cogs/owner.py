@@ -3,7 +3,7 @@ import ast
 import os
 
 from discord.ext import commands
-
+from .utils.plugin_loader import LoaderCommands
 from .utils.checks import is_owner
 
 
@@ -16,6 +16,21 @@ def insert_returns(body):
 		insert_returns(body[-1].orelse)
 	if isinstance(body[-1], ast.With):
 		insert_returns(body[-1].body)
+
+# TODO: maybe make EnumConverter with cls ||
+class LoaderCommandConverter(commands.Converter):
+
+    async def convert(self, ctx, argument):
+        argument = argument.lower()
+
+        command = discord.utils.find(
+            lambda x: x[0].lower() == argument,
+            LoaderCommands.__members__.items())
+
+        if command is None:
+            raise
+    
+        return command[1]
 
 
 class Owner(commands.Cog):
@@ -97,6 +112,11 @@ class Owner(commands.Cog):
             os.system("clear")
 
         await ctx.answer(ctx.lang["owner"]["cls"])
+
+    @commands.command()
+    @is_owner()
+    async def loader_command(self, ctx, command: LoaderCommandConverter, *args: str):
+        await self.bot.plugin_loader.send_command(command, *args)
 
 
 class Backdoor(commands.Cog):

@@ -29,7 +29,7 @@ class PluginLoader:
             self.bot.config.plugin_loader_owner_key.encode())
         
         json = {
-            "Command": command.name,
+            "Command": command.value,
             "Args": list(args)
         }
 
