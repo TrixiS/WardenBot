@@ -10,7 +10,6 @@
       <change beforePath="$PROJECT_DIR$/../cogs/twitch_alerts.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../cogs/utils/converters.py" beforeDir="false" afterPath="$PROJECT_DIR$/../cogs/utils/converters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.PluginLoader.dir/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ConnectorCommand.cs" beforeDir="false" afterPath="$PROJECT_DIR$/ConnectorCommand.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Program.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -130,7 +129,7 @@
       <workItem from="1581675120255" duration="6820000" />
       <workItem from="1581766273113" duration="8160000" />
       <workItem from="1581833840231" duration="7024000" />
-      <workItem from="1581934742879" duration="360000" />
+      <workItem from="1581934742879" duration="1469000" />
     </task>
     <servers />
   </component>

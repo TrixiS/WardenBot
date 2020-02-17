@@ -54,6 +54,11 @@ namespace PluginLoader
                 case ConnectorCommand.Kill:
                 {
                     connector.Stop();
+
+                    foreach (var assembly in loader.RegisteredPlugins.Select(p 
+                        => p.GetType().Assembly).Distinct())
+                        loader.KillPluginExecution(assembly);
+                    
                     Environment.Exit(0);
                     break;
                 }
