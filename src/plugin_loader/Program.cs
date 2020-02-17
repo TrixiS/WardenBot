@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
  // TODO:
@@ -17,13 +16,13 @@ namespace PluginLoader
     static class Program
     {
         private static Loader loader = new Loader(new AssemblyLoader());
+        private static WardenConnector connector;
         
         public static async Task Main(string[] args)
         {
             loader.RunPluginsFromPath(args[0]);
 
-            var connector = new WardenConnector("127.0.0.1", int.Parse(args[2]), args[1]);
-
+            connector = new WardenConnector("127.0.0.1", int.Parse(args[2]), args[1]);
             connector.OnCommandReceived += OnCommandReceived;
             connector.Start();
             
@@ -52,6 +51,15 @@ namespace PluginLoader
                                     
                     break;
                 }
+                case ConnectorCommand.Kill:
+                {
+                    connector.Stop();
+                    Environment.Exit(0);
+                    break;
+                }
+
+                default: 
+                    return;
             }
         }
     }

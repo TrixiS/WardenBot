@@ -9,6 +9,7 @@ class LoaderCommands(Enum):
 
     load = 0
     unload = 1
+    kill = 2
 
 
 class PluginLoader:
