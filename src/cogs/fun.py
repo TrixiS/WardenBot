@@ -7,6 +7,7 @@ from typing import Optional
 
 from .utils.constants import EmbedConstants, FunConstants
 from .utils.strings import markdown
+from .utils.converters import EnumConverter
 
 
 class RextesterPLs(Enum):
@@ -48,21 +49,16 @@ class RextesterPLs(Enum):
     Fortran = 45
 
 
-class RextesterPLConverter(commands.Converter):
+class RextesterPLConverter(EnumConverter):
 
     __qualname__ = "Programming language"
 
+    def __init__(self):
+        self.enum_cls = RextesterPLs
+
     async def convert(self, ctx, arg):
         arg = arg.lower().replace('#', 'sharp').replace('++', 'pp')
-
-        lang = discord.utils.find(
-            lambda x: x[0].lower() == arg, 
-            RextesterPLs.__members__.items())
-
-        if lang is None:
-            raise commands.BadArgument(ctx.lang["fun"]["invalid_prog_lang"])
-
-        return lang[1]
+        return await super().convert(ctx, arg)
 
 
 class Fun(commands.Cog):
@@ -76,15 +72,15 @@ class Fun(commands.Cog):
         right_attachment = discord.utils.find(
             lambda a: 0 < a.size <= FunConstants.ATTACH_MAX_SIZE,
             ctx.message.attachments)
-        
+            
         if code is None and right_attachment is not None:
             try:
                 code = (await right_attachment.read()).decode("utf-8")
-            except:
+            except Exception:
                 return await ctx.answer(ctx.lang["fun"]["invalid_attachment"].format(
                     FunConstants.ATTACH_MAX_SIZE / 1000000))
         elif code is None:
-            return await ctx.answer(ctx.lang["fun"]["need_code"])    
+            return await ctx.answer(ctx.lang["fun"]["need_code"])
 
         req_data = {
             "LanguageChoice": str(prog_lang.value),
@@ -93,10 +89,8 @@ class Fun(commands.Cog):
             "CompilerArgs": f"source_file.{prog_lang.name.lower()} -o a.out"
         }
 
-        async with self.bot.session.post(
-            FunConstants.REX_API_URL, 
-            data=req_data) as req:
-                data = await req.json()
+        async with self.bot.session.post(FunConstants.REX_API_URL, data=req_data) as req:
+            data = await req.json()
 
         offset = EmbedConstants.DESC_MAX_LEN - len("```")
 
@@ -123,11 +117,11 @@ class Fun(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command()
-    async def choose(self, ctx, *args):
-        if len(args) == 0:
+    async def choose(self, ctx, *words: str):
+        if len(words) == 0:
             await ctx.answer(ctx.lang["fun"]["choose_seq"])
         else:
-            await ctx.send(random.choice(args))
+            await ctx.send(random.choice(words))
 
 
 def setup(bot):
