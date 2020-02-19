@@ -198,7 +198,7 @@ class GameResultConverter(EnumConverter):
     __qualname__ = "GameResult"
 
     def __init__(self):
-        self.enum_cls = GameResult
+        super().__init__(GameResult)
 
 
 class MoneyTypeConverter(EnumConverter):
@@ -206,7 +206,7 @@ class MoneyTypeConverter(EnumConverter):
     __qualname__ = "MoneyType"
 
     def __init__(self):
-        self.enum_cls = MoneyType
+        super().__init__(MoneyType)
 
 
 class IncomeValue:

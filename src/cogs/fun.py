@@ -54,7 +54,7 @@ class RextesterPLConverter(EnumConverter):
     __qualname__ = "Programming language"
 
     def __init__(self):
-        self.enum_cls = RextesterPLs
+        super().__init__(RextesterPLs)
 
     async def convert(self, ctx, arg):
         arg = arg.lower().replace('#', 'sharp').replace('++', 'pp')
