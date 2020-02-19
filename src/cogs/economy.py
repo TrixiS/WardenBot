@@ -193,19 +193,12 @@ class GameResult(Enum):
     success = 1
 
 
-class GameResultConverter(commands.Converter):
+class GameResultConverter(EnumConverter):
 
-    async def convert(self, ctx, arg):
-        arg = arg.lower()
+    __qualname__ = "GameResult"
 
-        result = discord.utils.find(
-            lambda x: x[0].lower() == arg,
-            GameResult.__members__.items())
-
-        if result is None:
-            raise commands.BadArgument(ctx.lang["economy"]["invalid_game_result"])
-
-        return result[1]
+    def __init__(self):
+        self.enum_cls = GameResult
 
 
 class MoneyTypeConverter(EnumConverter):
