@@ -132,7 +132,7 @@ class EqualRole(commands.RoleConverter):
             raise commands.BadArgument(ctx.lang["errors"]["managed_role"].format(
                 role.mention))
 
-        if (role >= ctx.author.top_role and not ctx.bot.is_owner(ctx.author)) and \
+        if (role >= ctx.author.top_role and not ctx.bot.is_owner(ctx.author)) or \
             role >= ctx.guild.me.top_role:
                 raise commands.BadArgument(
                     ctx.lang["errors"]["role_over_top_role"].format(
