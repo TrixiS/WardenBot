@@ -4,6 +4,25 @@ from discord.ext import commands
 from asyncio import iscoroutinefunction as is_coro
 
 
+class EnumConverter(commands.Converter):
+
+    def __init__(self, enum_cls):
+        self.enum_cls = enum_cls
+
+    async def convert(self, ctx, arg):
+        arg = arg.lower()
+
+        result = discord.utils.find(
+            lambda x: x[0].lower() == arg,
+            self.enum_cls.__members__.items())
+
+        if result is None:
+            raise commands.BadArgument(ctx.lang["errors"]["cant_convert_enum"].format(
+                self.enum_cls.__qualname__))
+
+        return result[1]
+
+
 class CommandConverter(commands.Converter):
 
     __qualname__ = "Command"
