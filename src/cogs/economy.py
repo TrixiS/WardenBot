@@ -8,7 +8,8 @@ from math import ceil
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
-from .utils.converters import NotAuthor, SafeUint, IndexConverter, Index, HumanTime, CommandConverter
+from .utils.converters import (NotAuthor, SafeUint, IndexConverter, 
+    Index, HumanTime, CommandConverter, EnumConverter)
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown
 from .utils.models import PseudoMember
@@ -207,20 +208,12 @@ class GameResultConverter(commands.Converter):
         return result[1]
 
 
-class MoneyTypeConverter(commands.Converter):
+class MoneyTypeConverter(EnumConverter):
 
     __qualname__ = "MoneyType"
 
-    async def convert(self, ctx, argument):
-        argument = argument.lower()
-
-        if argument == ctx.lang["economy"]["cash"].lower():
-            return MoneyType.cash
-        
-        if argument == ctx.lang["economy"]["bank"].lower():
-            return MoneyType.bank
-
-        raise commands.BadArgument(ctx.lang["economy"]["incorrect_money_type"])
+    def __init__(self):
+        self.enum_cls = MoneyType
 
 
 class IncomeValue:
@@ -603,8 +596,6 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_income"].format(
                 member.mention))
 
-    # TODO:
-    #   add gamequal support, so drop table
     @commands.group(invoke_without_command=True)
     @is_commander()
     async def story(self, ctx, story_id: SafeUint):
