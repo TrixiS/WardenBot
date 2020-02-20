@@ -59,13 +59,15 @@ class Ranks(commands.Cog):
             return await ctx.answer(ctx.lang["errors"]["no_roles"])
         
         check = await self.bot.db.execute(
-            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ? LIMIT ?",
-            ctx.guild.id, RanksConstants.ROLES_MAX_COUNT, fetch_all=True)
+            "SELECT `role` FROM `ranks` WHERE `ranks`.`server` = ?",
+            ctx.guild.id, fetch_all=True)
 
         ranks_roles = tuple(ctx.guild.get_role(c[0]) for c in check)
+        ranks_roles = tuple(role for role in ranks_roles if role is not None)
 
-        deleted = {role for role in roles if role in ranks_roles and role is not None}
-        added = tuple(set(roles) ^ deleted)[:RanksConstants.ROLES_MAX_COUNT]
+        deleted = {role for role in roles if role in ranks_roles}
+        max_to_add = RanksConstants.ROLES_MAX_COUNT - len(ranks_roles) + len(deleted)
+        added = tuple(set(roles) ^ deleted)[:max_to_add]
 
         delete_sql = """
         DELETE 
