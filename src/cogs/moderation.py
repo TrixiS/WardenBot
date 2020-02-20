@@ -24,12 +24,8 @@ class MuteRoles:
     overwrite.send_messages = False
     overwrite.embed_links = False
     overwrite.attach_files = False
-    overwrite.create_instant_invite = False
-    overwrite.manage_messages = False
     overwrite.send_tts_messages = False
     overwrite.mention_everyone = False
-    overwrite.speak = False
-    overwrite.use_voice_activation = False
     
     def __init__(self, bot):
         self.bot = bot
