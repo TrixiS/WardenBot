@@ -424,9 +424,32 @@ class Moderation(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     async def role(self, ctx, *, role: discord.Role):
-        # TODO:
-        #   make info command for roles
-        pass
+        em = discord.Embed(
+            description=f"**{ctx.lang['shared']['role']}:** {role.mention}",
+            colour=ctx.color)
+        
+        em.add_field(
+            name=ctx.lang["shared"]["id"], 
+            value=role.id)
+        em.add_field(
+            name=ctx.lang["shared"]["created"], 
+            value=r"{:%d.%m.%Y}".format(role.created_at))
+        em.add_field(
+            name=ctx.lang["info"]["hoisted"],
+            value=ctx.lang["shared"][str(role.hoist)])
+        em.add_field(
+            name=ctx.lang["info"]["mentionable"],
+            value=ctx.lang["shared"][str(role.mentionable)])
+        em.add_field(
+            name=ctx.lang["info"]["members"],
+            value=len(role.members))
+        em.add_field(
+            name=ctx.lang["shared"]["color"],
+            value=role.color)
+
+        em.set_thumbnail(url=ctx.guild.icon_url)
+
+        await ctx.send(embed=em)
 
     @role.command(name="give")
     @is_moderator(manage_roles=True)
