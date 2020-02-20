@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .utils.plugin_loader import LoaderCommands
 from .utils.checks import is_owner
+from .utils.converters import EnumConverter
 
 
 def insert_returns(body):
@@ -19,20 +20,13 @@ def insert_returns(body):
 	if isinstance(body[-1], ast.With):
 		insert_returns(body[-1].body)
 
-# TODO: maybe make EnumConverter with cls ||
-class LoaderCommandConverter(commands.Converter):
 
-    async def convert(self, ctx, argument):
-        argument = argument.lower()
+class LoaderCommandConverter(EnumConverter):
 
-        command = discord.utils.find(
-            lambda x: x[0].lower() == argument,
-            LoaderCommands.__members__.items())
+    __qualname__ = "Plugin loader command"
 
-        if command is None:
-            raise commands.BadArgument(ctx.lang["owner"]["invalid_loader_command"])
-    
-        return command[1]
+    def __init__(self):
+        self.enum_cls = LoaderCommands
 
 
 class Owner(commands.Cog):
