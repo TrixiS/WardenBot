@@ -6,7 +6,7 @@ from enum import Enum
 from typing import Optional
 
 from .utils.constants import EmbedConstants, FunConstants
-from .utils.strings import markdown
+from .utils.strings import markdown, human_choice
 from .utils.converters import EnumConverter
 
 
@@ -59,6 +59,23 @@ class RextesterPLConverter(EnumConverter):
     async def convert(self, ctx, arg):
         arg = arg.lower().replace('#', 'sharp').replace('++', 'pp')
         return await super().convert(ctx, arg)
+
+
+class SpellerLanguage(Enum):
+
+    RU = 0
+    UK = 1
+    EN = 2
+
+
+class SpellerLanguageConverter(EnumConverter):
+
+    __qualname__ = human_choice(
+        tuple(SpellerLanguage.__members__.keys()), 
+        second_sep="or")
+
+    def __init__(self):
+        super().__init__(SpellerLanguage)
 
 
 class Fun(commands.Cog):
@@ -235,6 +252,22 @@ class Fun(commands.Cog):
                 translated_text += translated_letter
 
         await ctx.send(translated_text)
+
+    @commands.command()
+    async def speller(self, ctx, lang: SpellerLanguageConverter, word: commands.clean_content):
+        req_data = {
+            "text": word,
+            "lang": lang.name,
+            "format": "plain"
+        }
+
+        async with self.bot.session.post(FunConstants.SPELLER_API_URL, data=req_data) as req:
+            data = await req.json()
+    
+        if len(data) == 0:
+            return await ctx.answer(ctx.lang["fun"]["no_mistakes"])
+
+        await ctx.answer(data[0]['s'][0].capitalize())
 
 
 def setup(bot):
