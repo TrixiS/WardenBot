@@ -264,10 +264,10 @@ class Fun(commands.Cog):
         async with self.bot.session.post(FunConstants.SPELLER_API_URL, data=req_data) as req:
             data = await req.json()
     
-        if len(data) == 0:
+        if len(data) == 0 or len(data[0]['s']) == 0:
             return await ctx.answer(ctx.lang["fun"]["no_mistakes"])
 
-        await ctx.answer(data[0]['s'][0].capitalize())
+        await ctx.answer(', '.join(data[0]['s']).capitalize())
 
 
 def setup(bot):
