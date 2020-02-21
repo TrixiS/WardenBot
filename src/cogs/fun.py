@@ -123,6 +123,18 @@ class Fun(commands.Cog):
         else:
             await ctx.send(random.choice(words))
 
+    @commands.command()
+    async def dog(self, ctx):
+        async with self.bot.session.get(FunConstants.DOG_API_URL) as req:
+            image_url = (await req.json())['message']
+
+        em = discord.Embed(
+            title=ctx.lang["fun"]["dog"].format(ctx.author.name), 
+            colour=ctx.color)
+        em.set_image(url=image_url)
+
+        await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
