@@ -254,6 +254,9 @@ class Fun(commands.Cog):
 
     @commands.command()
     async def speller(self, ctx, lang: SpellerLanguageConverter, word: str):
+        if not word.isalpha():
+            return await ctx.answer(ctx.lang["fun"]["alpha_needed"])
+        
         req_data = {
             "text": word,
             "lang": lang.name,
