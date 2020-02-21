@@ -143,6 +143,99 @@ class Fun(commands.Cog):
     async def reverse(self, ctx, *, text: commands.clean_content):
         await ctx.send(text[::-1])
 
+    @commands.command(aliases=["switch"])
+    async def punto(self, ctx, *, text: commands.clean_content):
+        ru_letters = {
+            "й": "q",
+            "ц": "w",
+            "у": 'e',
+            'к': 'r',
+            'е': 't',
+            'н': 'y',
+            'г': 'u',
+            'ш': 'i',
+            'щ': 'o',
+            'з': 'p',
+            'х': '[',
+            'ъ': ']',
+            'ф': 'a',
+            'ы': 's',
+            'в': 'd',
+            'а': 'f',
+            'п': 'g',
+            'р': 'h',
+            'о': 'j',
+            'л': 'k',
+            'д': 'l',
+            'ж': ';',
+            'э': "'",
+            'я': 'z',
+            'ч': 'x',
+            'с': 'c',
+            'м': 'v',
+            'и': 'b',
+            'т': 'n',
+            'ь': 'm',
+            'б': ',',
+            'ю': '.'
+        }       
+
+        en_letters = {
+            "q": "й",
+            "w": "ц",
+            'e': "у",
+            'r': 'к',
+            't': 'е',
+            'y': 'н',
+            'u': 'г',
+            'i': 'ш',
+            'o': 'щ',
+            'p': 'з',
+            '[': 'х',
+            ']': 'ъ',
+            'a': 'ф',
+            's': 'ы',
+            'd': 'в',
+            'f': 'а',
+            'g': 'п',
+            'h': 'р',
+            'j': 'о',
+            'k': 'л',
+            'l': 'д',
+            ';': 'ж',
+            "'": 'э',
+            'z': 'я',
+            'x': 'ч',
+            'c': 'с',
+            'v': 'м',
+            'b': 'и',
+            'n': 'т',
+            'm': 'ь',
+            ',': 'б',
+            '.': 'ю'
+        }
+
+        translated_text = ""
+
+        for letter in text:
+            was_upper = letter.isupper()
+            letter = letter.lower()
+            translated_letter = None
+
+            if letter in ru_letters:
+                translated_letter = ru_letters[letter]
+            elif letter in en_letters:
+                translated_letter = en_letters[letter]
+            else:
+                translated_letter = letter
+
+            if was_upper:
+                translated_text += translated_letter.upper()
+            else:
+                translated_text += translated_letter
+
+        await ctx.send(translated_text)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
