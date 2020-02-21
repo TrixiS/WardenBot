@@ -139,6 +139,10 @@ class Fun(commands.Cog):
     async def coin(self, ctx):
         await ctx.send(random.choice(ctx.lang["fun"]["coins"]))
 
+    @commands.command()
+    async def reverse(self, ctx, *, text: commands.clean_content):
+        await ctx.send(text[::-1])
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
