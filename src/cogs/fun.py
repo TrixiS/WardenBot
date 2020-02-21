@@ -128,7 +128,6 @@ class Fun(commands.Cog):
         em = discord.Embed(
             title=ctx.lang["fun"]["avatar"].format((member or ctx.author).name),
             colour=ctx.color)
-
         em.set_image(url=(member or ctx.author).avatar_url)
 
         await ctx.send(embed=em)
@@ -163,9 +162,9 @@ class Fun(commands.Cog):
     @commands.command(aliases=["switch"])
     async def punto(self, ctx, *, text: commands.clean_content):
         ru_letters = {
-            "й": "q",
-            "ц": "w",
-            "у": 'e',
+            'й': 'q',
+            'ц': 'w',
+            'у': 'e',
             'к': 'r',
             'е': 't',
             'н': 'y',
@@ -185,7 +184,7 @@ class Fun(commands.Cog):
             'л': 'k',
             'д': 'l',
             'ж': ';',
-            'э': "'",
+            'э': '\'',
             'я': 'z',
             'ч': 'x',
             'с': 'c',
@@ -198,9 +197,9 @@ class Fun(commands.Cog):
         }       
 
         en_letters = {
-            "q": "й",
-            "w": "ц",
-            'e': "у",
+            'q': 'й',
+            'w': 'ц',
+            'e': 'у',
             'r': 'к',
             't': 'е',
             'y': 'н',
@@ -220,7 +219,7 @@ class Fun(commands.Cog):
             'k': 'л',
             'l': 'д',
             ';': 'ж',
-            "'": 'э',
+            '\'': 'э',
             'z': 'я',
             'x': 'ч',
             'c': 'с',
@@ -254,7 +253,7 @@ class Fun(commands.Cog):
         await ctx.send(translated_text)
 
     @commands.command()
-    async def speller(self, ctx, lang: SpellerLanguageConverter, word: commands.clean_content):
+    async def speller(self, ctx, lang: SpellerLanguageConverter, word: str):
         req_data = {
             "text": word,
             "lang": lang.name,
