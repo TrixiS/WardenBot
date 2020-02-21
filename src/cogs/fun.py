@@ -135,6 +135,10 @@ class Fun(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def coin(self, ctx):
+        await ctx.send(random.choice(ctx.lang["fun"]["coins"]))
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
