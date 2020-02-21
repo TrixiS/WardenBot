@@ -50,3 +50,4 @@ class FunConstants:
     ATTACH_MAX_SIZE = 1000000
     REX_API_URL = "https://rextester.com/rundotnet/api"
     DOG_API_URL = "https://dog.ceo/api/breeds/image/random"
+    SPELLER_API_URL = "https://speller.yandex.net/services/spellservice.json/checkText"
