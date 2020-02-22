@@ -252,6 +252,10 @@ class Fun(commands.Cog):
 
         await ctx.send(translated_text)
 
+    # TODO:
+    #   use lru here for rate limits
+    # TODO:
+    #   deploy the bot
     @commands.command()
     async def speller(self, ctx, lang: SpellerLanguageConverter, word: str):
         if not word.isalpha():
@@ -270,6 +274,10 @@ class Fun(commands.Cog):
             return await ctx.answer(ctx.lang["fun"]["no_mistakes"])
 
         await ctx.answer(', '.join(data[0]['s']).capitalize())
+
+    @commands.command()
+    async def say(self, ctx, *, text: commands.clean_content):
+        await ctx.send(text)
 
 
 def setup(bot):
