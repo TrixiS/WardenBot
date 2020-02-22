@@ -82,7 +82,7 @@ class Logging(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if before.author.bot or after.author.bot:
+        if before.author.bot or before.content == after.content:
             return
 
         log_channel = await self.get_log_channel(after.guild)
