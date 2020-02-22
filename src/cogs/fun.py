@@ -284,7 +284,7 @@ class Fun(commands.Cog):
     async def roll(self, ctx, min_value: int=1, max_value: int=100):
         await ctx.send(str(random.randint(min_value, max_value)))
 
-    @commands.command(aliases=["color"])
+    @commands.command(aliases=["color", "colour"])
     async def hex(self, ctx, hex_color: discord.Colour):
         em = discord.Embed(
             title=ctx.lang["shared"]["color"], 
