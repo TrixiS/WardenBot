@@ -7,7 +7,10 @@ from bot import Warden
 from config import Config
 from cogs.utils.global_checks import *
 
-logging.basicConfig(level=logging.INFO, format=f"%(levelname)s: %(message)s - %(asctime)s")
+logging.basicConfig(
+    filename="warden.log", 
+    level=logging.ERROR, 
+    format=f"%(levelname)s: %(message)s - %(asctime)s")
 
 config = Config()
 
