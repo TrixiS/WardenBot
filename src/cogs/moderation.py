@@ -143,8 +143,10 @@ class Moderation(commands.Cog):
         FROM `cases`
         WHERE `cases`.`server` = {ctx.guild.id}"""
 
-        await self.bot.db.execute(f"INSERT INTO `cases` VALUES (({query}), ?, ?, ?, ?, ?, ?, ?)",
-            ctx.guild.id,
+        case_id = await self.bot.db.execute(query)
+
+        await self.bot.db.execute(f"INSERT INTO `cases` VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            case_id, ctx.guild.id,
             ctx.author.id, member.id, 
             entry_type.name, int(info.time.timestamp),
             info.reason, False, with_commit=True)
