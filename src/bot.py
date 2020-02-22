@@ -126,3 +126,6 @@ class Warden(AutoShardedBot):
     async def on_ready(self):
         self.uptime = datetime.now()
         logging.info(f'{self.user.name} started with {len(self.guilds)} guilds')
+        await self.change_presence(activity=discord.Activity(
+            type=discord.ActivityType.watching, 
+            name=self.config.status))
