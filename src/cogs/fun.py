@@ -4,6 +4,7 @@ import random
 from discord.ext import commands
 from enum import Enum
 from typing import Optional
+from urllib.parse import urlencode
 
 from .utils.constants import EmbedConstants, FunConstants
 from .utils.strings import markdown, human_choice
@@ -282,7 +283,34 @@ class Fun(commands.Cog):
     @commands.command()
     async def roll(self, ctx, min_value: int=1, max_value: int=100):
         await ctx.send(str(random.randint(min_value, max_value)))
+
+    @commands.command(aliases=["color"])
+    async def hex(self, ctx, hex_color: discord.Colour):
+        em = discord.Embed(
+            title=ctx.lang["shared"]["color"], 
+            colour=hex_color)
         
+        str_hex = str(hex_color)[1:].upper()
+
+        em.add_field(
+            name="HEX", 
+            value=str_hex, 
+            inline=False)
+        em.add_field(
+            name="RGB", 
+            value=str(hex_color.to_rgb()), 
+            inline=False)
+
+        req_data = {
+            "hex": str_hex,
+            "width": 200,
+            "height": 200
+        }
+
+        em.set_thumbnail(url=FunConstants.IMAGE_API_URL + urlencode(req_data))
+
+        await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
