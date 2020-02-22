@@ -46,14 +46,17 @@ class Tags(commands.Cog):
                 description=', '.join(markdown(c[0], '`') for c in check),
                 colour=ctx.color)
             em.set_thumbnail(url=member.avatar_url)
-            em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{ceil(count / TagsConstants.CHECK_PAGE_MAX)}')           
+            em.set_footer(text=f'{ctx.lang["shared"]["page"]} {page.humanize()}/{ceil(count / TagsConstants.CHECK_PAGE_MAX)}')           
 
             return await ctx.send(embed=em)
 
         await ctx.answer(ctx.lang["tags"]["dont_have_any"].format(member.mention, page.humanize()))            
 
     @tag.command(name="create")
-    async def tag_create(self, ctx, *, name: str):
+    async def tag_create(self, ctx, *, name: commands.clean_content(escape_markdown=True)):
+        if not name.isalpha():
+            return await ctx.answer(ctx.lang["fun"]["aplha_needed"])
+        
         name = name[:TagsConstants.MAX_LEN]
 
         check = await self.bot.db.execute("SELECT `name` FROM `tags` WHERE `tags`.`member` = ? AND `tags`.`name` = ?",
@@ -67,7 +70,7 @@ class Tags(commands.Cog):
             if content is None:
                 return
 
-            content = await commands.clean_content().convert(ctx, name)
+            content = await commands.clean_content().convert(ctx, content)
 
             await self.bot.db.execute("INSERT INTO `tags` VALUES (?, ?, ?, ?, UNIX_TIMESTAMP())",
                 ctx.message.author.id, name, content, 0, with_commit=True)
