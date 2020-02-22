@@ -41,7 +41,8 @@ class General(Cog):
     @is_commander()
     async def embed_color(self, ctx, *, new_color: Optional[discord.Colour]):
         if new_color is None:
-            return await ctx.answer(str(ctx.color).upper())
+            hex_command = self.bot.get_command("hex")
+            return await hex_command.callback(hex_command.cog, ctx, ctx.color)
 
         rgb_str = ';'.join(map(str, new_color.to_rgb()))
 
