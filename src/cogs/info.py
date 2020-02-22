@@ -1,6 +1,7 @@
 import discord
 
 from discord.ext import commands
+from typing import Optional
 
 
 class Info(commands.Cog):
@@ -46,8 +47,41 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command(aliases=["user"])
+    async def member(self, ctx, *, member: Optional[discord.Member]):
+        if member is None:
+            member = ctx.author
+        
+        em = discord.Embed(
+            description=f"**{ctx.lang['shared']['member']}:** {member.mention}",
+            colour=ctx.color)
+
+        date_fmt = r"{:%d.%m.%Y, %H:%M}"
+
+        em.add_field(
+            name=ctx.lang["shared"]["id"],
+            value=member.id)
+        em.add_field(
+            name=ctx.lang["shared"]["created"],
+            value=date_fmt.format(member.created_at))
+        em.add_field(
+            name=ctx.lang["info"]["joined"], 
+            value=date_fmt.format(member.joined_at))
+        em.add_field(
+            name=ctx.lang["info"]["status"],
+            value=str(member.status).title())
+        em.add_field(
+            name=ctx.lang["shared"]["color"], 
+            value=str(member.color).upper())
+        em.add_field(
+            name=ctx.lang["info"]["top_role"],
+            value=member.top_role.mention)
+
+        em.set_thumbnail(url=member.avatar_url)
+
+        await ctx.send(embed=em)
+
 # TODO:
-#   member
 #   channel
 #   emoji command with human emoji for lang adding
 
