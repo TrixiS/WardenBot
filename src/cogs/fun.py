@@ -279,6 +279,10 @@ class Fun(commands.Cog):
     async def say(self, ctx, *, text: commands.clean_content):
         await ctx.send(text)
 
+    @commands.command()
+    async def roll(self, ctx, min_value: int=1, max_value: int=100):
+        await ctx.send(str(random.randint(min_value, max_value)))
+        
 
 def setup(bot):
     bot.add_cog(Fun(bot))
