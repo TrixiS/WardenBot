@@ -52,3 +52,8 @@ class FunConstants:
     DOG_API_URL = "https://dog.ceo/api/breeds/image/random"
     SPELLER_API_URL = "https://speller.yandex.net/services/spellservice.json/checkText"
     IMAGE_API_URL = "https://www.colorbook.io/imagecreator.php/?"
+
+
+class InfoConstants:
+
+    GHUB_API_URL = "https://api.github.com"
