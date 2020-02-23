@@ -253,10 +253,6 @@ class Fun(commands.Cog):
 
         await ctx.send(translated_text)
 
-    # TODO:
-    #   use lru here for rate limits
-    # TODO:
-    #   deploy the bot
     @commands.command()
     async def speller(self, ctx, lang: SpellerLanguageConverter, word: str):
         if not word.isalpha():
