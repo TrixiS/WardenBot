@@ -81,9 +81,43 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def channel(self, ctx, channel: Optional[discord.TextChannel]):
+        if channel is None:
+            channel = ctx.channel
+
+        em = discord.Embed(
+            description=f"**{ctx.lang['shared']['channel']}:** {channel.mention}",
+            colour=ctx.color)
+
+        em.add_field(
+            name=ctx.lang["shared"]["id"],
+            value=channel.id)
+        em.add_field(
+            name=ctx.lang["shared"]["created"],
+            value="{:%d.%m.%Y}".format(channel.created_at))
+        em.add_field(
+            name=ctx.lang["shared"]["type"],
+            value=str(channel.type).title())
+        em.add_field(
+            name="NSFW", 
+            value=ctx.lang["shared"][str(channel.is_news())])
+        em.add_field(
+            name=ctx.lang["info"]["is_news"], 
+            value=ctx.lang["shared"][str(channel.is_news())])
+        em.add_field(
+            name=ctx.lang["info"]["slowmode"],
+            value=f"{channel.slowmode_delay} {ctx.lang['shared']['seconds']}")
+
+        em.set_thumbnail(url=ctx.guild.icon_url)
+
+        await ctx.send(embed=em)
+
 # TODO:
 #   channel
 #   emoji command with human emoji for lang adding
+#   bot command
+#   last change command (last commit from ghub (may be check its api))
 
 def setup(bot):
     bot.add_cog(Info(bot))
