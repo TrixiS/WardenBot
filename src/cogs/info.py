@@ -113,9 +113,30 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def emoji(self, ctx, emoji: discord.Emoji):
+        em = discord.Embed(
+            description=f"**{ctx.lang['shared']['emoji']}:** {str(emoji)}",
+            colour=ctx.color)
+
+        em.add_field(
+            name=ctx.lang["shared"]["id"], 
+            value=emoji.id)
+        em.add_field(
+            name=ctx.lang["shared"]["created"], 
+            value="{:%d.%m.%Y}".format(emoji.created_at))
+        em.add_field(
+            name="URL", 
+            value=f"[{ctx.lang['shared']['click']}]({emoji.url})")
+        em.add_field(
+            name=ctx.lang["info"]["code"], 
+            value=f"```{str(emoji)}```")
+
+        em.set_thumbnail(url=emoji.url)
+
+        await ctx.send(embed=em)
+
 # TODO:
-#   channel
-#   emoji command with human emoji for lang adding
 #   bot command
 #   last change command (last commit from ghub (may be check its api))
 
