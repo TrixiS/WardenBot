@@ -165,6 +165,23 @@ class _Economy:
 
         return str(emoji)
 
+    async def get_chance(self, guild, command):
+        select_sql = """
+        SELECT `chance`
+        FROM `chances`
+        WHERE `chances`.`server` = ? AND `chances`.`command` = ?
+        """
+
+        lower_name = command.qualified_name.lower()
+
+        current_chance = await self.bot.db.execute(
+        select_sql, guild.id, lower_name)
+
+        if current_chance is None:
+            current_chance = self.bot.config.default_chances.get(lower_name, 50)
+
+        return current_chance
+
 
 class EconomyCommand(commands.Command):
     
@@ -648,6 +665,46 @@ class Economy(commands.Cog):
         else:
             await ctx.answer(ctx.lang["economy"]["delete_story"].format(story_id))
 
+    # TODO:
+    #   reward command
+
+    @commands.command()
+    @is_commander()
+    async def chance(self, ctx, command: CommandConverter(cls=EconomyGame), new_chance: Optional[SafeUint]):
+        if new_chance is None:
+            return await ctx.answer(ctx.lang["economy"]["current_chance"].format(
+                command.qualified_name, 
+                await self.eco.get_chance(ctx.guild, command)))
+
+        lower_name = command.qualified_name.lower()
+        new_chance = min(100, new_chance)
+    
+        update_sql = """
+        UPDATE `chances` 
+        SET `chance` = ? 
+        WHERE `chances`.`server` = ? AND `chances`.`command` = ?
+        """
+    
+        check = await self.bot.db.execute(
+            update_sql, new_chance, 
+            ctx.guild.id, lower_name)
+    
+        if not check:
+            await self.bot.db.execute(
+                "INSERT INTO `chances` VALUES (?, ?, ?)",
+                ctx.guild.id, lower_name, new_chance)
+    
+        await ctx.answer(ctx.lang["economy"]["chance_changed"].format(
+            lower_name, new_chance))
+
+        
+    # TODO:
+    #   work command
+    #   slut command
+    #   rob command
+    #   crime command
+    #   EconomyGame prepare fetch GameResult and story
+    #   maybe add fetch account?
 
 def setup(bot):
     bot.add_cog(Economy(bot))
