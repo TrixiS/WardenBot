@@ -185,7 +185,10 @@ class Info(commands.Cog):
         em.add_field(
             name=ctx.lang["info"]["committer"], 
             value=f"[{data['committer']['login']}]({data['committer']['html_url']})")
-        
+        em.add_field(
+            name="URL", 
+            value=f"[{ctx.lang['shared']['click']}]({data['html_url']})")
+
         commit_date = datetime.datetime.strptime(
             data["commit"]["committer"]["date"], 
             "%Y-%m-%dT%H:%M:%SZ")
@@ -195,7 +198,8 @@ class Info(commands.Cog):
             value="{:%d.%m.%Y %H:%M}".format(commit_date))
         em.add_field(
             name=ctx.lang["shared"]["message"],
-            value=data["commit"]["message"])
+            value=data["commit"]["message"],
+            inline=False)
 
         em.set_thumbnail(url=data["committer"]["avatar_url"])
 
