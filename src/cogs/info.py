@@ -1,7 +1,10 @@
 import discord
+import datetime
 
 from discord.ext import commands
 from typing import Optional
+
+from .utils.constants import InfoConstants
 
 
 class Info(commands.Cog):
@@ -165,8 +168,39 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
-# TODO:
-#   last change command (last commit from ghub (may be check its api))
+    @commands.command()
+    async def lastchange(self, ctx):
+        url = InfoConstants.GHUB_API_URL + "/repos/TrixiS/WardenBot/commits/master"
+
+        async with self.bot.session.get(url) as req:
+            data = await req.json()
+
+        em = discord.Embed(
+            title=ctx.lang["info"]["last_commit"], 
+            colour=ctx.color)
+
+        em.add_field(
+            name=ctx.lang["shared"]["author"], 
+            value=f"[{data['author']['login']}]({data['author']['html_url']})")
+        em.add_field(
+            name=ctx.lang["info"]["committer"], 
+            value=f"[{data['committer']['login']}]({data['committer']['html_url']})")
+        
+        commit_date = datetime.datetime.strptime(
+            data["commit"]["committer"]["date"], 
+            "%Y-%m-%dT%H:%M:%SZ")
+        
+        em.add_field(
+            name=ctx.lang["shared"]["created"], 
+            value="{:%d.%m.%Y %H:%M}".format(commit_date))
+        em.add_field(
+            name=ctx.lang["shared"]["message"],
+            value=data["commit"]["message"])
+
+        em.set_thumbnail(url=data["committer"]["avatar_url"])
+
+        await ctx.send(embed=em)
+
 
 def setup(bot):
     bot.add_cog(Info(bot))
