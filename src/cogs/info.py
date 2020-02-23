@@ -136,8 +136,36 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def bot(self, ctx):
+        em = discord.Embed(
+            description=self.bot.user.mention, 
+            colour=ctx.color)
+
+        em.add_field(
+            name=ctx.lang["shared"]["id"], 
+            value=self.bot.user.id)
+        em.add_field(
+            name=ctx.lang["info"]["docs"], 
+            value=f"[{ctx.lang['shared']['click']}]({self.bot.config.docs_url})")
+        em.add_field(
+            name=ctx.lang["info"]["members"],
+            value=len(self.bot.users))
+        em.add_field(
+            name=ctx.lang["info"]["guilds"],
+            value=len(self.bot.guilds))
+        em.add_field(
+            name=ctx.lang["info"]["latency"],
+            value=f"{round(self.bot.latency, 3)} {ctx.lang['shared']['seconds']}")
+        em.add_field(
+            name=ctx.lang["info"]["owners"],  
+            value='\n'.join(self.bot.get_user(uid).mention for uid in self.bot.config.owners))
+
+        em.set_thumbnail(url=self.bot.user.avatar_url)
+
+        await ctx.send(embed=em)
+
 # TODO:
-#   bot command
 #   last change command (last commit from ghub (may be check its api))
 
 def setup(bot):
