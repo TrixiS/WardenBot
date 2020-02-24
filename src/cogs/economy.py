@@ -174,13 +174,52 @@ class _Economy:
         """
 
         current_chance = await self.bot.db.execute(
-        select_sql, guild.id, command.qualified_name)
+            select_sql, guild.id, command.qualified_name)
 
         if current_chance is None:
             current_chance = self.bot.config.default_chances.get(
                 command.qualified_name, 50)
 
         return current_chance
+
+    async def get_game_config(self, ctx):
+        config_select_sql = """
+        SELECT `chance`, `reward`
+        FROM `game_config`
+        WHERE `game_config`.`server` = ? AND `game_config`.`command` = ?
+        """
+
+        story_select_sql = """
+        SELECT `story` FROM `stories`
+        WHERE `stories`.`server` = ? AND `stories`.`lang` = ? 
+            AND `stories`.`command` = ?
+        """
+
+        game_config = await self.bot.db.execute(
+            config_select_sql, ctx.guild.id, 
+            ctx.command.qualified_name)
+
+        story = await self.bot.db.execute(
+            story_select_sql, ctx.guild.id, 
+            ctx.lang["lang_code"], 
+            ctx.command.qualified_name)
+
+        return EconomyGameConfig(
+            *(game_config or self.bot.config.default_game_config), story)
+
+
+class EconomyGameConfig:
+
+    def __init__(self, chance, reward, story):
+        self.chance = chance
+        self.reward = reward
+        self.story = story
+        self.rolled_chance = random.randint(1, 100)
+        
+        if self.rolled_chance >= chance:
+            self.game_result = GameResult.success
+        else:
+            self.game_result = GameResult.fail
 
 
 class EconomyCommand(commands.Command):
@@ -194,26 +233,24 @@ class EconomyGroup(EconomyCommand, commands.Group):
     pass
 
 
+# TODO: create table for chances and rewares on prod db
+# TODO: make one class and table for all economy configs
 class EconomyGame(EconomyCommand, CooldownCommand):
-    
-    async def prepare(self, ctx):
-        await super().prepare(ctx)
+    pass    
+#     async def prepare(self, ctx):
+#         await super().prepare(ctx)
         
-        win_chance = await self.cog.get_chance(ctx.guild, self)
-        rolled_chance = random.randint(1, 100)
+#         win_chance = await self.cog.eco.get_chance(ctx.guild, self)
+#         rolled_chance = random.randint(1, 100)
 
-        if rolled_chance >= win_chance:
-            ctx.game_result = GameResult.success
-        else:
-            ctx.game_result = GameResult.fail
+#         if rolled_chance >= win_chance:
+#             ctx.game_result = GameResult.success
+#         else:
+#             ctx.game_result = GameResult.fail
 
-        # TODO!!!: remove lower_name and just take command.qualified_name
-        # TODO: ctx.reward = await self.cog.eco.get_reward(ctx.guild, self)
-        # TODO: think how to push pure lang to the method
-        #       so we push dict but we want lang code like en or st
-        # TODO: ctx.story = await self.cog.eco.get_story(ctx, self)
-        # TODO: create table for chances and rewares on prod d
-        ctx.account = await self.cog.get_money(ctx.author)
+#         ctx.reward = await self.cog.eco.get_reward(ctx.guild, self)
+#         ctx.story = await self.cog.eco.get_story(ctx)
+#         ctx.account = await self.cog.get_money(ctx.author)
 
 
 class MoneyType(Enum):
