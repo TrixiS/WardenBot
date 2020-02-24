@@ -1,5 +1,6 @@
 import discord
 import logging
+import random
 
 from discord.ext import commands, tasks
 from enum import Enum
@@ -172,13 +173,12 @@ class _Economy:
         WHERE `chances`.`server` = ? AND `chances`.`command` = ?
         """
 
-        lower_name = command.qualified_name.lower()
-
         current_chance = await self.bot.db.execute(
-        select_sql, guild.id, lower_name)
+        select_sql, guild.id, command.qualified_name)
 
         if current_chance is None:
-            current_chance = self.bot.config.default_chances.get(lower_name, 50)
+            current_chance = self.bot.config.default_chances.get(
+                command.qualified_name, 50)
 
         return current_chance
 
@@ -195,7 +195,25 @@ class EconomyGroup(EconomyCommand, commands.Group):
 
 
 class EconomyGame(EconomyCommand, CooldownCommand):
-    pass
+    
+    async def prepare(self, ctx):
+        await super().prepare(ctx)
+        
+        win_chance = await self.cog.get_chance(ctx.guild, self)
+        rolled_chance = random.randint(1, 100)
+
+        if rolled_chance >= win_chance:
+            ctx.game_result = GameResult.success
+        else:
+            ctx.game_result = GameResult.fail
+
+        # TODO!!!: remove lower_name and just take command.qualified_name
+        # TODO: ctx.reward = await self.cog.eco.get_reward(ctx.guild, self)
+        # TODO: think how to push pure lang to the method
+        #       so we push dict but we want lang code like en or st
+        # TODO: ctx.story = await self.cog.eco.get_story(ctx, self)
+        # TODO: create table for chances and rewares on prod d
+        ctx.account = await self.cog.get_money(ctx.author)
 
 
 class MoneyType(Enum):
@@ -676,7 +694,6 @@ class Economy(commands.Cog):
                 command.qualified_name, 
                 await self.eco.get_chance(ctx.guild, command)))
 
-        lower_name = command.qualified_name.lower()
         new_chance = min(100, new_chance)
     
         update_sql = """
@@ -687,15 +704,15 @@ class Economy(commands.Cog):
     
         check = await self.bot.db.execute(
             update_sql, new_chance, 
-            ctx.guild.id, lower_name)
+            ctx.guild.id, command.qualified_name)
     
         if not check:
             await self.bot.db.execute(
                 "INSERT INTO `chances` VALUES (?, ?, ?)",
-                ctx.guild.id, lower_name, new_chance)
+                ctx.guild.id, command.qualified_name, new_chance)
     
         await ctx.answer(ctx.lang["economy"]["chance_changed"].format(
-            lower_name, new_chance))
+            command.qualified_name, new_chance))
 
         
     # TODO:
