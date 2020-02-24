@@ -207,6 +207,39 @@ class _Economy:
         return EconomyGameConfig(
             *(game_config or self.bot.config.default_game_config), story)
 
+    async def edit_game_config(self, guild, command, *, chance=None, reward=None):
+        if chance is None and reward is None:
+            return
+
+        update_sql = """
+        "UPDATE `game_config` 
+        {} 
+        WHERE `game_config`.`server` = ? AND `game_config`.`command` = ?
+        """
+
+        if chance is not None and reward is not None:
+            check = await self.bot.db.execute(
+                update_sql.format("SET `reward` = ?, `chance` = ?"),
+                reward, chance, guild.id, command.qualified_name,
+                with_commit=True)
+        elif chance is not None:
+            check = await self.bot.db.execute(
+                update_sql.format("SET `chance` = ?"),
+                chance, guild.id, command.qualified_name,
+                with_commit=True)
+        elif reward is not None:
+            check = await self.bot.db.execute(
+                update_sql.format("SET `reward` = ?"),
+                reward, guild.id, command.qualified_name,
+                with_commit=True)
+
+        if not check:
+            await self.bot.db.execute(
+                "INSERT INTO `game_config` VALUES (?, ?, ?, ?)",
+                guild.id, command.qualified_name,
+                chance or self.bot.config.default_game_config[0],
+                reward or self.bot.config.default_game_config[1])
+
 
 class EconomyGameConfig:
 
