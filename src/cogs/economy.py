@@ -186,7 +186,7 @@ class _Economy:
     #   story table
     #   make result_type int in db
     #   add lang field
-    async def get_game_config(self, ctx):
+    async def get_game_config(self, ctx, command):
         config_select_sql = """
         SELECT `chance`, `reward`
         FROM `game_config`
@@ -203,14 +203,14 @@ class _Economy:
 
         game_config = await self.bot.db.execute(
             config_select_sql, ctx.guild.id, 
-            ctx.command.qualified_name)
+            command.qualified_name)
         
         config = EconomyGameConfig(*(game_config or self.bot.config.default_game_config))
 
         story = await self.bot.db.execute(
             story_select_sql, ctx.guild.id, 
             ctx.lang["lang_code"], 
-            ctx.command.qualified_name,
+            command.qualified_name,
             config.game_result.value)
 
         config.story = story or random.choice(ctx.lang["economy"]["stories"])
@@ -772,7 +772,7 @@ class Economy(commands.Cog):
 
     @commands.command()
     @is_commander()
-    async def chance(self, ctx, command: CommandConverter(), new_chance: Optional[SafeUint]):
+    async def chance(self, ctx, command: CommandConverter(cls=EconomyGame), new_chance: Optional[SafeUint]):
         if new_chance is None:
             return await ctx.answer(ctx.lang["economy"]["current_chance"].format(
                 command.qualified_name, 
@@ -780,7 +780,7 @@ class Economy(commands.Cog):
 
         new_chance = min(100, new_chance)
     
-        await self.eco.edit_game_config(ctx.guild, ctx.command, chance=new_chance)
+        await self.eco.edit_game_config(ctx.guild, command, chance=new_chance)
 
         await ctx.answer(ctx.lang["economy"]["chance_changed"].format(
             command.qualified_name, new_chance))
