@@ -794,7 +794,9 @@ class Economy(commands.Cog):
         if new_reward is None:
             return await ctx.answer(ctx.lang["economy"]["current_reward"].format(
                 command.qualified_name,
-                (await self.eco.get_game_config(ctx, command)).reward))
+                self.currency_fmt(
+                    ctx.currency, 
+                    (await self.eco.get_game_config(ctx, command)).reward)))
 
         await self.eco.edit_game_config(ctx.guild, command, reward=new_reward)
 
@@ -817,4 +819,3 @@ class Economy(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Economy(bot))
-
