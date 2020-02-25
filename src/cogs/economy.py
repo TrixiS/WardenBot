@@ -215,7 +215,7 @@ class _Economy:
 
             config.story = story or random.choice(ctx.lang["economy"]["stories"])
         else:
-            config.story = (None, None)
+            config.story = None
 
         return config
 
@@ -740,7 +740,8 @@ class Economy(commands.Cog):
     @story.command(name="add")
     @is_commander()
     async def story_add(self, ctx, command: CommandConverter(cls=EconomyGame), result_type: GameResultConverter, *, text: str):
-        text = text[:EmbedConstants.DESC_MAX_LEN]
+        if len(text) > EconomyConstants.STORY_MAX_LEN:
+            return await ctx.answer(ctx.lang["economy"]["story_too_len"])
         
         if r"{money}" not in text:
             return await ctx.answer(ctx.lang["economy"]["need_marker"])
@@ -786,6 +787,20 @@ class Economy(commands.Cog):
 
         await ctx.answer(ctx.lang["economy"]["chance_changed"].format(
             command.qualified_name, new_chance))
+
+    @commands.command(cls=EconomyCommand)
+    @is_commander()
+    async def reward(self, ctx, command: CommandConverter(cls=EconomyGame), new_reward: Optional[SafeUint]):
+        if new_reward is None:
+            return await ctx.answer(ctx.lang["economy"]["current_reward"].format(
+                command.qualified_name,
+                (await self.eco.get_game_config(ctx, command)).reward))
+
+        await self.eco.edit_game_config(ctx.guild, command, reward=new_reward)
+
+        await ctx.answer(ctx.lang["economy"]["reward_changed"].format(
+            command.qualified_name, 
+            self.currency_fmt(ctx.currency, new_reward)))
 
     @commands.command(cls=EconomyGame)
     async def work(self, ctx):

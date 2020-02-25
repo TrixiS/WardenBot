@@ -38,6 +38,7 @@ class EconomyConstants:
 
     DEFAULT_SYMBOL = ':dollar:'
     USER_PER_PAGE = 10
+    STORY_MAX_LEN = 1500
 
 
 class TwitchAlertsConstants:
