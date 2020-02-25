@@ -276,7 +276,6 @@ class EconomyGroup(EconomyCommand, commands.Group):
 
 
 # TODO: create table for chances and rewares on prod db
-# TODO: make one class and table for all economy configs
 class EconomyGame(EconomyCommand, CooldownCommand):
     pass    
 #     async def prepare(self, ctx):
@@ -719,8 +718,12 @@ class Economy(commands.Cog):
             return await ctx.answer(ctx.lang["economy"]["no_story"].format(
                 story_id))
 
+        result_type = discord.utils.find(
+            lambda x: x.value == check[3],
+            GameResult.__members__.values())
+
         em = discord.Embed(
-            title=ctx.lang["economy"]["story"].format(check[1], check[3]),
+            title=ctx.lang["economy"]["story"].format(check[1], result_type.name),
             description=check[0], 
             colour=ctx.color)
 
@@ -745,10 +748,10 @@ class Economy(commands.Cog):
             ctx.guild.id)
 
         await self.bot.db.execute(
-            "INSERT INTO `story` VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO `story` VALUES (?, ?, ?, ?, ?, ?, ?)",
             story_id, ctx.guild.id, ctx.author.id, 
-            command.qualified_name, result_type.name,
-            text, with_commit=True)
+            command.qualified_name, result_type.value,
+            text, ctx.lang["lang_code"], with_commit=True)
 
         await ctx.answer(ctx.lang["economy"]["add_story"].format(story_id))
 
@@ -777,26 +780,14 @@ class Economy(commands.Cog):
 
         new_chance = min(100, new_chance)
     
-        # update_sql = """
-        # UPDATE `chances` 
-        # SET `chance` = ? 
-        # WHERE `chances`.`server` = ? AND `chances`.`command` = ?
-        # """
-    
-        # check = await self.bot.db.execute(
-        #     update_sql, new_chance, 
-        #     ctx.guild.id, command.qualified_name)
-    
-        # if not check:
-        #     await self.bot.db.execute(
-        #         "INSERT INTO `chances` VALUES (?, ?, ?)",
-        #         ctx.guild.id, command.qualified_name, new_chance)
-    
         await self.eco.edit_game_config(ctx.guild, ctx.command, chance=new_chance)
 
         await ctx.answer(ctx.lang["economy"]["chance_changed"].format(
             command.qualified_name, new_chance))
 
+    @commands.command(cls=EconomyGame)
+    async def work(self, ctx):
+        await ctx.send("passed")
         
     # TODO:
     #   global stories from lang{}
