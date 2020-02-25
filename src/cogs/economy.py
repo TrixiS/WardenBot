@@ -260,7 +260,7 @@ class EconomyGameConfig:
         self.reward = reward
         self.rolled_chance = random.randint(1, 100)
         
-        if self.rolled_chance >= chance:
+        if self.rolled_chance <= chance:
             self.game_result = GameResult.success
         else:
             self.game_result = GameResult.fail
