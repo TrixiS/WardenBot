@@ -182,7 +182,7 @@ class _Economy:
 
         return current_chance
 
-    async def get_game_config(self, ctx, command):
+    async def get_game_config(self, ctx, command=None):
         config_select_sql = """
         SELECT `chance`, `reward`
         FROM `game_config`
@@ -197,13 +197,16 @@ class _Economy:
         LIMIT 1
         """
 
+        if command is None:
+            command = ctx.command
+
         game_config = await self.bot.db.execute(
             config_select_sql, ctx.guild.id, 
             command.qualified_name)
         
         config = EconomyGameConfig(*(game_config or self.bot.config.default_game_config))
 
-        if isinstance(command, EconomyGame):
+        if command == ctx.command:
             story = await self.bot.db.execute(
                 story_select_sql, ctx.guild.id, 
                 ctx.lang["lang_code"], 
