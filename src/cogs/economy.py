@@ -182,10 +182,6 @@ class _Economy:
 
         return current_chance
 
-    # TODO:
-    #   story table
-    #   make result_type int in db
-    #   add lang field
     async def get_game_config(self, ctx, command):
         config_select_sql = """
         SELECT `chance`, `reward`
@@ -207,13 +203,16 @@ class _Economy:
         
         config = EconomyGameConfig(*(game_config or self.bot.config.default_game_config))
 
-        story = await self.bot.db.execute(
-            story_select_sql, ctx.guild.id, 
-            ctx.lang["lang_code"], 
-            command.qualified_name,
-            config.game_result.value)
+        if isinstance(command, EconomyGame):
+            story = await self.bot.db.execute(
+                story_select_sql, ctx.guild.id, 
+                ctx.lang["lang_code"], 
+                command.qualified_name,
+                config.game_result.value)
 
-        config.story = story or random.choice(ctx.lang["economy"]["stories"])
+            config.story = story or random.choice(ctx.lang["economy"]["stories"])
+        else:
+            config.story = (None, None)
 
         return config
 
@@ -222,7 +221,7 @@ class _Economy:
             return
 
         update_sql = """
-        "UPDATE `game_config` 
+        UPDATE `game_config` 
         {} 
         WHERE `game_config`.`server` = ? AND `game_config`.`command` = ?
         """
@@ -776,7 +775,7 @@ class Economy(commands.Cog):
         if new_chance is None:
             return await ctx.answer(ctx.lang["economy"]["current_chance"].format(
                 command.qualified_name, 
-                (await self.eco.get_game_config(ctx)).chance))
+                (await self.eco.get_game_config(ctx, command)).chance))
 
         new_chance = min(100, new_chance)
     
