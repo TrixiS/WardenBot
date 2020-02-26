@@ -817,6 +817,29 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
+    @commands.command(cls=EconomyGame)
+    @custom_cooldown()
+    async def slut(self, ctx):
+        em = discord.Embed(
+            description=ctx.game_config.story[1].format(money=self.currency_fmt(
+                ctx.currency,
+                ctx.game_config.rolled_reward)),
+                colour=ctx.color)
+
+        em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+
+        if ctx.game_config.story[0] is not None:
+            em.set_footer(text=f"ID({ctx.game_config.story[0]})")
+
+        await ctx.send(embed=em)
+
+        if ctx.game_config.game_result == GameResult.success:
+            ctx.account.cash += ctx.game_config.rolled_reward
+        else:
+            ctx.account.cash -= ctx.game_config.rolled_reward
+
+        await ctx.account.save()
+
     # TODO:
     #   slut command
     #   rob command
