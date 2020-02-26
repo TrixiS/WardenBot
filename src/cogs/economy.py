@@ -16,6 +16,7 @@ from .utils.strings import markdown
 from .utils.models import PseudoMember
 from .utils.db import DbType
 
+# TODO: create table for chances and rewares on prod db
 
 class Account:
 
@@ -213,7 +214,8 @@ class _Economy:
                 command.qualified_name,
                 config.game_result.value)
 
-            config.story = story or random.choice(ctx.lang["economy"]["stories"])
+            config.story = story or (None, random.choice(
+                ctx.lang["economy"]["stories"][command.qualified_name][config.game_result.name]))
         else:
             config.story = None
 
@@ -259,6 +261,7 @@ class EconomyGameConfig:
         self.chance = chance
         self.reward = reward
         self.rolled_chance = random.randint(1, 100)
+        self.rolled_reward = random.randint(1, reward)
         
         if self.rolled_chance <= chance:
             self.game_result = GameResult.success
@@ -277,23 +280,13 @@ class EconomyGroup(EconomyCommand, commands.Group):
     pass
 
 
-# TODO: create table for chances and rewares on prod db
 class EconomyGame(EconomyCommand, CooldownCommand):
-    pass    
-#     async def prepare(self, ctx):
-#         await super().prepare(ctx)
-        
-#         win_chance = await self.cog.eco.get_chance(ctx.guild, self)
-#         rolled_chance = random.randint(1, 100)
+    
+    async def prepare(self, ctx):
+        await super().prepare(ctx)
 
-#         if rolled_chance >= win_chance:
-#             ctx.game_result = GameResult.success
-#         else:
-#             ctx.game_result = GameResult.fail
-
-#         ctx.reward = await self.cog.eco.get_reward(ctx.guild, self)
-#         ctx.story = await self.cog.eco.get_story(ctx)
-#         ctx.account = await self.cog.get_money(ctx.author)
+        ctx.game_config = await self.cog.eco.get_game_config(ctx)
+        ctx.account = await self.cog.eco.get_money(ctx.author)
 
 
 class MoneyType(Enum):
@@ -770,9 +763,6 @@ class Economy(commands.Cog):
         else:
             await ctx.answer(ctx.lang["economy"]["delete_story"].format(story_id))
 
-    # TODO:
-    #   reward command
-
     @commands.command()
     @is_commander()
     async def chance(self, ctx, command: CommandConverter(cls=EconomyGame), new_chance: Optional[SafeUint]):
@@ -805,12 +795,29 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, new_reward)))
 
     @commands.command(cls=EconomyGame)
+    @custom_cooldown()
     async def work(self, ctx):
-        await ctx.send("passed")
+        em = discord.Embed(
+            description=ctx.game_config.story[1].format(money=self.currency_fmt(
+                ctx.currency, 
+                ctx.game_config.rolled_reward)),
+            colour=ctx.color)
+
+        em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         
+        if ctx.game_config.story[0] is not None:
+            em.set_footer(text=f"ID({ctx.game_config.story[0]})")
+        
+        await ctx.send(embed=em)
+
+        if ctx.game_config.game_result == GameResult.success:
+            ctx.account.bank += ctx.game_config.rolled_reward
+        else:
+            ctx.account.bank -= ctx.game_config.rolled_reward
+
+        await ctx.account.save()
+
     # TODO:
-    #   global stories from lang{}
-    #   work command
     #   slut command
     #   rob command
     #   crime command
