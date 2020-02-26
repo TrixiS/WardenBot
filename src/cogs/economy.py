@@ -398,7 +398,7 @@ class Economy(commands.Cog):
         if amount is None:
             amount = account.cash
 
-        if amount > account.cash or amount == 0:
+        if amount > account.cash or amount <= 0 or account.cash <= 0:
             return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
 
         account.cash -= amount
@@ -416,7 +416,7 @@ class Economy(commands.Cog):
         if amount is None:
             amount = account.bank
 
-        if amount > account.bank or amount == 0:
+        if amount > account.bank or amount <= 0 or account.bank <= 0:
             return await ctx.answer(ctx.lang["economy"]["not_enough_bank"])
 
         account.bank -= amount
@@ -812,7 +812,7 @@ class Economy(commands.Cog):
     @custom_cooldown()
     async def work(self, ctx):
         await ctx.command.use(ctx)
-        
+
         if ctx.game_config.game_result == GameResult.success:
             ctx.account.bank += ctx.game_config.rolled_reward
         else:
@@ -845,11 +845,7 @@ class Economy(commands.Cog):
         await ctx.account.save()
 
     # TODO:
-    #   slut command
     #   rob command
-    #   crime command
-    #   EconomyGame prepare fetch GameResult and story
-    #   maybe add fetch account?
 
 def setup(bot):
     bot.add_cog(Economy(bot))
