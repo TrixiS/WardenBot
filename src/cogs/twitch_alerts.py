@@ -102,6 +102,9 @@ class TwitchAlerts(commands.Cog):
         for user in filter(lambda u: u is not None and u.is_live, users):
             stream = user.stream
 
+            if stream is None:
+                continue
+
             stream_started = datetime.datetime.strptime(
                 stream.started_at, r"%Y-%m-%dT%H:%M:%S%z").astimezone(pytz.utc)
 
