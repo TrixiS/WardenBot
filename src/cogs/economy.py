@@ -17,6 +17,7 @@ from .utils.models import PseudoMember
 from .utils.db import DbType
 
 # TODO: create table for chances and rewares on prod db
+# TODO: one table for langs and embed colors
 
 class Account:
 
@@ -844,8 +845,31 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
-    # TODO:
-    #   rob command
+    @commands.command(cls=EconomyGame)
+    @custom_cooldown()
+    async def rob(self, ctx, member: NotAuthor):
+        member_account = await self.eco.get_money(member)
+        money = ctx.game_config.rolled_reward
+
+        if ctx.game_config.game_result == GameResult.success:
+            if member_account.cash > 0:
+                money = member_account.cash // 100 * ctx.game_config.rolled_chance
+
+            member_account.cash -= money
+            ctx.account.cash += money
+
+            await member_account.save()
+        else:
+            if ctx.account.cash > 0:
+                money = ctx.account.cash // 100 * ctx.game_config.rolled_chance
+
+            ctx.account.cash -= money
+
+        ctx.game_config.rolled_reward = money
+
+        await ctx.command.use(ctx)
+        await ctx.account.save()
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
