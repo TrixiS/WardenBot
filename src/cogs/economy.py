@@ -18,6 +18,7 @@ from .utils.db import DbType
 
 # TODO: create table for chances and rewares on prod db
 # TODO: one table for langs and embed colors
+# TODO: fill stories lists in langs
 
 class Account:
 
@@ -282,6 +283,10 @@ class EconomyGroup(EconomyCommand, commands.Group):
 
 
 class EconomyGame(EconomyCommand, CooldownCommand):
+    pass
+
+
+class StoryGame(EconomyGame):
     
     async def prepare(self, ctx):
         await super().prepare(ctx)
@@ -809,7 +814,7 @@ class Economy(commands.Cog):
             command.qualified_name, 
             self.currency_fmt(ctx.currency, new_reward)))
 
-    @commands.command(cls=EconomyGame)
+    @commands.command(cls=StoryGame)
     @custom_cooldown()
     async def work(self, ctx):
         await ctx.command.use(ctx)
@@ -821,7 +826,7 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
-    @commands.command(cls=EconomyGame)
+    @commands.command(cls=StoryGame)
     @custom_cooldown()
     async def slut(self, ctx):
         await ctx.command.use(ctx)
@@ -833,7 +838,7 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
-    @commands.command(cls=EconomyGame)
+    @commands.command(cls=StoryGame)
     @custom_cooldown()
     async def crime(self, ctx):
         await ctx.command.use(ctx)
@@ -845,7 +850,7 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
-    @commands.command(cls=EconomyGame)
+    @commands.command(cls=StoryGame)
     @custom_cooldown()
     async def rob(self, ctx, member: NotAuthor):
         member_account = await self.eco.get_money(member)
@@ -869,6 +874,11 @@ class Economy(commands.Cog):
 
         await ctx.command.use(ctx)
         await ctx.account.save()
+
+    @commands.command(aliases=["bj"], cls=EconomyGame)
+    @custom_cooldown()
+    async def blackjack(self, ctx, bet: SafeUint):
+        pass
 
 
 def setup(bot):
