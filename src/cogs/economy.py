@@ -6,13 +6,15 @@ from discord.ext import commands, tasks
 from enum import Enum
 from typing import Optional, Union
 from math import ceil
+from collections import namedtuple
+from asyncio import TimeoutError
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
 from .utils.converters import (NotAuthor, SafeUint, IndexConverter, 
     Index, HumanTime, CommandConverter, EnumConverter)
 from .utils.checks import is_commander, has_permissions
-from .utils.strings import markdown
+from .utils.strings import markdown, human_choice
 from .utils.models import PseudoMember
 from .utils.db import DbType
 
@@ -360,6 +362,107 @@ class IncomeValueConverter(SafeUint):
             value = await super().convert(ctx, arg)
 
         return IncomeValue(ctx.bot.db.make_safe_value(value), arg.endswith('%'))
+
+
+class BJCard:
+
+    __slots__ = ("emoji", "value")
+
+    def __init__(self, emoji, value):
+        self.emoji = emoji
+        self.value = value
+
+
+class BJHand:
+
+    def __init__(self, cards):
+        self.cards = cards
+
+    @property
+    def score(self):
+        total_score = sum(map(lambda x: x.value, self.cards))
+
+        for card in filter(lambda x: x.value == 11, self.cards):
+            if total_score <= 21:
+                break
+
+            total_score -= 10
+
+        return total_score
+
+
+class BJDeck:
+
+    def __init__(self, back, cards, multiply):
+        self.back = back
+        self.cards = cards * multiply
+
+    def make_hand(self, amount_of_cards):
+        return BJHand(list(
+            self.get_card() for _ in range(amount_of_cards)))
+
+    def get_card(self):
+        card = random.choice(self.cards)
+        self.cards.remove(card)
+        return BJCard(*card)
+
+
+class BJShuffle:
+
+    def __init__(self, ctx, embed, deck):
+        self.ctx = ctx
+        self.embed = embed
+        self.deck = deck
+        self.player_hand = self.deck.make_hand(2)
+        self.dealer_hand = self.deck.make_hand(2)
+
+    @property
+    def closed(self):
+        return self.player_hand.score >= 21 or self.dealer_hand.score >= 21
+
+    def winner(self):
+        player_score = self.player_hand.score
+        dealer_score = self.dealer_hand.score
+
+        if player_score > 21 and dealer_score > 21:
+            return None
+
+        if player_score != dealer_score:
+            if player_score > 21:
+                return self.ctx.bot.user
+
+            if dealer_score > 21:
+                return self.ctx.author
+
+            if player_score > dealer_score:
+                return self.ctx.author
+            else:
+                return self.ctx.bot.user
+        else:
+            return None
+
+    def player_draw_card(self):
+        self.player_hand.cards.append(self.deck.get_card())
+
+        self.embed.set_field_at(
+            0, 
+            name=self.embed.fields[0].name, 
+            value=self.embed.fields[0].value + self.player_hand.cards[-1].emoji)
+
+    def dealer_draw_card(self):
+        self.dealer_hand.cards.append(self.deck.get_card())
+
+        self.embed.set_field_at(
+            1,
+            name=self.embed.fields[1].name,
+            value=self.embed.fields[1].value + self.deck.back.emoji)
+
+
+class BJAction(Enum):
+
+    Pass = 0
+    Draw = 1
+    Double = 2
 
 
 class Economy(commands.Cog):
@@ -878,7 +981,99 @@ class Economy(commands.Cog):
     @commands.command(aliases=["bj"], cls=EconomyGame)
     @custom_cooldown()
     async def blackjack(self, ctx, bet: SafeUint):
-        pass
+        account = await self.eco.get_money(ctx.author)
+
+        if bet > account.cash:
+            ctx.command.current_bucket(ctx).remaining_uses += 1
+            return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
+
+        actions = tuple(map(str.lower, BJAction.__members__.keys()))
+
+        em = discord.Embed(
+            description=human_choice(
+                tuple(map(str.title, actions)), 
+                second_sep=ctx.lang["shared"]["or"]),
+            colour=ctx.color)
+        em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+
+        cards = list(ctx.lang["economy"]["cards"]["all"].items())
+        deck = BJDeck(BJCard(ctx.lang["economy"]["cards"]["back"], None), cards, 4)
+        shuffle = BJShuffle(ctx, em, deck)
+
+        em.add_field(
+            name=ctx.lang["economy"]["your_hand"], 
+            value=''.join(map(lambda x: x.emoji, shuffle.player_hand.cards)))
+        em.add_field(
+            name=ctx.lang["economy"]["dealer_hand"],
+            value=shuffle.dealer_hand.cards[0].emoji + deck.back.emoji)
+
+        game_message = await ctx.send(embed=em)
+        player_passed = False
+
+        while not shuffle.closed:
+            if not player_passed:
+                try:
+                    action_message = await self.bot.wait_for(
+                        "message", 
+                        check=lambda x: x.author == ctx.author and x.content.lower() in actions,
+                        timeout=30.0)
+
+                    action = await EnumConverter(BJAction).convert(
+                        ctx, action_message.content)
+                except TimeoutError:
+                    break
+
+                if action == BJAction.Pass:
+                    player_passed = True
+                elif action == BJAction.Draw:
+                    shuffle.player_draw_card()
+                elif action == BJAction.Double:
+                    bet *= 2
+                    shuffle.player_draw_card()
+
+            if player_passed and len(tuple(filter(
+                    lambda x: shuffle.dealer_hand.score + x[1] > 21, 
+                    shuffle.deck.cards))) / len(shuffle.deck.cards) * 100 >= 60:
+                break
+
+            shuffle.dealer_draw_card()
+            
+            em.description = ctx.lang['economy']['current_bet'].format(
+                self.currency_fmt(ctx.currency, bet))
+            em.set_footer(
+                text=f"{ctx.lang['economy']['cards_in_deck']} {len(shuffle.deck.cards)}")
+
+            await game_message.edit(embed=em)
+
+        bet *= 2
+        winner = shuffle.winner()
+        account = await self.eco.get_money(ctx.author)
+        
+        if winner == ctx.author:
+            em.description = ctx.lang["economy"]["win"].format(
+                self.currency_fmt(ctx.currency, bet))
+            account.cash += bet
+        elif winner == ctx.bot.user:
+            em.description = ctx.lang["economy"]["lose"].format(
+                self.currency_fmt(ctx.currency, bet))
+            account.cash -= bet
+        else:
+            em.description = ctx.lang["economy"]["push"]
+        
+        await account.save()
+
+        em.set_field_at(
+            0,
+            name=em.fields[0].name,
+            value=(f"{''.join(map(lambda x: x.emoji, shuffle.player_hand.cards))}\n\n"
+                f"{ctx.lang['economy']['total_card_value']} {shuffle.player_hand.score}"))
+        em.set_field_at(
+            1,
+            name=em.fields[1].name,
+            value=(f"{''.join(map(lambda x: x.emoji, shuffle.dealer_hand.cards))}\n\n"
+                f"{ctx.lang['economy']['total_card_value']} {shuffle.dealer_hand.score}"))
+
+        await game_message.edit(embed=em)
 
 
 def setup(bot):
