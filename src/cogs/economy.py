@@ -21,6 +21,8 @@ from .utils.db import DbType
 # TODO: create table for chances and rewares on prod db
 # TODO: one table for langs and embed colors
 # TODO: fill stories lists in langs
+# TODO: ?class for langs with paths like /langs/somedict/1/12323232/41341
+#                                     or langs['asdasd', 'asdasd']
 
 class Account:
 
@@ -431,8 +433,7 @@ class BJShuffle:
         if player_score != dealer_score:
             if player_score > 21:
                 return self.ctx.bot.user
-
-            if dealer_score > 21:
+            else:
                 return self.ctx.author
 
             if player_score > dealer_score:
@@ -1048,20 +1049,22 @@ class Economy(commands.Cog):
 
         bet *= 2
         winner = shuffle.winner()
-        account = await self.eco.get_money(ctx.author)
         
-        if winner == ctx.author:
-            em.description = ctx.lang["economy"]["win"].format(
-                self.currency_fmt(ctx.currency, bet))
-            account.cash += bet
-        elif winner == ctx.bot.user:
-            em.description = ctx.lang["economy"]["lose"].format(
-                self.currency_fmt(ctx.currency, bet))
-            account.cash -= bet
+        if winner is not None:
+            account = await self.eco.get_money(ctx.author)
+
+            if winner == ctx.author:
+                em.description = ctx.lang["economy"]["win"].format(
+                    self.currency_fmt(ctx.currency, bet))
+                account.cash += bet
+            elif winner == ctx.bot.user:
+                em.description = ctx.lang["economy"]["lose"].format(
+                    self.currency_fmt(ctx.currency, bet))
+                account.cash -= bet
+
+            await account.save()
         else:
             em.description = ctx.lang["economy"]["push"]
-        
-        await account.save()
 
         em.set_field_at(
             0,
