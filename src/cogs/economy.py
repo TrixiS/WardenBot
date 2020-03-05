@@ -285,16 +285,17 @@ class EconomyGroup(EconomyCommand, commands.Group):
 
 
 class EconomyGame(EconomyCommand, CooldownCommand):
-    pass
+    
+    async def prepare(self, ctx):
+        await super().prepare(ctx)
+        ctx.account = await self.cog.eco.get_money(ctx.author)
 
 
 class StoryGame(EconomyGame):
     
     async def prepare(self, ctx):
         await super().prepare(ctx)
-
         ctx.game_config = await self.cog.eco.get_game_config(ctx)
-        ctx.account = await self.cog.eco.get_money(ctx.author)
 
     async def use(self, ctx):
         em = discord.Embed(
@@ -981,9 +982,9 @@ class Economy(commands.Cog):
     @commands.command(aliases=["bj"], cls=EconomyGame)
     @custom_cooldown()
     async def blackjack(self, ctx, bet: SafeUint):
-        account = await self.eco.get_money(ctx.author)
+        ctx.account = await self.eco.get_money(ctx.author)
 
-        if bet > account.cash:
+        if bet > ctx.account.cash:
             ctx.command.current_bucket(ctx).remaining_uses += 1
             return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
 
