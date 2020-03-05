@@ -16,10 +16,12 @@ class WardenContext(Context):
 
     async def send(self, content: str=None, **kwargs) -> None:
         try:
-            await super().send(content, **kwargs)
+            msg = await super().send(content, **kwargs)
         except Exception as e:
             logging.error(str(e))
-            await super().send(self.lang["errors"]["send_error"])
+            msg = await super().send(self.lang["errors"]["send_error"])
+
+        return msg
 
     async def answer(self, message: str, **kwargs) -> None:
         em = Embed(colour=self.color, description=message)
