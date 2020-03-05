@@ -11,7 +11,12 @@ class CooldownCommand(commands.Command):
         super().__init__(*args, **kwargs)
         self.custom_cooldown_buckets = []
 
+    def current_bucket(self, ctx):
+        return discord.utils.find(
+            lambda x: x.guild == ctx.guild and x.user == ctx.author and x.command == ctx.command,
+            self.custom_cooldown_buckets)
 
+            
 class CustomCooldownBucket:
 
     def __init__(self, ctx):
