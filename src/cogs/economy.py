@@ -1032,12 +1032,13 @@ class Economy(commands.Cog):
                     bet *= 2
                     shuffle.player_draw_card()
 
-            if player_passed and len(tuple(filter(
+            if len(tuple(filter(
                     lambda x: shuffle.dealer_hand.score + x[1] > 21, 
                     shuffle.deck.cards))) / len(shuffle.deck.cards) * 100 >= 60:
-                break
-
-            shuffle.dealer_draw_card()
+                if player_passed:
+                    break
+            else:
+                shuffle.dealer_draw_card()
             
             em.description = ctx.lang['economy']['current_bet'].format(
                 self.currency_fmt(ctx.currency, bet))
