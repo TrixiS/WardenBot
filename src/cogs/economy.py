@@ -427,13 +427,13 @@ class BJShuffle:
         player_score = self.player_hand.score
         dealer_score = self.dealer_hand.score
 
-        if player_score > 21 and dealer_score > 21:
-            return None
-
         if player_score != dealer_score:
+            if player_score > 21 and dealer_score > 21:
+                return None
+
             if player_score > 21:
                 return self.ctx.bot.user
-            else:
+            elif dealer_score > 21:
                 return self.ctx.author
 
             if player_score > dealer_score:
