@@ -23,6 +23,7 @@ from .utils.db import DbType
 # TODO: fill stories lists in langs
 # TODO: ?class for langs with paths like /langs/somedict/1/12323232/41341
 #                                     or langs['asdasd', 'asdasd']
+# TODO: make normal card pictures for bj
 
 class Account:
 
@@ -983,8 +984,6 @@ class Economy(commands.Cog):
     @commands.command(aliases=["bj"], cls=EconomyGame)
     @custom_cooldown()
     async def blackjack(self, ctx, bet: SafeUint):
-        ctx.account = await self.eco.get_money(ctx.author)
-
         if bet > ctx.account.cash:
             ctx.command.current_bucket(ctx).remaining_uses += 1
             return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
