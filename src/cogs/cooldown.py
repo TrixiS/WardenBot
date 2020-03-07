@@ -87,6 +87,11 @@ class Cooldown(commands.Cog):
             command.qualified_name, 
             (role_or_member and role_or_member.mention) or ctx.lang["shared"]["all_members"]))
 
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(ctx.command, CooldownCommand):
+            ctx.command.current_bucket(ctx).remaining_uses += 1
+
 
 def setup(bot):
     bot.add_cog(Cooldown(bot))
