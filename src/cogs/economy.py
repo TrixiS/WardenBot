@@ -964,7 +964,7 @@ class Economy(commands.Cog):
 
         if ctx.game_config.game_result == GameResult.success:
             if member_account.cash > 0:
-                money = member_account.cash // 100 * ctx.game_config.rolled_chance
+                money = ceil(member_account.cash / 100 * ctx.game_config.rolled_chance)
 
             member_account.cash -= money
             ctx.account.cash += money
@@ -972,7 +972,7 @@ class Economy(commands.Cog):
             await member_account.save()
         else:
             if ctx.account.cash > 0:
-                money = ctx.account.cash // 100 * ctx.game_config.rolled_chance
+                money = ceil(ctx.account.cash / 100 * ctx.game_config.rolled_chance)
 
             ctx.account.cash -= money
 
