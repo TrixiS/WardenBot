@@ -58,3 +58,4 @@ class FunConstants:
 class InfoConstants:
 
     GHUB_API_URL = "https://api.github.com"
+    BOT_INVITE_URL = "https://discordapp.com/api/oauth2/authorize?client_id={}&permissions=8&scope=bot"

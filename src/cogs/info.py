@@ -149,8 +149,9 @@ class Info(commands.Cog):
             name=ctx.lang["shared"]["id"], 
             value=self.bot.user.id)
         em.add_field(
-            name=ctx.lang["info"]["docs"], 
-            value=f"[{ctx.lang['shared']['click']}]({self.bot.config.docs_url})")
+            name=ctx.lang["info"]["invite"], 
+            value=f"[{ctx.lang['shared']['click']}]"
+                    f"({InfoConstants.BOT_INVITE_URL.format(self.bot.user.id)})")
         em.add_field(
             name=ctx.lang["info"]["members"],
             value=len(self.bot.users))
