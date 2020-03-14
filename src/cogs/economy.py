@@ -6,7 +6,6 @@ from discord.ext import commands, tasks
 from enum import Enum
 from typing import Optional, Union
 from math import ceil
-from collections import namedtuple
 from asyncio import TimeoutError
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
@@ -18,11 +17,9 @@ from .utils.strings import markdown, human_choice
 from .utils.models import PseudoMember
 from .utils.db import DbType
 
-# TODO: create table for chances and rewares on prod db
-# TODO: one table for langs and embed colors
+# !!! TODO: the whole shop system
 # TODO: fill stories lists in langs
-# TODO: ?class for langs with paths like /langs/somedict/1/12323232/41341
-#                                     or langs['asdasd', 'asdasd']
+# TODO: update en langs
 # TODO: make normal card pictures for bj
 
 class Account:
@@ -593,16 +590,11 @@ class Economy(commands.Cog):
     @commands.command(name="delete-money")
     @is_commander()
     async def delete_money(self, ctx, *, member: discord.Member):
-        accept = await ctx.ask(ctx.lang["economy"]["really_delete?"].format(markdown(member.name, "**")),
-            check=lambda m: m.content.lower() in (ctx.lang["shared"]["yes"].lower(), ctx.lang["shared"]["no"].lower()))
-
-        if accept is None or accept == ctx.lang["shared"]["no"].lower():
+        if not await ctx.accept(ctx.lang["economy"]["really_delete?"].format(
+                markdown(member.name, "**"))):
             return
 
-        account = Account(self.bot, member)
-
-        await account.delete()
-
+        await Account(self.bot, member).delete()
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
 
