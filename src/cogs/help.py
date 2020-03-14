@@ -59,7 +59,8 @@ class Help(commands.Cog):
 
         if command_or_module is None:
             em.title = ctx.lang["help"]["modules"].format(self.bot.user.name)
-            em.description = markdown('\n'.join(self.bot.cogs.keys()), "```")
+            em.description = f"[{ctx.lang['info']['docs']}]({self.bot.config.docs_url})\n\n" + \
+                markdown('\n'.join(self.bot.cogs.keys()), "```")
             return await ctx.send(embed=em)
             
         cog = self.bot.get_cog(command_or_module)
