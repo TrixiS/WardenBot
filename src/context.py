@@ -48,3 +48,19 @@ class WardenContext(Context):
                     if (attach.width or attach.height))
         finally:
             return content
+
+    async def accept(self, message):
+        no = self.lang["shared"]["no"].lower()
+        yes = self.lang["shared"]["yes"].lower()
+
+        result = await self.ask(
+            f"{message} ({yes.title()}, {no.title()})", 
+            check=lambda x: x.author == self.author and x.content.lower() in (yes, no))
+
+        if result.lower() == no:
+            await self.answer(self.lang["shared"]["aborted"].format(
+                self.command.qualified_name))
+        elif result is None:
+            return False
+        else:
+            return True
