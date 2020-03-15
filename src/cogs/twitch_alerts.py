@@ -100,7 +100,10 @@ class TwitchAlerts(commands.Cog):
         users = self.client.users(map(lambda i: i[0], check))   
 
         for user in filter(lambda u: u is not None and u.is_live, users):
-            stream = user.stream
+            try:
+                stream = user.stream
+            except Exception:
+                continue
 
             if stream is None:
                 continue
