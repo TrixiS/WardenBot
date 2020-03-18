@@ -6,6 +6,10 @@ from typing import Optional
 
 from .utils.constants import InfoConstants
 
+# TODO:
+# add langs and economy commands and update bot command
+# on prod bot
+
 
 class Info(commands.Cog):
 
@@ -146,8 +150,8 @@ class Info(commands.Cog):
             colour=ctx.color)
 
         em.add_field(
-            name=ctx.lang["shared"]["id"], 
-            value=self.bot.user.id)
+            name=ctx.lang["info"]["uptime"], 
+            value="{} {:%d.%m.%y %H:%M}".format(ctx.lang["info"]["since"], self.bot.uptime))
         em.add_field(
             name=ctx.lang["info"]["invite"], 
             value=f"[{ctx.lang['shared']['click']}]"
