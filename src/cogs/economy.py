@@ -18,9 +18,8 @@ from .utils.models import PseudoMember
 from .utils.db import DbType
 
 # !!! TODO: the whole shop system
-# TODO: fill stories lists in langs
+# TODO: fill MORE stories lists in langs
 # TODO: update en langs
-# TODO: make normal card pictures for bj
 
 class Account:
 
@@ -1024,9 +1023,11 @@ class Economy(commands.Cog):
                     bet *= 2
                     shuffle.player_draw_card()
 
+            draw_chance = 70 if bet >= ctx.account.sum else 60
+
             if len(tuple(filter(
                     lambda x: shuffle.dealer_hand.score + x[1] > 21, 
-                    shuffle.deck.cards))) / len(shuffle.deck.cards) * 100 >= 60:
+                    shuffle.deck.cards))) / len(shuffle.deck.cards) * 100 >= draw_chance:
                 if player_passed:
                     break
             else:
