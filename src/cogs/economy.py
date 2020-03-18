@@ -1079,7 +1079,40 @@ class Economy(commands.Cog):
 
         await game_message.edit(embed=em)
 
-    
+    # dont forget to commit constants KEK
+    @commands.command(cls=EconomyGame)
+    async def slot(self, ctx, bet: Bet):
+        # TODO:
+        # use GameResult and chance to get win state
+        # and get rolls
+
+        roll = tuple(tuple(random.choices(EconomyConstants.SLOTS, k=3)) for _ in range(3))
+
+        multiplier = 1
+
+        for row in roll:
+            if all(row[0] == row[i] for i in range(1, 3)):
+                multiplier += 1
+
+        won = multiplier > 1         
+
+        if won:
+            bet *= multiplier
+            ctx.account.cash += bet
+        else:
+            bet *= 2
+            ctx.account.cash -= bet
+
+        await ctx.account.save()
+
+        em = discord.Embed(description="{}\n\n{}\n{} :arrow_left:\n{}".format(
+            (ctx.lang["economy"]["win"] if won else ctx.lang["economy"]["lose"]).format(
+                self.currency_fmt(ctx.currency, bet)),
+            *(' | '.join(roll[i]) for i in range(3))),
+            colour=ctx.color)
+        em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+        
+        await ctx.send(embed=em)
 
 
 def setup(bot):
