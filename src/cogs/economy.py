@@ -274,9 +274,9 @@ class EconomyGameConfig:
 
 class EconomyCommand(commands.Command):
     
-    async def prepare(self, ctx):
-        await super().prepare(ctx)
+    async def invoke(self, ctx):
         ctx.currency = await ctx.cog.eco.get_currency(ctx.guild)
+        await super().invoke(ctx)
 
 
 class EconomyGroup(EconomyCommand, commands.Group):
@@ -285,16 +285,16 @@ class EconomyGroup(EconomyCommand, commands.Group):
 
 class EconomyGame(EconomyCommand, CooldownCommand):
     
-    async def prepare(self, ctx):
-        await super().prepare(ctx)
+    async def invoke(self, ctx):
         ctx.account = await self.cog.eco.get_money(ctx.author)
+        await super().invoke(ctx)
 
 
 class StoryGame(EconomyGame):
     
-    async def prepare(self, ctx):
-        await super().prepare(ctx)
+    async def invoke(self, ctx):
         ctx.game_config = await self.cog.eco.get_game_config(ctx)
+        await super().invoke(ctx)
 
     async def use(self, ctx):
         em = discord.Embed(
@@ -462,6 +462,17 @@ class BJAction(Enum):
     Pass = 0
     Draw = 1
     Double = 2
+
+
+class Bet(SafeUint):
+
+    async def convert(self, ctx, arg):
+        result = await super().convert(ctx, arg)
+        
+        if result > ctx.account.cash:
+            raise commands.BadArgument(ctx.lang["economy"]["not_enough_cash"])
+
+        return result
 
 
 class Economy(commands.Cog):
@@ -974,11 +985,7 @@ class Economy(commands.Cog):
 
     @commands.command(aliases=["bj"], cls=EconomyGame)
     @custom_cooldown()
-    async def blackjack(self, ctx, bet: SafeUint):
-        if bet > ctx.account.cash:
-            ctx.command.current_bucket(ctx).remaining_uses += 1
-            return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
-
+    async def blackjack(self, ctx, bet: Bet):
         actions = tuple(map(str.lower, BJAction.__members__.keys()))
 
         em = discord.Embed(
@@ -1071,6 +1078,8 @@ class Economy(commands.Cog):
                 f"{ctx.lang['economy']['total_card_value']} {shuffle.dealer_hand.score}"))
 
         await game_message.edit(embed=em)
+
+    
 
 
 def setup(bot):
