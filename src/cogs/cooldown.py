@@ -89,8 +89,10 @@ class Cooldown(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(ctx.command, CooldownCommand):
-            ctx.command.current_bucket(ctx).remaining_uses += 1
+        current_bucket = ctx.command.current_bucket(ctx)
+        
+        if current_bucket is not None and isinstance(ctx.command, CooldownCommand):
+            current_bucket.remaining_uses += 1
 
 
 def setup(bot):
