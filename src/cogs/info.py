@@ -6,10 +6,6 @@ from typing import Optional
 
 from .utils.constants import InfoConstants
 
-# TODO:
-# add langs and economy commands and update bot command
-# on prod bot
-
 
 class Info(commands.Cog):
 
