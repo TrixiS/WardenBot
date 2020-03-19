@@ -15,7 +15,7 @@ class Cooldown(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def cooldown(self, ctx, max_uses: SafeUint, interval: HumanTime, *, command: CommandConverter(CooldownCommand)):
+    async def cooldown(self, ctx, command: CommandConverter(CooldownCommand), max_uses: SafeUint, interval: HumanTime):
         sql = """
         UPDATE `cooldown`
         SET `max_uses` = ?, `reset_seconds` = ?
@@ -69,7 +69,7 @@ class Cooldown(commands.Cog):
 
     @cooldown.command(name="reset")
     @is_commander()
-    async def cooldown_reset(self, ctx, role_or_member: Optional[Union[discord.Role, discord.Member]], *, command: CommandConverter(CooldownCommand)):
+    async def cooldown_reset(self, ctx, command: CommandConverter(CooldownCommand), *, role_or_member: Optional[Union[discord.Role, discord.Member]]):
         buckets = filter(
             lambda b: b.guild == ctx.guild, 
             command.custom_cooldown_buckets)
