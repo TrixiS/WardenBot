@@ -89,9 +89,12 @@ class Cooldown(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        if not isinstance(ctx.command, CooldownCommand):
+            return
+            
         current_bucket = ctx.command.current_bucket(ctx)
         
-        if current_bucket is not None and isinstance(ctx.command, CooldownCommand):
+        if current_bucket is not None:
             current_bucket.remaining_uses += 1
 
 
