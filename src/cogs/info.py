@@ -190,7 +190,7 @@ class Info(commands.Cog):
             name="URL", 
             value=f"[{ctx.lang['shared']['click']}]({data['html_url']})")
 
-        commit_date = datetime.datetime.strftime(
+        commit_date = datetime.datetime.strptime(
             data["commit"]["committer"]["date"], 
             "%Y-%m-%dT%H:%M:%SZ")
         
