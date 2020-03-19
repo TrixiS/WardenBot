@@ -2,7 +2,7 @@ import discord
 import logging
 import random
 
-from discord.ext import commands, tasks
+from discord.ext import commands
 from enum import Enum
 from typing import Optional, Union
 from math import ceil
@@ -19,8 +19,6 @@ from .utils.db import DbType
 
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
-# TODO: update en langs
-# TODO: store const date strings in langs
 
 class Account:
 
@@ -211,7 +209,7 @@ class _Economy:
         
         config = EconomyGameConfig(*(game_config or self.bot.config.default_game_config))
 
-        if command == ctx.command:
+        if isinstance(command, StoryGame):
             story = await self.bot.db.execute(
                 story_select_sql, ctx.guild.id, 
                 ctx.lang["lang_code"], 
@@ -1080,36 +1078,36 @@ class Economy(commands.Cog):
 
         await game_message.edit(embed=em)
 
-    # dont forget to commit constants KEK
     @commands.command(cls=EconomyGame)
     @custom_cooldown()
     async def slot(self, ctx, bet: Bet):
-        # TODO:
-        # use GameResult and chance to get win state
-        # and get rolls
+        game_config = await self.eco.get_game_config(ctx)
 
-        roll = tuple(tuple(random.choices(EconomyConstants.SLOTS, k=3)) for _ in range(3))
+        if game_config.game_result == GameResult.success:
+            if game_config.rolled_chance < 80:
+                roll = (
+                    random.choices(EconomyConstants.SLOTS, k=3),
+                    [random.choice(EconomyConstants.SLOTS)] * 3,
+                    random.choices(EconomyConstants.SLOTS, k=3)
+                )
+                bet *= 2
+            else:
+                roll = ((random.choice(EconomyConstants.SLOTS, )) * 3, ) * 3
+                bet *= 3
 
-        multiplier = 1
-
-        for row in roll:
-            if all(row[0] == row[i] for i in range(1, 3)):
-                multiplier += 1
-
-        won = multiplier > 1         
-
-        if won:
-            bet *= multiplier
             ctx.account.cash += bet
         else:
+            roll = tuple(random.choices(EconomyConstants.SLOTS, k=3) for _ in range(3))
             bet *= 2
             ctx.account.cash -= bet
 
         await ctx.account.save()
 
         em = discord.Embed(description="{}\n\n{}\n{} :arrow_left:\n{}".format(
-            (ctx.lang["economy"]["win"] if won else ctx.lang["economy"]["lose"]).format(
-                self.currency_fmt(ctx.currency, bet)),
+            (ctx.lang["economy"]["win"] 
+                if game_config.game_result == GameResult.success 
+                else ctx.lang["economy"]["lose"]).format(
+                    self.currency_fmt(ctx.currency, bet)),
             *(' | '.join(roll[i]) for i in range(3))),
             colour=ctx.color)
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
