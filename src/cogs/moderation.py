@@ -298,7 +298,9 @@ class Moderation(commands.Cog):
 
         em.add_field(name=ctx.lang["shared"]["member"], value=member)
         em.add_field(name=ctx.lang["moderation"]["moderator"], value=author)
-        em.add_field(name=ctx.lang["shared"]["expires"], value=expires.humanize("%d.%m.%Y, %H:%S"))
+        em.add_field(
+            name=ctx.lang["shared"]["expires"], 
+            value=expires.humanize(ctx.lang["long_date"]))
         em.add_field(name=ctx.lang["shared"]["reason"], value=case[4])
 
         await ctx.send(embed=em)
@@ -431,7 +433,7 @@ class Moderation(commands.Cog):
             value=role.id)
         em.add_field(
             name=ctx.lang["shared"]["created"], 
-            value=r"{:%d.%m.%Y}".format(role.created_at))
+            value=role.created_at.strftime(ctx.lang["short_date"]))
         em.add_field(
             name=ctx.lang["info"]["hoisted"],
             value=ctx.lang["shared"][str(role.hoist)])

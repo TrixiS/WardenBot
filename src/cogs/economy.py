@@ -20,6 +20,7 @@ from .utils.db import DbType
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
 # TODO: update en langs
+# TODO: store const date strings in langs
 
 class Account:
 
@@ -1081,6 +1082,7 @@ class Economy(commands.Cog):
 
     # dont forget to commit constants KEK
     @commands.command(cls=EconomyGame)
+    @custom_cooldown()
     async def slot(self, ctx, bet: Bet):
         # TODO:
         # use GameResult and chance to get win state

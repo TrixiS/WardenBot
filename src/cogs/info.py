@@ -23,7 +23,7 @@ class Info(commands.Cog):
             value=ctx.guild.id)
         em.add_field(
             name=ctx.lang["shared"]["created"], 
-            value="{:%d.%m.%Y}".format(ctx.guild.created_at))
+            value=ctx.guild.created_at.strftime(ctx.lang["short_date"]))
         em.add_field(
             name=ctx.lang["info"]["region"],
             value=str(ctx.guild.region).title())
@@ -59,17 +59,15 @@ class Info(commands.Cog):
             description=f"**{ctx.lang['shared']['member']}:** {member.mention}",
             colour=ctx.color)
 
-        date_fmt = r"{:%d.%m.%Y, %H:%M}"
-
         em.add_field(
             name=ctx.lang["shared"]["id"],
             value=member.id)
         em.add_field(
             name=ctx.lang["shared"]["created"],
-            value=date_fmt.format(member.created_at))
+            value=member.created_at.strftime(ctx.lang["long_date"]))
         em.add_field(
             name=ctx.lang["info"]["joined"], 
-            value=date_fmt.format(member.joined_at))
+            value=member.joined_at.strftime(ctx.lang["long_date"]))
         em.add_field(
             name=ctx.lang["info"]["status"],
             value=str(member.status).title())
@@ -98,7 +96,7 @@ class Info(commands.Cog):
             value=channel.id)
         em.add_field(
             name=ctx.lang["shared"]["created"],
-            value="{:%d.%m.%Y}".format(channel.created_at))
+            value=channel.created_at.strftime(ctx.lang["short_date"]))
         em.add_field(
             name=ctx.lang["shared"]["type"],
             value=str(channel.type).title())
@@ -127,7 +125,7 @@ class Info(commands.Cog):
             value=emoji.id)
         em.add_field(
             name=ctx.lang["shared"]["created"], 
-            value="{:%d.%m.%Y}".format(emoji.created_at))
+            value=emoji.created_at.strftime(ctx.lang["short_date"]))
         em.add_field(
             name="URL", 
             value=f"[{ctx.lang['shared']['click']}]({emoji.url})")
@@ -147,7 +145,9 @@ class Info(commands.Cog):
 
         em.add_field(
             name=ctx.lang["info"]["uptime"], 
-            value="{} {:%d.%m.%y %H:%M}".format(ctx.lang["info"]["since"], self.bot.uptime))
+            value="{} {}".format(
+                ctx.lang["info"]["since"], 
+                self.bot.uptime.strftime(ctx.lang["long_date"])))
         em.add_field(
             name=ctx.lang["info"]["invite"], 
             value=f"[{ctx.lang['shared']['click']}]"
@@ -190,13 +190,13 @@ class Info(commands.Cog):
             name="URL", 
             value=f"[{ctx.lang['shared']['click']}]({data['html_url']})")
 
-        commit_date = datetime.datetime.strptime(
+        commit_date = datetime.datetime.strftime(
             data["commit"]["committer"]["date"], 
             "%Y-%m-%dT%H:%M:%SZ")
         
         em.add_field(
             name=ctx.lang["shared"]["created"], 
-            value="{:%d.%m.%Y %H:%M}".format(commit_date))
+            value=commit_date.strftime(ctx.lang["long_date"]))
         em.add_field(
             name=ctx.lang["shared"]["message"],
             value=data["commit"]["message"],

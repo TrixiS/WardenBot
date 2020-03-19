@@ -109,7 +109,7 @@ class Tags(commands.Cog):
             return await ctx.answer(ctx.lang["tags"]["no_with_name"].format(member.mention, name))
 
         owner = self.bot.get_user(check[0])
-        created = UnixTime(check[4]).humanize()
+        created = UnixTime(check[4]).humanize(ctx.lang["short_date"])
 
         em = discord.Embed(title=ctx.lang["tags"]["information"], 
             colour=ctx.color)

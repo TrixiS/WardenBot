@@ -94,7 +94,7 @@ def custom_cooldown():
 
         if not await bucket.use():
             raise commands.CheckFailure(ctx.lang["errors"]["on_cooldown"].format(
-                bucket.reset_at.strftime(r"%d.%m.%y %H:%S")))
+                bucket.reset_at.strftime(ctx.lang["long_date"])))
         
         return True
 
