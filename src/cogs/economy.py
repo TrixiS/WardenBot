@@ -1103,12 +1103,13 @@ class Economy(commands.Cog):
 
         await ctx.account.save()
 
-        em = discord.Embed(description="{}\n\n{}\n{} :arrow_left:\n{}".format(
-            (ctx.lang["economy"]["win"] 
-            if game_config.game_result == GameResult.success 
-            else ctx.lang["economy"]["lose"]).format(
-                self.currency_fmt(ctx.currency, bet)),
-            *(' | '.join(roll[i]) for i in range(3))),
+        em = discord.Embed(
+            description="{}\n\n{}\n{} :arrow_left:\n{}".format(
+                (ctx.lang["economy"]["win"] 
+                if game_config.game_result == GameResult.success 
+                else ctx.lang["economy"]["lose"]).format(
+                    self.currency_fmt(ctx.currency, bet)),
+                *(' | '.join(roll[i]) for i in range(3))),
             colour=ctx.color)
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         
