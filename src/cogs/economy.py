@@ -1087,7 +1087,7 @@ class Economy(commands.Cog):
             if game_config.rolled_chance < 80:
                 roll = (
                     random.choices(EconomyConstants.SLOTS, k=3),
-                    [random.choice(EconomyConstants.SLOTS)] * 3,
+                    (random.choice(EconomyConstants.SLOTS)) * 3,
                     random.choices(EconomyConstants.SLOTS, k=3)
                 )
                 bet *= 2
@@ -1105,9 +1105,9 @@ class Economy(commands.Cog):
 
         em = discord.Embed(description="{}\n\n{}\n{} :arrow_left:\n{}".format(
             (ctx.lang["economy"]["win"] 
-                if game_config.game_result == GameResult.success 
-                else ctx.lang["economy"]["lose"]).format(
-                    self.currency_fmt(ctx.currency, bet)),
+            if game_config.game_result == GameResult.success 
+            else ctx.lang["economy"]["lose"]).format(
+                self.currency_fmt(ctx.currency, bet)),
             *(' | '.join(roll[i]) for i in range(3))),
             colour=ctx.color)
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
