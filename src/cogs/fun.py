@@ -110,7 +110,7 @@ class Fun(commands.Cog):
         async with self.bot.session.post(FunConstants.REX_API_URL, data=req_data) as req:
             data = await req.json()
 
-        offset = EmbedConstants.DESC_MAX_LEN - len("```")
+        offset = EmbedConstants.DESC_MAX_LEN - len("```") * 2
 
         if data["Errors"] is not None and len(data["Errors"]):
             await ctx.answer(markdown(data["Errors"][:offset], "```"))
