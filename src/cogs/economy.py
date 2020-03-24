@@ -14,7 +14,7 @@ from .utils.converters import (NotAuthor, SafeUint, IndexConverter,
     Index, HumanTime, CommandConverter, EnumConverter)
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown, human_choice
-from .utils.models import PseudoMember
+from .utils.models import PseudoMember, ContextFormatter
 from .utils.db import DbType
 
 # !!! TODO: the whole shop system
@@ -296,10 +296,15 @@ class StoryGame(EconomyGame):
         await super().invoke(ctx)
 
     async def use(self, ctx):
+        formatter = ContextFormatter(
+            member=ctx.author,
+            guild=ctx.guild)
+
         em = discord.Embed(
-            description=ctx.game_config.story[1].format(money=self.cog.currency_fmt(
-                ctx.currency,
-                ctx.game_config.rolled_reward)),
+            description=formatter.format(
+                ctx.game_config.story[1].replace(r"{money}", self.cog.currency_fmt(
+                    ctx.currency,
+                    ctx.game_config.rolled_reward))),
             colour=ctx.color)
 
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
