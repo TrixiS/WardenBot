@@ -24,8 +24,6 @@ class ContextFormatter:
         matched = self.pattern.findall(string)
 
         for name, field in set(matched):
-            name_field_pair = (name, field)
-
             if name in self.allowed_names and field in StringConstants.ALLOWED_FMT_FIELDS:
                 value = getattr(self.ctx[name], field, None)
                 
