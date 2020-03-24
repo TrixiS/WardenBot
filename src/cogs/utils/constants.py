@@ -26,6 +26,11 @@ class EmbedConstants:
 class StringConstants:
 
     DOT_SYMBOL = '•'
+    ALLOWED_FMT_FIELDS = (
+        "created_at",
+        "name", "id",
+        "mention"
+    )
 
 
 class ModerationConstants:
