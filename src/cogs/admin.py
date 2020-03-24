@@ -2,6 +2,8 @@ import discord
 
 from .utils.checks import is_commander
 from .utils.converters import Check
+from .utils.models import ContextFormatter
+from .utils.constants import EmbedConstants
 from discord.ext import commands
 from typing import Optional
 
@@ -24,6 +26,8 @@ class Administration(commands.Cog):
     @is_commander()
     async def welcome(self, ctx, *, content: str=None):
         if content is not None:
+            content = content[:EmbedConstants.DESC_MAX_LEN]
+
             check = await self.bot.db.execute("UPDATE `welcome` SET `content` = ? WHERE `welcome`.`server` = ?",
                 content, ctx.guild.id, with_commit=True)
 
@@ -81,42 +85,57 @@ class Administration(commands.Cog):
         await self.delete_pattern(ctx, "autorole", 
             "autorole_deleted", "no_autorole")
 
-    @commands.Cog.listener()
-    async def on_member_join(self, member):
-        welcome_content = await self.bot.db.execute("SELECT `content` FROM `welcome` WHERE `welcome`.`server` = ?",
+    async def send_welcome(self, member):
+        welcome_content = await self.bot.db.execute(
+            "SELECT `content` FROM `welcome` WHERE `welcome`.`server` = ?",
             member.guild.id)
 
-        if welcome_content:
-            user = self.bot.get_user(member.id)
+        if not welcome_content:
+            return
 
-            em = discord.Embed(
-                description=welcome_content,
-                colour=(await self.bot.get_color(member.guild)))
-            em.set_thumbnail(url=member.guild.icon_url)
+        user = self.bot.get_user(member.id)
+        dm_channel = user.dm_channel or await user.create_dm()
+    
+        if not dm_channel.permissions_for(self.bot.user).send_messages:
+            return 
+    
+        formatter = ContextFormatter(
+            guild=member.guild,
+            member=member,
+            owner=member.guild.owner)
+    
+        em = discord.Embed(
+            description=formatter.format(welcome_content),
+            colour=(await self.bot.get_color(member.guild)))
+    
+        em.set_thumbnail(url=member.guild.icon_url)
+    
+        await dm_channel.send(embed=em)
 
-            try:
-                await user.send(embed=em)
-            except:
-                pass
-
+    async def give_autorole(self, member):
         if not member.guild.me.guild_permissions.manage_roles:
             return
 
-        autorole_id = await self.bot.db.execute("SELECT `role` FROM `autorole` WHERE `autorole`.`server` = ?",
+        autorole_id = await self.bot.db.execute(
+            "SELECT `role` FROM `autorole` WHERE `autorole`.`server` = ?",
             member.guild.id)
 
-        if autorole_id:
-            role = member.guild.get_role(autorole_id)
+        if not autorole_id:
+            return 
 
-            if member.guild.me.top_role < role:
-                return
+        role = member.guild.get_role(autorole_id)
+        
+        if member.guild.me.top_role < role:
+            return
+        
+        await member.add_roles(
+            role,
+            reason=(await self.bot.get_lang(member.guild))["events"]["autorole"])
 
-            try:
-                await member.add_roles(
-                    role,
-                    reason=(await self.bot.get_lang(member.guild))["events"]["autorole"])
-            except:
-                pass
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        await self.send_welcome(member)
+        await self.give_autorole(member)
 
 
 def setup(bot):
