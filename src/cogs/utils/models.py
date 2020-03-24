@@ -22,14 +22,10 @@ class ContextFormatter:
 
     def format(self, string):
         matched = self.pattern.findall(string)
-        ignored = []
 
-        for name, field in matched:
+        for name, field in set(matched):
             name_field_pair = (name, field)
 
-            if name_field_pair in ignored:
-                continue
-        
             if name in self.allowed_names and field in StringConstants.ALLOWED_FMT_FIELDS:
                 value = getattr(self.ctx[name], field, None)
                 
@@ -37,7 +33,5 @@ class ContextFormatter:
                     string = string.replace(
                         "{}{}.{}{}".format('{', name, field, '}'), 
                         str(value))
-
-            ignored.append(name_field_pair)
 
         return string
