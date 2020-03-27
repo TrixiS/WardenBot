@@ -1124,7 +1124,7 @@ class Economy(commands.Cog):
     #       fill it in constants throuth
     @commands.command(cls=EconomyGame)
     @custom_cooldown()
-    async def dice(self, ctx, bet: Bet):
+    async def dice(self, ctx, bet: Bet, predicted: Optional[SafeUint]):
         bot_roll = random.randint(1, 6)
         player_roll = random.randint(1, 6)
 
@@ -1143,14 +1143,16 @@ class Economy(commands.Cog):
             name=ctx.lang["economy"]["player_roll"],
             value=EconomyConstants.ROLLS[player_roll])
 
-        bet *= 2
-
         if bot_roll > player_roll:
+            bet *= 2
             ctx.account.cash -= bet
-            em.description = ctx.lang["economy"]["lose"].format(bet)
+            em.description = ctx.lang["economy"]["lose"].format(
+                self.currency_fmt(ctx.currency, bet))
         elif bot_roll < player_roll:
+            bet *= 3 if predicted == player_roll else 2
             ctx.account.cash += bet
-            em.description = ctx.lang["economy"]["win"].format(bet)
+            em.description = ctx.lang["economy"]["win"].format(
+                self.currency_fmt(ctx.currency, bet))
         else:
             em.description = ctx.lang["economy"]["push"]
 
