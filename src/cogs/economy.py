@@ -1120,6 +1120,43 @@ class Economy(commands.Cog):
         
         await ctx.send(embed=em)
 
+    # TODO: pictures for rolls (1-6 dots)
+    #       fill it in constants throuth
+    @commands.command(cls=EconomyGame)
+    @custom_cooldown()
+    async def dice(self, ctx, bet: Bet):
+        bot_roll = random.randint(1, 6)
+        player_roll = random.randint(1, 6)
+
+        if bot_roll < 6:
+            game_config = await self.eco.get_game_config(ctx)
+
+            if game_config.game_result == GameResult.fail:
+                bot_roll += 1
+
+        em = discord.Embed(colour=ctx.color)
+        em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
+        em.add_field(
+            name=ctx.lang["economy"]["dealer_roll"],
+            value=EconomyConstants.ROLLS[bot_roll])
+        em.add_field(
+            name=ctx.lang["economy"]["player_roll"],
+            value=EconomyConstants.ROLLS[player_roll])
+
+        bet *= 2
+
+        if bot_roll > player_roll:
+            ctx.account.cash -= bet
+            em.description = ctx.lang["economy"]["lose"].format(bet)
+        elif bot_roll < player_roll:
+            ctx.account.cash += bet
+            em.description = ctx.lang["economy"]["win"].format(bet)
+        else:
+            em.description = ctx.lang["economy"]["push"]
+
+        await ctx.send(embed=em)
+        await ctx.account.save()
+
 
 def setup(bot):
     bot.add_cog(Economy(bot))
