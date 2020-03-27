@@ -277,7 +277,7 @@ class Fun(commands.Cog):
         await ctx.send(text)
 
     @commands.command()
-    async def roll(self, ctx, min_value: int=1, max_value: int=100):
+    async def roll(self, ctx, min_value: Optional[int] = 1, max_value: Optional[int] = 100):
         await ctx.send(str(random.randint(min_value, max_value)))
 
     @commands.command(aliases=["color", "colour"])
