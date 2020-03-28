@@ -609,10 +609,28 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
 
-    # TODO: make amount argument optional
-    @commands.command(name="start-money", cls=EconomyCommand)
+    @commands.group(name="start-money", cls=EconomyGroup)
+    async def start_money(self, ctx):
+        start_money = await self.bot.db.execute(
+            "SELECT `cash`, `bank` FROM `start_money` WHERE `start_money`.`server` = ?",
+            ctx.guild.id)
+        
+        cash, bank = start_money or (0, 0)
+
+        em = discord.Embed(colour=ctx.color)
+        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
+        em.add_field(
+            name=ctx.lang["economy"]["cash"], 
+            value=self.currency_fmt(ctx.currency, cash))
+        em.add_field(
+            name=ctx.lang["economy"]["bank"], 
+            value=self.currency_fmt(ctx.currency, bank))
+        
+        await ctx.send(embed=em)
+
+    @start_money.command(name="set", cls=EconomyCommand)
     @is_commander()
-    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
+    async def start_money_set(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
         update_sql = """
         UPDATE `start_money` 
         SET `{}` = ? 
