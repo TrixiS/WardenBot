@@ -362,7 +362,7 @@ class IncomeValueConverter(uint):
         else:
             value = await super().convert(ctx, arg)
 
-        return IncomeValue(ctx.bot.db.make_safe_value(value), arg.endswith('%'))
+        return IncomeValue(value, arg.endswith('%'))
 
 
 class BJCard:
@@ -609,6 +609,7 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
 
+    # TODO: make amount argument optional
     @commands.command(name="start-money", cls=EconomyCommand)
     @is_commander()
     async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
