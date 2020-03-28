@@ -609,7 +609,7 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
             member.mention))
 
-    @commands.group(name="start-money", cls=EconomyGroup)
+    @commands.group(name="start-money", cls=EconomyGroup, invoke_without_command=True)
     async def start_money(self, ctx):
         start_money = await self.bot.db.execute(
             "SELECT `cash`, `bank` FROM `start_money` WHERE `start_money`.`server` = ?",
