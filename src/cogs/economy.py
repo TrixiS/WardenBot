@@ -10,7 +10,7 @@ from asyncio import TimeoutError
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
-from .utils.converters import (NotAuthor, SafeUint, IndexConverter, 
+from .utils.converters import (NotAuthor, uint, IndexConverter, 
     Index, HumanTime, CommandConverter, EnumConverter)
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown, human_choice
@@ -39,9 +39,6 @@ class Account:
         SET `cash` = ?, `bank` = ? 
         WHERE `money`.`server` = ? AND `money`.`member` = ?
         """
-
-        self.cash = self.bot.db.make_safe_value(int(self.cash))
-        self.bank = self.bot.db.make_safe_value(int(self.bank))
 
         check = await self.bot.db.execute(
             update_sql, self.cash, 
@@ -355,7 +352,7 @@ class IncomeValue:
         return f"{self.amount}%" if self.is_percentage else str(self.amount)
 
 
-class IncomeValueConverter(SafeUint):
+class IncomeValueConverter(uint):
 
     __qualname__ = "IncomeValue"
 
@@ -468,7 +465,7 @@ class BJAction(Enum):
     Double = 2
 
 
-class Bet(SafeUint):
+class Bet(uint):
 
     async def convert(self, ctx, arg):
         result = await super().convert(ctx, arg)
@@ -515,7 +512,7 @@ class Economy(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command(aliases=["dep"], cls=EconomyCommand)
-    async def deposit(self, ctx, amount: Optional[SafeUint]):
+    async def deposit(self, ctx, amount: Optional[uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -533,7 +530,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(aliases=["with"], cls=EconomyCommand)
-    async def withdraw(self, ctx, amount: Optional[SafeUint]):
+    async def withdraw(self, ctx, amount: Optional[uint]):
         account = await self.eco.get_money(ctx.author)
 
         if amount is None:
@@ -551,7 +548,7 @@ class Economy(commands.Cog):
             self.currency_fmt(ctx.currency, amount)))
 
     @commands.command(cls=EconomyCommand)
-    async def give(self, ctx, member: NotAuthor, amount: SafeUint(include_zero=False)):
+    async def give(self, ctx, member: NotAuthor, amount: uint(include_zero=False)):
         if member == ctx.author:
             return await ctx.answer(ctx.lang["errors"]["cant_use_to_yourself"])
         
@@ -573,7 +570,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="add-money", cls=EconomyCommand)
     @is_commander()
-    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: SafeUint):
+    async def add_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -588,7 +585,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="remove-money", cls=EconomyCommand)
     @is_commander()
-    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: SafeUint):
+    async def remove_money(self, ctx, member: discord.Member, money_type: MoneyTypeConverter, amount: uint):
         account = await self.eco.get_money(member)
 
         if money_type == MoneyType.bank:
@@ -614,7 +611,7 @@ class Economy(commands.Cog):
 
     @commands.command(name="start-money", cls=EconomyCommand)
     @is_commander()
-    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: SafeUint(include_zero=True)):
+    async def start_money(self, ctx, money_type: MoneyTypeConverter, amount: uint(include_zero=True)):
         update_sql = """
         UPDATE `start_money` 
         SET `{}` = ? 
@@ -831,7 +828,7 @@ class Economy(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def story(self, ctx, story_id: SafeUint):
+    async def story(self, ctx, story_id: uint):
         sql = """
         SELECT `text`, `type`, `author`, `result_type`
         FROM `story`
@@ -885,7 +882,7 @@ class Economy(commands.Cog):
 
     @story.command(name="delete", aliases=["remove"])
     @is_commander()
-    async def story_delete(self, ctx, story_id: SafeUint):
+    async def story_delete(self, ctx, story_id: uint):
         check = await self.bot.db.execute(
             "DELETE FROM `story` WHERE `story`.`server` = ? AND `story`.`id` = ?",
             ctx.guild.id, story_id, with_commit=True)
@@ -897,7 +894,7 @@ class Economy(commands.Cog):
 
     @commands.command()
     @is_commander()
-    async def chance(self, ctx, command: CommandConverter(cls=EconomyGame), new_chance: Optional[SafeUint]):
+    async def chance(self, ctx, command: CommandConverter(cls=EconomyGame), new_chance: Optional[uint]):
         if new_chance is None:
             return await ctx.answer(ctx.lang["economy"]["current_chance"].format(
                 command.qualified_name, 
@@ -912,7 +909,7 @@ class Economy(commands.Cog):
 
     @commands.command(cls=EconomyCommand)
     @is_commander()
-    async def reward(self, ctx, command: CommandConverter(cls=EconomyGame), new_reward: Optional[SafeUint]):
+    async def reward(self, ctx, command: CommandConverter(cls=EconomyGame), new_reward: Optional[uint]):
         if new_reward is None:
             return await ctx.answer(ctx.lang["economy"]["current_reward"].format(
                 command.qualified_name,
@@ -1122,7 +1119,7 @@ class Economy(commands.Cog):
 
     @commands.command(cls=EconomyGame)
     @custom_cooldown()
-    async def dice(self, ctx, bet: Bet, predicted: Optional[SafeUint]):
+    async def dice(self, ctx, bet: Bet, predicted: Optional[uint]):
         bot_roll = random.randint(1, 6)
         player_roll = random.randint(1, 6)
 
