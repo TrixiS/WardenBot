@@ -4,7 +4,7 @@ from discord.ext import commands
 from typing import Optional
 from math import ceil
 
-from .utils.converters import IndexConverter, Index, Check
+from .utils.converters import IndexConverter, Index
 from .utils.strings import markdown
 from .utils.time import UnixTime
 from .utils.constants import TagsConstants

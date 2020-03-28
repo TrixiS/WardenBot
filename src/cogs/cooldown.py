@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from typing import Union, Optional
 
-from .utils.converters import HumanTime, SafeUint, CommandConverter
+from .utils.converters import HumanTime, uint, CommandConverter
 from .utils.cooldown import CooldownCommand
 from .utils.checks import is_commander
 
@@ -15,7 +15,7 @@ class Cooldown(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @is_commander()
-    async def cooldown(self, ctx, command: CommandConverter(CooldownCommand), max_uses: SafeUint, interval: HumanTime):
+    async def cooldown(self, ctx, command: CommandConverter(CooldownCommand), max_uses: uint, interval: HumanTime):
         sql = """
         UPDATE `cooldown`
         SET `max_uses` = ?, `reset_seconds` = ?

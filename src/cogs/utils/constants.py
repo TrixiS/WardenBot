@@ -2,7 +2,7 @@
 
 class TagsConstants:
 
-    MAX_LEN = 60
+    MAX_LEN = 20
     CHECK_PAGE_MAX = 30
 
 

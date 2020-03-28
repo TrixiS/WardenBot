@@ -12,7 +12,7 @@ from math import ceil
 from .utils.time import UnixTime
 from .utils.strings import markdown
 from .utils.checks import is_moderator, is_commander, bot_has_permissions
-from .utils.converters import SafeUint, HumanTime, EqualMember, EqualRole, IndexConverter, Index
+from .utils.converters import uint, HumanTime, EqualMember, EqualRole, IndexConverter, Index
 from .utils.constants import ModerationConstants, StringConstants, EmbedConstants
 
 ActionInfo = namedtuple("ActionInfo", ["time", "reason"])
@@ -266,13 +266,13 @@ class Moderation(commands.Cog):
 
         em = discord.Embed(title=ctx.lang["moderation"]["cases_title"].format(
             (member or ctx.guild).name), description=description, colour=ctx.color)
-        em.set_footer(text=f'{ctx.lang["shared"]["page"]}: {page.humanize()}/{pages_amount}')
+        em.set_footer(text=f'{ctx.lang["shared"]["page"]} {page.humanize()}/{pages_amount}')
 
         await ctx.send(embed=em)
 
     @commands.command()
     @is_moderator()
-    async def case(self, ctx, case_id: SafeUint):
+    async def case(self, ctx, case_id: uint):
         sql = """
         SELECT `author`, `member`, `type`, `expires`, `reason`
         FROM `cases`

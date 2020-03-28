@@ -41,9 +41,20 @@ class DataBase:
         self._lock = Lock()
         self._adapt()
 
-    def make_safe_value(self, number):
+    def _make_safe_value(self, number):
         return max(min(number, self.int_max_bound), self.int_min_bound)
 
+    def _make_safe_ints(self, ints):
+        result = []
+
+        for value in ints:
+            if isinstance(value, int):
+                result.append(self._make_safe_value(value))
+            else:
+                result.append(value)
+
+        return result
+        
     def _adapt(self) -> None:
         if self.db_type is DbType.SQLite:
             self.conn.create_function("rand", 0, random)
@@ -62,7 +73,7 @@ class DataBase:
             query = self.prepare_query(query)
 
         try:
-            self.cursor.execute(query, args)
+            self.cursor.execute(query, self._make_safe_ints(args))
         except Exception as e:
             logging.error(f"{str(e)} ({query}) ({args})")
             return

@@ -1,7 +1,6 @@
 import discord
 
 from .utils.checks import is_commander
-from .utils.converters import Check
 from .utils.models import ContextFormatter
 from .utils.constants import EmbedConstants
 from discord.ext import commands
