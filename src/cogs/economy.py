@@ -1120,8 +1120,6 @@ class Economy(commands.Cog):
         
         await ctx.send(embed=em)
 
-    # TODO: pictures for rolls (1-6 dots)
-    #       fill it in constants throuth
     @commands.command(cls=EconomyGame)
     @custom_cooldown()
     async def dice(self, ctx, bet: Bet, predicted: Optional[SafeUint]):
@@ -1137,11 +1135,11 @@ class Economy(commands.Cog):
         em = discord.Embed(colour=ctx.color)
         em.set_author(name=ctx.author.name, icon_url=ctx.author.avatar_url)
         em.add_field(
-            name=ctx.lang["economy"]["dealer_roll"],
-            value=EconomyConstants.ROLLS[bot_roll])
-        em.add_field(
             name=ctx.lang["economy"]["player_roll"],
             value=EconomyConstants.ROLLS[player_roll])
+        em.add_field(
+            name=ctx.lang["economy"]["dealer_roll"],
+            value=EconomyConstants.ROLLS[bot_roll])
 
         if bot_roll > player_roll:
             bet *= 2
