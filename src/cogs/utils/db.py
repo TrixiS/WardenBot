@@ -22,8 +22,8 @@ class DataBase:
     param_lit = '?'
     null = "NULL"
 
-    int_min_bound = -999999999999
-    int_max_bound = 999999999999
+    int_min_bound = -999999999999999999
+    int_max_bound = 999999999999999999
 
     def __init__(self, db_type, **kwargs):
         if db_type is DbType.SQLite:
