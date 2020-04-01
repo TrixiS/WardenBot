@@ -1,6 +1,7 @@
 import discord
 import logging
 import random
+import datetime as dt
 
 from discord.ext import commands
 from enum import Enum
@@ -19,6 +20,20 @@ from .utils.db import DbType
 
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
+# TODO: check permissions to send messages in ctx.send
+
+# await bot.db.execute("""create table `shop_items` (
+#     `server` bigint,
+#     `author` bigint,
+#     `buy_count` bigint,
+#     `name` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+#     `price` bigint,
+#     `description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+#     `role` bigint,
+#     `stock` bigint,
+#     `message_type` int,
+#     `message` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci)""")
+
 
 class Account:
 
@@ -252,6 +267,48 @@ class _Economy:
                 guild.id, command.qualified_name,
                 chance or self.bot.config.default_game_config[0],
                 reward or self.bot.config.default_game_config[1])
+
+    async def get_item(self, guild, name):
+        select_sql = """
+        SELECT `buy_count`, {}  
+        FROM `shop_items`
+        WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
+        """
+        
+        to_select = ', '.join(markdown(prop, '`') for prop in ShopItem.properties.keys())
+        check = await self.bot.db.execute(select_sql.format(to_select), guild.id, name)
+
+        if check is None:
+            return
+
+        return ShopItem(guild, *check)
+
+
+class MessageType(Enum):
+
+    dm = 0
+    guild = 1
+
+
+class ShopItem:
+
+    properties = {
+        "name": str,
+        "price": uint(),
+        "description": str,
+        "role": commands.RoleConverter(),
+        "stock": uint(),
+        "message_type": EnumConverter(MessageType),
+        "message": commands.clean_content()
+    }
+
+    def __init__(self, guild, buy_count, *args):
+        self.guild = guild
+        self.buy_count = buy_count
+
+        fields_names = tuple(self.properties.keys())
+        for i, arg in enumerate(args):
+            setattr(self, fields_names[i], arg)
 
 
 class EconomyGameConfig:
@@ -1172,6 +1229,75 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=em)
         await ctx.account.save()
+
+    @commands.group(cls=EconomyGroup, invoke_without_commands=True)
+    @is_commander()
+    async def item(self, ctx):
+        pass
+
+    @item.command(name="create")
+    @is_commander()
+    async def item_create(self, ctx):
+        dialogue_start_time = dt.datetime.now()
+        end_timedelta = dt.timedelta(minutes=len(ShopItem.properties) + 1)
+        item_props = []
+
+        for prop, prop_type in ShopItem.properties.items():
+            await ctx.send(ctx.lang["economy"]["item_message"].format(
+                ctx.author.mention, 
+                ctx.lang["economy"]["item_properties"][prop], 
+                ctx.lang["shared"]["cancel"]))
+            
+            convertered = None
+
+            while convertered is None:
+                if dialogue_start_time - dt.datetime.now() > end_timedelta:
+                    return
+
+                try:
+                    result = (await self.bot.wait_for(
+                        "message", 
+                        check=lambda x: x.author == ctx.author, 
+                        timeout=60.0)).content
+                
+                    if result == ctx.lang["shared"]["cancel"]:
+                        return await ctx.answer(ctx.lang["shared"]["aborted"].format(
+                            ctx.command.qualified_name))
+
+                    if prop_type == str:
+                        convertered = result[:EmbedConstants.FIELD_NAME_MAX_LEN]
+                    elif prop_type == int:
+                        convertered = int(result)
+                    elif isinstance(prop_type, commands.Converter):
+                        result = await prop_type.convert(ctx, result)
+
+                        if isinstance(result, Enum):
+                            convertered = result.value
+                        elif isinstance(result, discord.mixins.Hashable):
+                            convertered = result.id
+                        else:
+                            convertered = result
+                except TimeoutError:
+                    return
+                except Exception:
+                    if isinstance(prop_type, commands.converter.IDConverter):
+                        break
+                    
+                    await ctx.answer(ctx.lang["economy"]["invalid_prop_value"].format(
+                        ctx.lang["economy"]["item_properties"][prop]))
+            
+            if prop == "name" and await self.eco.get_item(ctx.guild, convertered):
+                return await ctx.answer(ctx.lang["economy"]["item_already_created"].format(
+                    convertered))
+
+            item_props.append(convertered)
+
+        await ctx.answer(ctx.lang["economy"]["item_created"].format(
+            item_props[0]))
+
+        await self.bot.db.execute(
+            "INSERT INTO `shop_items` VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            ctx.guild.id, ctx.author.id, 0, *item_props, with_commit=True)
 
 
 def setup(bot):
