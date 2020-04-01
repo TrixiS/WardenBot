@@ -22,6 +22,12 @@ class EnumConverter(commands.Converter):
 
         return result[1]
 
+    @staticmethod
+    def convert_value(enum_cls, value):
+        return discord.utils.find(
+            lambda x: x.value == value,
+            enum_cls.__members__.values())
+
 
 class CommandConverter(commands.Converter):
 
