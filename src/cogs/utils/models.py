@@ -1,5 +1,6 @@
 import re
 
+from itertools import chain
 from .constants import StringConstants
 
 
@@ -16,9 +17,13 @@ class ContextFormatter:
 
     pattern = re.compile(r"\{(.+?)\.(.+?)\}")
 
-    def __init__(self, **context):
+    def __init__(self, *extra_fields, **context):
         self.ctx = context
-        self.allowed_names = context.keys()
+        self.extra_fields = extra_fields
+
+    @property
+    def allowed_names(self):
+        return chain(self.ctx.keys(), self.extra_fields)
 
     def format(self, string):
         matched = self.pattern.findall(string)
