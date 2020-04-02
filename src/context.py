@@ -64,3 +64,7 @@ class WardenContext(Context):
             return False
         else:
             return True
+
+    async def abort(self):
+        await self.answer(self.lang["shared"]["aborted"].format(
+            self.command.qualified_name))
