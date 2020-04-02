@@ -23,13 +23,17 @@ class ContextFormatter:
 
     @property
     def allowed_names(self):
-        return chain(self.ctx.keys(), self.extra_fields)
+        return self.ctx.keys()
+
+    @property
+    def allowed_fields(self):
+        return chain(StringConstants.ALLOWED_FMT_FIELDS, self.extra_fields)
 
     def format(self, string):
         matched = self.pattern.findall(string)
 
-        for name, field in set(matched):
-            if name in self.allowed_names and field in StringConstants.ALLOWED_FMT_FIELDS:
+        for name, field in filter(lambda x: x[0] in self.ctx, set(matched)):
+            if name in self.allowed_names and field in self.allowed_fields:
                 value = getattr(self.ctx[name], field, None)
                 
                 if value is not None:
