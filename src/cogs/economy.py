@@ -1291,22 +1291,21 @@ class Economy(commands.Cog):
 
             while convertered is None:
                 if dialogue_start_time - dt.datetime.now() > end_timedelta:
-                    return
+                    return await ctx.abort()
 
                 try:
-                    result = (await self.bot.wait_for(
+                    answer = (await self.bot.wait_for(
                         "message", 
                         check=lambda x: x.author == ctx.author, 
                         timeout=60.0)).content
                 
-                    if result == ctx.lang["shared"]["cancel"]:
-                        return await ctx.answer(ctx.lang["shared"]["aborted"].format(
-                            ctx.command.qualified_name))
+                    if answer == ctx.lang["shared"]["cancel"]:
+                        return await ctx.abort()
 
                     if prop_type == str:
-                        convertered = result[:EmbedConstants.FIELD_NAME_MAX_LEN]
+                        convertered = answer[:EmbedConstants.FIELD_NAME_MAX_LEN]
                     elif prop_type == int:
-                        convertered = int(result)
+                        convertered = int(answer)
                     elif isinstance(prop_type, commands.Converter):
                         result = await prop_type.convert(ctx, result)
 
@@ -1352,7 +1351,7 @@ class Economy(commands.Cog):
         if check:
             await ctx.answer(ctx.lang["economy"]["item_deleted"].format(name))
         else:
-            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
+            await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
                 name))
 
     @commands.command(cls=EconomyCommand, aliases=["store"])
