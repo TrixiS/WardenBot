@@ -1341,25 +1341,19 @@ class Economy(commands.Cog):
     @item.command(name="delete")
     @is_commander()
     async def item_delete(self, ctx, *, name: str):
-        select_sql = """
-        SELECT COUNT(*)
-        FROM `shop_items`
-        WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
-        """
-
-        is_item_created = await self.bot.db.execute(select_sql, ctx.guild.id, name)
-
-        if not is_item_created:
-            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
-                name))
-
         delete_sql = """
         DELETE FROM `shop_items` 
         WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
         """
 
-        await ctx.answer(ctx.lang["economy"]["item_deleted"].format(name))
-        await self.bot.db.execute(delete_sql, ctx.guild.id, name, with_commit=True)
+        check = await self.bot.db.execute(
+            delete_sql, ctx.guild.id, name, with_commit=True)
+
+        if check:
+            await ctx.answer(ctx.lang["economy"]["item_deleted"].format(name))
+        else:
+            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
+                name))
 
     @commands.command(cls=EconomyCommand, aliases=["store"])
     async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
