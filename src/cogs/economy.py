@@ -114,6 +114,9 @@ class _Economy:
         return account
 
     async def get_income(self, account):
+        if account.bank >= self.bot.db.int_max_bound:
+            return 
+        
         select_sql = """
         SELECT `income`.`amount`, `is_percentage`,
             (UNIX_TIMESTAMP() - `income`.`seen`) / `income`.`interval`
@@ -1358,6 +1361,9 @@ class Economy(commands.Cog):
         await ctx.answer(ctx.lang["economy"]["item_deleted"].format(name))
         await self.bot.db.execute(delete_sql, ctx.guild.id, name, with_commit=True)
 
-        
+    @commands.command(cls=EconomyCommand, aliases=["store"])
+    async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
+        pass
+
 def setup(bot):
     bot.add_cog(Economy(bot))
