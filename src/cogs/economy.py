@@ -1237,7 +1237,7 @@ class Economy(commands.Cog):
         await ctx.send(embed=em)
         await ctx.account.save()
 
-    @commands.group(cls=EconomyGroup, invoke_without_commands=True)
+    @commands.group(invoke_without_command=True)
     async def item(self, ctx, *, name: str):
         name = name[:EmbedConstants.FIELD_NAME_MAX_LEN]        
         item = await self.eco.get_item(ctx.guild, name)
