@@ -21,20 +21,6 @@ from .utils.db import DbType
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
 # TODO: check permissions to send messages in ctx.send
-# ?TODO: ctx.abort()
-
-# await bot.db.execute("""create table `shop_items` (
-#     `server` bigint,
-#     `author` bigint,
-#     `buy_count` bigint,
-#     `name` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-#     `price` bigint,
-#     `description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-#     `role` bigint,
-#     `stock` bigint,
-#     `message_type` int,
-#     `message` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci)""")
-
 
 class Account:
 
@@ -306,7 +292,7 @@ class ShopItem:
         "price": uint(),
         "description": str,
         "role": commands.RoleConverter(),
-        "stock": uint(),
+        "stock": uint(include_zero=True),
         "message_type": EnumConverter(MessageType),
         "message": commands.clean_content()
     }
@@ -1303,11 +1289,11 @@ class Economy(commands.Cog):
                         return await ctx.abort()
 
                     if prop_type == str:
-                        convertered = answer[:EmbedConstants.FIELD_NAME_MAX_LEN]
+                        convertered = answer[:50 if prop == "name" else EmbedConstants.FIELD_NAME_MAX_LEN]
                     elif prop_type == int:
                         convertered = int(answer)
                     elif isinstance(prop_type, commands.Converter):
-                        result = await prop_type.convert(ctx, result)
+                        result = await prop_type.convert(ctx, answer)
 
                         if isinstance(result, Enum):
                             convertered = result.value
@@ -1354,9 +1340,6 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
                 name))
 
-    @commands.command(cls=EconomyCommand, aliases=["store"])
-    async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
-        pass
 
 def setup(bot):
     bot.add_cog(Economy(bot))
