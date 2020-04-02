@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Optional, Union
 from math import ceil
 from asyncio import TimeoutError
+from collections import namedtuple
 
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
@@ -1339,6 +1340,63 @@ class Economy(commands.Cog):
         else:
             await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
                 name))
+    
+    @commands.command(cls=EconomyCommand, aliases=["store"])
+    async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
+        select_sql = """
+        SELECT `author`, `name`, `description`, `price`, `buy_count`, `stock`
+        FROM `shop_items`
+        WHERE `shop_items`.`server` = ?
+        ORDER BY `shop_items`.`price`
+        LIMIT ? OFFSET ?
+        """
+        
+        check = await self.bot.db.execute(
+            select_sql, ctx.guild.id,
+            EconomyConstants.SHOP_PAGE_MAX_LEX,
+            EconomyConstants.SHOP_PAGE_MAX_LEX * page.value, 
+            fetch_all=True)
+
+        if not len(check):
+            return await ctx.answer(ctx.lang["economy"]["no_items_on_page"].format(
+                page.humanize()))
+
+        count = await self.bot.db.execute(
+            "SELECT COUNT(*) FROM `shop_items` WHERE `shop_items`.`server` = ?",
+            ctx.guild.id)
+
+        em = discord.Embed(
+            title=ctx.lang["economy"]["shop"].format(ctx.guild.name), 
+            colour=ctx.color)
+
+        context_item = namedtuple("item", ("name", "price", "buy_count", "stock"))
+        formatter = ContextFormatter(
+            "author", "price", "buy_count", "stock", 
+            guild=ctx.guild, member=ctx.author, currency=ctx.currency)
+
+        for author_id, name, desc, price, buy_count, stock in check:
+            formatter.ctx["item"] = context_item( 
+                name, self.currency_fmt(ctx.currency, price), 
+                buy_count, stock)
+            
+            formatter.ctx["author"] = ctx.guild.get_member(author_id) or ctx.lang["shared"]["left_member"]
+
+            em.add_field(
+                name=(f"{name} " 
+                    f"({f'{buy_count}/{stock}' if stock > 0 else StringConstants.INFINITY}) "
+                    f"{StringConstants.DOT_SYMBOL} " 
+                    f"{self.currency_fmt(ctx.currency, price)}"),
+                value=formatter.format(desc),
+                inline=False)
+
+        em.set_footer(text=(
+            f'{ctx.lang["shared"]["page"]} '
+            f"{page.humanize()}/{ceil(count / EconomyConstants.SHOP_PAGE_MAX_LEX)}"))
+
+        await ctx.send(embed=em)
+
+    # TODO:
+    #   item edit command
 
 
 def setup(bot):

@@ -26,6 +26,7 @@ class EmbedConstants:
 class StringConstants:
 
     DOT_SYMBOL = '•'
+    INFINITY = '∞'
     ALLOWED_FMT_FIELDS = (
         "created_at",
         "name", "id",
@@ -64,6 +65,7 @@ class EconomyConstants:
         5: "<:d5:693091317919514665>",
         6: "<:d6:693091318150201455>"
     }
+    SHOP_PAGE_MAX_LEX = 6
 
 
 class TwitchAlertsConstants:
