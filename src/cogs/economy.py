@@ -21,6 +21,7 @@ from .utils.db import DbType
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
 # TODO: check permissions to send messages in ctx.send
+# ?TODO: ctx.abort()
 
 # await bot.db.execute("""create table `shop_items` (
 #     `server` bigint,
@@ -270,7 +271,7 @@ class _Economy:
 
     async def get_item(self, guild, name):
         select_sql = """
-        SELECT `buy_count`, {}  
+        SELECT `author`, `buy_count`, {}  
         FROM `shop_items`
         WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
         """
@@ -280,6 +281,11 @@ class _Economy:
 
         if check is None:
             return
+
+        check = list(check)
+        check[0] = guild.get_member(check[0])
+        check[5] = guild.get_role(check[5])
+        check[7] = EnumConverter.convert_value(MessageType, check[7]).name.upper()
 
         return ShopItem(guild, *check)
 
@@ -302,8 +308,9 @@ class ShopItem:
         "message": commands.clean_content()
     }
 
-    def __init__(self, guild, buy_count, *args):
+    def __init__(self, guild, author, buy_count, *args):
         self.guild = guild
+        self.author = author
         self.buy_count = buy_count
 
         fields_names = tuple(self.properties.keys())
@@ -1231,9 +1238,38 @@ class Economy(commands.Cog):
         await ctx.account.save()
 
     @commands.group(cls=EconomyGroup, invoke_without_commands=True)
-    @is_commander()
-    async def item(self, ctx):
-        pass
+    async def item(self, ctx, *, name: str):
+        name = name[:EmbedConstants.FIELD_NAME_MAX_LEN]        
+        item = await self.eco.get_item(ctx.guild, name)
+
+        if item is None:
+            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
+                name))
+
+        em = discord.Embed(
+            description=ctx.lang["economy"]["item"], 
+            colour=ctx.color)
+        em.set_author(name=ctx.guild.name, icon_url=ctx.guild.icon_url)
+
+        em.add_field(
+            name=ctx.lang["shared"]["author"],
+            value=item.author.mention if item.author else ctx.lang["shared"]["left_member"],
+            inline=False)
+
+        em.add_field(
+            name=ctx.lang["economy"]["buy_count"],
+            value=item.buy_count,
+            inline=False)
+
+        for prop in item.properties.keys():
+            value = item.__dict__[prop]
+            
+            em.add_field(
+                name=ctx.lang["economy"]["item_properties"][prop].capitalize(),
+                value=str(value) if value is not None else ctx.lang["shared"]["no"],
+                inline=False)
+
+        await ctx.send(embed=em)
 
     @item.command(name="create")
     @is_commander()
