@@ -1,7 +1,19 @@
 import discord
+import string
+import datetime as dt
 
 from discord.ext import commands
-from asyncio import iscoroutinefunction as is_coro
+
+
+class without_whitespace(commands.clean_content):
+
+    async def convert(self, ctx, arg):
+        result = await super().convert(ctx, arg)
+
+        if any(s in result for s in string.whitespace[1:]):
+            raise commands.BadArgument(ctx.lang["fun"]["alpha_needed"])
+
+        return result
 
 
 class EnumConverter(commands.Converter):
