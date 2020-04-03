@@ -102,6 +102,9 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
+        if member.guild.me is None:
+            return
+
         if not member.guild.me.guild_permissions.manage_roles:
             return
 
@@ -140,6 +143,9 @@ class RoleManager(commands.Cog):
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
+        if member.guild.me is None:
+            return
+
         if not member.guild.me.guild_permissions.manage_roles:
             return
         
