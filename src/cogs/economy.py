@@ -22,6 +22,11 @@ from .utils.db import DbType
 # !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
 # TODO: check permissions to send messages in ctx.send
+# TODO: FIX
+#       File "src/cogs/role_manager.py", line 143, in on_member_remove
+#           if not member.guild.me.guild_permissions.manage_roles:
+#       AttributeError: 'NoneType' object has no attribute 'guild_permissions'
+
 
 class Account:
 
@@ -530,6 +535,20 @@ class Bet(uint):
         return result
 
 
+class ShopItemConverter(commands.Converter):
+
+    __qualname__ = "Shop item"
+
+    async def convert(self, ctx, arg):
+        arg = arg[:EconomyConstants.ITEM_MAX_LEN]
+        item = await ctx.cog.eco.get_item(ctx, arg)
+
+        if item is None:
+            raise commands.BadArgument(ctx.lang["economy"]["no_item_with_name"].format(arg))
+
+        return item
+
+
 class Economy(commands.Cog):
 
     def __init__(self, bot):
@@ -570,7 +589,12 @@ class Economy(commands.Cog):
                 elif isinstance(result, discord.mixins.Hashable):
                     convertered = result.id
                 else:
-                    convertered = result
+                    if prop_name == "name":
+                        convertered = result[:EconomyConstants.ITEM_MAX_LEN]
+                    elif prop_name == "description":
+                        convertered = result[:EconomyConstants.ITEM_MAX_LEN * 2]
+                    else:
+                        convertered = result
             except TimeoutError:
                 return
             except Exception:
@@ -1276,14 +1300,7 @@ class Economy(commands.Cog):
         await ctx.account.save()
 
     @commands.group(invoke_without_command=True)
-    async def item(self, ctx, *, name: str):
-        name = name[:EmbedConstants.FIELD_NAME_MAX_LEN]        
-        item = await self.eco.get_item(ctx.guild, name)
-
-        if item is None:
-            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
-                name))
-
+    async def item(self, ctx, *, item: ShopItemConverter):
         em = discord.Embed(
             description=ctx.lang["economy"]["item"], 
             colour=ctx.color)
@@ -1332,14 +1349,7 @@ class Economy(commands.Cog):
 
     @item.command(name="edit")
     @is_commander()
-    async def item_edit(self, ctx, *, name: str):
-        name = name[:EconomyConstants.ITEM_MAX_LEN]
-        item = await self.eco.get_item(ctx.guild, name)
-
-        if item is None:
-            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
-                name))
-
+    async def item_edit(self, ctx, *, item: ShopItemConverter):
         allowed_props = ctx.lang["economy"]["item_properties"].values()
         to_edit = await ctx.ask(
             ctx.lang["economy"]["property_choice"].format(
@@ -1357,7 +1367,7 @@ class Economy(commands.Cog):
             return
 
         await ctx.answer(ctx.lang["economy"]["property_changed"].format(
-            to_edit, name))
+            to_edit, item.name))
 
         update_sql = """
         UPDATE `shop_items` 
@@ -1366,24 +1376,25 @@ class Economy(commands.Cog):
         """
 
         await self.bot.db.execute(update_sql.format(translated), 
-            new_value, ctx.guild.id, name, with_commit=True)
+            new_value, ctx.guild.id, item.name, with_commit=True)
 
     @item.command(name="delete")
     @is_commander()
-    async def item_delete(self, ctx, *, name: str):
+    async def item_delete(self, ctx, *, item: ShopItemConverter):
         delete_sql = """
         DELETE FROM `shop_items` 
         WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
         """
 
         check = await self.bot.db.execute(
-            delete_sql, ctx.guild.id, name, with_commit=True)
+            delete_sql, ctx.guild.id, item.name, with_commit=True)
 
         if check:
-            await ctx.answer(ctx.lang["economy"]["item_deleted"].format(name))
+            await ctx.answer(ctx.lang["economy"]["item_deleted"].format(
+                item.name))
         else:
             await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
-                name))
+                item.name))
     
     @commands.command(cls=EconomyCommand, aliases=["store"])
     async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
