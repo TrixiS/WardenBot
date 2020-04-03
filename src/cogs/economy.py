@@ -13,7 +13,7 @@ from collections import namedtuple
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
 from .utils.converters import (NotAuthor, uint, IndexConverter, 
-    Index, HumanTime, CommandConverter, EnumConverter, without_whitespace)
+    Index, HumanTime, CommandConverter, EnumConverter, without_whitespace, EqualRole)
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown, human_choice
 from .utils.models import PseudoMember, ContextFormatter
@@ -292,7 +292,7 @@ class ShopItem:
         "name": without_whitespace(),
         "price": uint(),
         "description": without_whitespace(),
-        "role": commands.RoleConverter(),
+        "role": EqualRole(),
         "stock": uint(include_zero=True),
         "message_type": EnumConverter(MessageType),
         "message": commands.clean_content()
