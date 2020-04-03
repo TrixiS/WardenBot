@@ -13,7 +13,7 @@ from collections import namedtuple
 from .utils.cooldown import CooldownCommand, custom_cooldown
 from .utils.constants import EconomyConstants, StringConstants, EmbedConstants
 from .utils.converters import (NotAuthor, uint, IndexConverter, 
-    Index, HumanTime, CommandConverter, EnumConverter)
+    Index, HumanTime, CommandConverter, EnumConverter, without_whitespace)
 from .utils.checks import is_commander, has_permissions
 from .utils.strings import markdown, human_choice
 from .utils.models import PseudoMember, ContextFormatter
@@ -289,9 +289,9 @@ class MessageType(Enum):
 class ShopItem:
 
     properties = {
-        "name": str,
+        "name": without_whitespace(),
         "price": uint(),
-        "description": str,
+        "description": without_whitespace(),
         "role": commands.RoleConverter(),
         "stock": uint(include_zero=True),
         "message_type": EnumConverter(MessageType),
@@ -539,8 +539,9 @@ class Economy(commands.Cog):
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
 
-    async def property_parse_dialogue(self, ctx, prop_name, timeout):
+    async def property_parse_dialogue(self, ctx, prop_name, timeout_delta):
         prop_type = ShopItem.properties[prop_name]
+        timeout = dt.datetime.now() + timeout_delta
         convertered = None
 
         while convertered is None:
@@ -558,24 +559,18 @@ class Economy(commands.Cog):
                     check=lambda x: x.author == ctx.author, 
                     timeout=60.0)).content
             
-                if answer == ctx.lang["shared"]["cancel"]:
+                if answer.lower() == ctx.lang["shared"]["cancel"]:
                     await ctx.abort()
                     return False
 
-                if prop_type == str:
-                    offset = EconomyConstants.ITEM_MAX_LEN
-                    convertered = answer[:offset if prop_name == "name" else offset * 2]
-                elif prop_type == int:
-                    convertered = int(answer)
-                elif isinstance(prop_type, commands.Converter):
-                    result = await prop_type.convert(ctx, answer)
-                    
-                    if isinstance(result, Enum):
-                        convertered = result.value
-                    elif isinstance(result, discord.mixins.Hashable):
-                        convertered = result.id
-                    else:
-                        convertered = result
+                result = await prop_type.convert(ctx, answer)
+                
+                if isinstance(result, Enum):
+                    convertered = result.value
+                elif isinstance(result, discord.mixins.Hashable):
+                    convertered = result.id
+                else:
+                    convertered = result
             except TimeoutError:
                 return
             except Exception:
@@ -585,6 +580,11 @@ class Economy(commands.Cog):
                 await ctx.answer(ctx.lang["economy"]["invalid_prop_value"].format(
                     ctx.lang["economy"]["item_properties"][prop_name]))
         
+        if prop_name == "name" and await self.eco.get_item(ctx.guild, convertered):
+            await ctx.answer(ctx.lang["economy"]["item_already_created"].format(
+                convertered))
+            return False
+
         return convertered
 
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
@@ -1312,7 +1312,7 @@ class Economy(commands.Cog):
     @item.command(name="create")
     @is_commander()
     async def item_create(self, ctx):
-        timeout = dt.datetime.now() + dt.timedelta(len(ShopItem.properties))
+        timeout = dt.timedelta(minutes=len(ShopItem.properties))
         item_props = []
 
         for prop in ShopItem.properties.keys():
@@ -1320,10 +1320,6 @@ class Economy(commands.Cog):
 
             if convertered is False:
                 return
-
-            if prop == "name" and await self.eco.get_item(ctx.guild, convertered):
-                return await ctx.answer(ctx.lang["economy"]["item_already_created"].format(
-                    convertered))
 
             item_props.append(convertered)
 
@@ -1333,6 +1329,44 @@ class Economy(commands.Cog):
         await self.bot.db.execute(
             "INSERT INTO `shop_items` VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             ctx.guild.id, ctx.author.id, 0, *item_props, with_commit=True)
+
+    @item.command(name="edit")
+    @is_commander()
+    async def item_edit(self, ctx, *, name: str):
+        name = name[:EconomyConstants.ITEM_MAX_LEN]
+        item = await self.eco.get_item(ctx.guild, name)
+
+        if item is None:
+            return await ctx.answer(ctx.lang["economy"]["no_item_with_name"].format(
+                name))
+
+        allowed_props = ctx.lang["economy"]["item_properties"].values()
+        to_edit = await ctx.ask(
+            ctx.lang["economy"]["property_choice"].format(
+                ', '.join(map(lambda x: markdown(x, '`'), allowed_props))), 
+            check=lambda x: x.author == ctx.author and x.content.lower() in allowed_props)
+
+        if to_edit is None:
+            return
+
+        translated = {v: k for k, v in ctx.lang["economy"]["item_properties"].items()}[to_edit]
+        new_value = await self.property_parse_dialogue(
+            ctx, translated, dt.timedelta(seconds=30))
+
+        if new_value is False:
+            return
+
+        await ctx.answer(ctx.lang["economy"]["property_changed"].format(
+            to_edit, name))
+
+        update_sql = """
+        UPDATE `shop_items` 
+        SET `{}` = ? 
+        WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
+        """
+
+        await self.bot.db.execute(update_sql.format(translated), 
+            new_value, ctx.guild.id, name, with_commit=True)
 
     @item.command(name="delete")
     @is_commander()
