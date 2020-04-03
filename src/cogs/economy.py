@@ -541,7 +541,7 @@ class ShopItemConverter(commands.Converter):
 
     async def convert(self, ctx, arg):
         arg = arg[:EconomyConstants.ITEM_MAX_LEN]
-        item = await ctx.cog.eco.get_item(ctx, arg)
+        item = await ctx.cog.eco.get_item(ctx.guild, arg)
 
         if item is None:
             raise commands.BadArgument(ctx.lang["economy"]["no_item_with_name"].format(arg))
@@ -1449,6 +1449,42 @@ class Economy(commands.Cog):
             f"{page.humanize()}/{ceil(count / EconomyConstants.SHOP_PAGE_MAX_LEX)}"))
 
         await ctx.send(embed=em)
+
+    @commands.command(cls=EconomyCommand)
+    async def buy(self, ctx, *, item: ShopItemConverter):
+        if 0 < item.stock == item.buy_count:
+            return await ctx.answer(ctx.lang["economy"]["over_stock"].format(
+                item.name))
+        
+        dm_channel = dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
+        send_default_message = item.message_type == MessageType.dm and \
+            not dm_channel.permissions_for(self.bot.user).send_messages
+
+        if item.message is None or send_default_message:
+            await ctx.answer(ctx.lang["economy"]["item_buy"].format(item.name))
+        else:
+            formatter = ContextFormatter(
+                "author", "price", "buy_count", "stock", 
+                guild=ctx.guild, member=ctx.author, 
+                currency=ctx.currency, item=item)
+
+            if item.message_type == MessageType.dm:
+                await ctx.author.send(formatter.format(item.message))
+            else:
+                await ctx.send(formatter.format(item.message))
+
+        if item.stock == 0:
+            return
+
+        update_sql = """
+        UPDATE `shop_items`
+        SET `buy_count` = `buy_count` + 1
+        WHERE `shop_items`.`server` = ? AND `shop_items`.`name` = ?
+        """
+
+        await self.bot.db.execute(
+            update_sql, ctx.guild.id, 
+            item.name, with_commit=True)
 
     # TODO:
     #   item edit command
