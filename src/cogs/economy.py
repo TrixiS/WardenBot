@@ -275,7 +275,7 @@ class _Economy:
         check = list(check)
         check[0] = guild.get_member(check[0])
         check[5] = guild.get_role(check[5])
-        check[7] = EnumConverter.convert_value(MessageType, check[7]).name.upper()
+        check[7] = EnumConverter.convert_value(MessageType, check[7])
 
         return ShopItem(guild, *check)
 
@@ -1397,7 +1397,7 @@ class Economy(commands.Cog):
         SELECT `author`, `name`, `description`, `price`, `buy_count`, `stock`
         FROM `shop_items`
         WHERE `shop_items`.`server` = ?
-        ORDER BY `shop_items`.`price`
+        ORDER BY `shop_items`.`price` DESC
         LIMIT ? OFFSET ?
         """
         
@@ -1445,11 +1445,14 @@ class Economy(commands.Cog):
 
         await ctx.send(embed=em)
 
-    @commands.command(cls=EconomyCommand)
+    @commands.command(cls=EconomyGame)
     async def buy(self, ctx, *, item: ShopItemConverter):
         if 0 < item.stock == item.buy_count:
             return await ctx.answer(ctx.lang["economy"]["over_stock"].format(
                 item.name))
+
+        if ctx.account.cash < item.price:
+            return await ctx.answer(ctx.lang["economy"]["not_enough_cash"])
         
         dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
         send_default_message = item.message_type == MessageType.dm and \
@@ -1464,12 +1467,20 @@ class Economy(commands.Cog):
                 currency=ctx.currency, item=item)
 
             if item.message_type == MessageType.dm:
-                await ctx.author.send(formatter.format(item.message))
+                await dm_channel.send(formatter.format(item.message))
             else:
                 await ctx.send(formatter.format(item.message))
 
-        if item.stock == 0:
-            return
+        if item.role is not None and \
+                item.role not in ctx.author.roles and \
+                item.role < ctx.guild.me.top_role and \
+                item.role < ctx.author.top_role and \
+                ctx.channel.permissions_for(ctx.guild.me).manage_roles:
+            await ctx.author.add_roles(
+                item.role, reason=ctx.lang["economy"]["shop_reward"])
+
+        ctx.account.cash -= item.price
+        await ctx.account.save()
 
         update_sql = """
         UPDATE `shop_items`
