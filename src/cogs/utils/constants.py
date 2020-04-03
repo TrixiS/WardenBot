@@ -66,6 +66,7 @@ class EconomyConstants:
         6: "<:d6:693091318150201455>"
     }
     SHOP_PAGE_MAX_LEX = 6
+    ITEM_MAX_LEN = 50
 
 
 class TwitchAlertsConstants:

@@ -539,6 +539,48 @@ class Economy(commands.Cog):
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
 
+    async def property_parse_dialogue(self, ctx, prop, prop_type, timeout):
+        convertered = None
+
+        while convertered is None:
+            if dt.datetime.now() >= timeout:
+                return await ctx.abort()
+            
+            try:
+                answer = (await self.bot.wait_for(
+                    "message", 
+                    check=lambda x: x.author == ctx.author, 
+                    timeout=60.0)).content
+            
+                if answer == ctx.lang["shared"]["cancel"]:
+                    await ctx.abort()
+                    return False
+
+                if prop_type == str:
+                    offset = EconomyConstants.ITEM_MAX_LEN
+                    convertered = answer[:offset if prop == "name" else offset * 2]
+                elif prop_type == int:
+                    convertered = int(answer)
+                elif isinstance(prop_type, commands.Converter):
+                    result = await prop_type.convert(ctx, answer)
+                    
+                    if isinstance(result, Enum):
+                        convertered = result.value
+                    elif isinstance(result, discord.mixins.Hashable):
+                        convertered = result.id
+                    else:
+                        convertered = result
+            except TimeoutError:
+                return
+            except Exception:
+                if isinstance(prop_type, commands.converter.IDConverter):
+                    break
+                
+                await ctx.answer(ctx.lang["economy"]["invalid_prop_value"].format(
+                    ctx.lang["economy"]["item_properties"][prop]))
+        
+        return convertered
+
     @commands.command(aliases=["bal", "money"], cls=EconomyCommand)
     async def balance(self, ctx, *, member: Optional[discord.Member]):
         account = await self.eco.get_money(member or ctx.author)
@@ -1264,8 +1306,7 @@ class Economy(commands.Cog):
     @item.command(name="create")
     @is_commander()
     async def item_create(self, ctx):
-        dialogue_start_time = dt.datetime.now()
-        end_timedelta = dt.timedelta(minutes=len(ShopItem.properties) + 1)
+        timeout = dt.datetime.now() + dt.timedelta(len(ShopItem.properties))
         item_props = []
 
         for prop, prop_type in ShopItem.properties.items():
@@ -1274,43 +1315,12 @@ class Economy(commands.Cog):
                 ctx.lang["economy"]["item_properties"][prop], 
                 ctx.lang["shared"]["cancel"]))
             
-            convertered = None
+            convertered = await self.property_parse_dialogue(
+                ctx, prop, prop_type, timeout)
 
-            while convertered is None:
-                if dialogue_start_time - dt.datetime.now() > end_timedelta:
-                    return await ctx.abort()
+            if convertered is False:
+                return
 
-                try:
-                    answer = (await self.bot.wait_for(
-                        "message", 
-                        check=lambda x: x.author == ctx.author, 
-                        timeout=60.0)).content
-                
-                    if answer == ctx.lang["shared"]["cancel"]:
-                        return await ctx.abort()
-
-                    if prop_type == str:
-                        convertered = answer[:50 if prop == "name" else EmbedConstants.FIELD_NAME_MAX_LEN]
-                    elif prop_type == int:
-                        convertered = int(answer)
-                    elif isinstance(prop_type, commands.Converter):
-                        result = await prop_type.convert(ctx, answer)
-
-                        if isinstance(result, Enum):
-                            convertered = result.value
-                        elif isinstance(result, discord.mixins.Hashable):
-                            convertered = result.id
-                        else:
-                            convertered = result
-                except TimeoutError:
-                    return
-                except Exception:
-                    if isinstance(prop_type, commands.converter.IDConverter):
-                        break
-                    
-                    await ctx.answer(ctx.lang["economy"]["invalid_prop_value"].format(
-                        ctx.lang["economy"]["item_properties"][prop]))
-            
             if prop == "name" and await self.eco.get_item(ctx.guild, convertered):
                 return await ctx.answer(ctx.lang["economy"]["item_already_created"].format(
                     convertered))
@@ -1397,7 +1407,17 @@ class Economy(commands.Cog):
 
     # TODO:
     #   item edit command
-
+    # await bot.db.execute("""create table `shop_items` (
+    #     `server` bigint,
+    #     `author` bigint,
+    #     `buy_count` bigint,
+    #     `name` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    #     `price` bigint,
+    #     `description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+    #     `role` bigint,
+    #     `stock` bigint,
+    #     `message_type` int,
+    #     `message` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci)""")
 
 def setup(bot):
     bot.add_cog(Economy(bot))
