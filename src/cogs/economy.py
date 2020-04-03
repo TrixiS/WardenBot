@@ -19,14 +19,9 @@ from .utils.strings import markdown, human_choice
 from .utils.models import PseudoMember, ContextFormatter
 from .utils.db import DbType
 
-# !!! TODO: the whole shop system
 # TODO: fill MORE stories lists in langs
 # TODO: check permissions to send messages in ctx.send
-# TODO: FIX
-#       File "src/cogs/role_manager.py", line 143, in on_member_remove
-#           if not member.guild.me.guild_permissions.manage_roles:
-#       AttributeError: 'NoneType' object has no attribute 'guild_permissions'
-
+# TODO: make formatter format just {something} using eval and compile or something similar
 
 class Account:
 
@@ -596,7 +591,7 @@ class Economy(commands.Cog):
                     else:
                         convertered = result
             except TimeoutError:
-                return
+                return False
             except Exception:
                 if isinstance(prop_type, commands.converter.IDConverter):
                     break
@@ -1456,7 +1451,7 @@ class Economy(commands.Cog):
             return await ctx.answer(ctx.lang["economy"]["over_stock"].format(
                 item.name))
         
-        dm_channel = dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
+        dm_channel = ctx.author.dm_channel or await ctx.author.create_dm()
         send_default_message = item.message_type == MessageType.dm and \
             not dm_channel.permissions_for(self.bot.user).send_messages
 
