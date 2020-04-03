@@ -539,12 +539,18 @@ class Economy(commands.Cog):
     def currency_fmt(self, currency, amount):
         return "{}**{:3,}**".format(currency, amount)
 
-    async def property_parse_dialogue(self, ctx, prop, prop_type, timeout):
+    async def property_parse_dialogue(self, ctx, prop_name, timeout):
+        prop_type = ShopItem.properties[prop_name]
         convertered = None
 
         while convertered is None:
             if dt.datetime.now() >= timeout:
                 return await ctx.abort()
+
+            await ctx.send(ctx.lang["economy"]["item_message"].format(
+                ctx.author.mention, 
+                ctx.lang["economy"]["item_properties"][prop_name], 
+                ctx.lang["shared"]["cancel"]))
             
             try:
                 answer = (await self.bot.wait_for(
@@ -558,7 +564,7 @@ class Economy(commands.Cog):
 
                 if prop_type == str:
                     offset = EconomyConstants.ITEM_MAX_LEN
-                    convertered = answer[:offset if prop == "name" else offset * 2]
+                    convertered = answer[:offset if prop_name == "name" else offset * 2]
                 elif prop_type == int:
                     convertered = int(answer)
                 elif isinstance(prop_type, commands.Converter):
@@ -577,7 +583,7 @@ class Economy(commands.Cog):
                     break
                 
                 await ctx.answer(ctx.lang["economy"]["invalid_prop_value"].format(
-                    ctx.lang["economy"]["item_properties"][prop]))
+                    ctx.lang["economy"]["item_properties"][prop_name]))
         
         return convertered
 
@@ -1309,14 +1315,8 @@ class Economy(commands.Cog):
         timeout = dt.datetime.now() + dt.timedelta(len(ShopItem.properties))
         item_props = []
 
-        for prop, prop_type in ShopItem.properties.items():
-            await ctx.send(ctx.lang["economy"]["item_message"].format(
-                ctx.author.mention, 
-                ctx.lang["economy"]["item_properties"][prop], 
-                ctx.lang["shared"]["cancel"]))
-            
-            convertered = await self.property_parse_dialogue(
-                ctx, prop, prop_type, timeout)
+        for prop in ShopItem.properties.keys():
+            convertered = await self.property_parse_dialogue(ctx, prop, timeout)
 
             if convertered is False:
                 return
