@@ -1356,7 +1356,7 @@ class Economy(commands.Cog):
 
         translated = {v: k for k, v in ctx.lang["economy"]["item_properties"].items()}[to_edit]
         new_value = await self.property_parse_dialogue(
-            ctx, translated, dt.timedelta(seconds=30))
+            ctx, translated, dt.timedelta(seconds=60))
 
         if new_value is False:
             return
@@ -1468,6 +1468,7 @@ class Economy(commands.Cog):
 
             if item.message_type == MessageType.dm:
                 await dm_channel.send(formatter.format(item.message))
+                await ctx.answer(ctx.lang["economy"]["item_buy"].format(item.name))
             else:
                 await ctx.send(formatter.format(item.message))
 
@@ -1492,19 +1493,6 @@ class Economy(commands.Cog):
             update_sql, ctx.guild.id, 
             item.name, with_commit=True)
 
-    # TODO:
-    #   item edit command
-    # await bot.db.execute("""create table `shop_items` (
-    #     `server` bigint,
-    #     `author` bigint,
-    #     `buy_count` bigint,
-    #     `name` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    #     `price` bigint,
-    #     `description` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
-    #     `role` bigint,
-    #     `stock` bigint,
-    #     `message_type` int,
-    #     `message` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci)""")
 
 def setup(bot):
     bot.add_cog(Economy(bot))
