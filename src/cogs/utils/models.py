@@ -15,30 +15,42 @@ class PseudoMember:
 
 class ContextFormatter:
 
-    pattern = re.compile(r"\{(.+?)\.(.+?)\}")
+    pattern = re.compile(r"\{([a-zA-Z_\.]+?)\}")
 
     def __init__(self, *extra_fields, **context):
         self.ctx = context
         self.extra_fields = extra_fields
 
     @property
-    def allowed_names(self):
-        return self.ctx.keys()
-
-    @property
     def allowed_fields(self):
-        return chain(StringConstants.ALLOWED_FMT_FIELDS, self.extra_fields)
+        return set(StringConstants.ALLOWED_FMT_FIELDS + self.extra_fields)
+
+    def make_tag(self, *tokens):
+        return '{' + '.'.join(tokens) + '}'
+
+    def get_value(self, value_str):
+        try:
+            result = eval(value_str, self.ctx, self.ctx)
+            return str(result)
+        except Exception as e:
+            print(str(e))
+            return ''
 
     def format(self, string):
-        matched = self.pattern.findall(string)
+        allowed_fields = self.allowed_fields
 
-        for name, field in filter(lambda x: x[0] in self.ctx, set(matched)):
-            if name in self.allowed_names and field in self.allowed_fields:
-                value = getattr(self.ctx[name], field, None)
-                
-                if value is not None:
-                    string = string.replace(
-                        "{}{}.{}{}".format('{', name, field, '}'), 
-                        str(value))
+        for match in set(self.pattern.findall(string)):
+            match = match.split('.')
+
+            if len(match) == 0:
+                continue
+
+            name, *values = match
+
+            if name not in self.ctx or any(value not in allowed_fields for value in values):
+                continue
+            
+            tag = self.make_tag(name, *values)
+            string = string.replace(tag, self.get_value(tag[1:-1]))
 
         return string

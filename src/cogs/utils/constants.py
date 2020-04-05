@@ -30,7 +30,11 @@ class StringConstants:
     ALLOWED_FMT_FIELDS = (
         "created_at",
         "name", "id",
-        "mention"
+        "mention", "owner",
+        "guild", "joined_at",
+        "avatar_url", "icon_url",
+        "discriminator", "color", "colour",
+        "display_name", "top_role"
     )
 
 
