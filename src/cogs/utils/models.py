@@ -33,8 +33,7 @@ class ContextFormatter:
             result = eval(value_str, self.ctx, self.ctx)
             return str(result)
         except Exception as e:
-            print(str(e))
-            return ''
+            return "None"
 
     def format(self, string):
         allowed_fields = self.allowed_fields
