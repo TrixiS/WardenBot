@@ -1419,15 +1419,16 @@ class Economy(commands.Cog):
             title=ctx.lang["economy"]["shop"].format(ctx.guild.name), 
             colour=ctx.color)
 
-        context_item = namedtuple("item", ("name", "price", "buy_count", "stock"))
+        fields = ("name", "price", "buy_count", "stock", "author")
+        context_item = namedtuple("item", fields)
         formatter = ContextFormatter(
-            "author", "price", "buy_count", "stock", 
-            guild=ctx.guild, member=ctx.author, currency=ctx.currency)
+            *fields, guild=ctx.guild, 
+            member=ctx.author, currency=ctx.currency)
 
         for author_id, name, desc, price, buy_count, stock in check:
             formatter.ctx["item"] = context_item( 
-                name, self.currency_fmt(ctx.currency, price), 
-                buy_count, stock)
+                name, price, buy_count, stock or StringConstants.INFINITY, 
+                ctx.guild.get_member(author_id))
             
             formatter.ctx["author"] = ctx.guild.get_member(author_id) or ctx.lang["shared"]["left_member"]
 
@@ -1462,7 +1463,7 @@ class Economy(commands.Cog):
             await ctx.answer(ctx.lang["economy"]["item_buy"].format(item.name))
         else:
             formatter = ContextFormatter(
-                "author", "price", "buy_count", "stock", 
+                "name", "price", "buy_count", "stock", "author", 
                 guild=ctx.guild, member=ctx.author, 
                 currency=ctx.currency, item=item)
 
