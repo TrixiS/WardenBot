@@ -1394,7 +1394,7 @@ class Economy(commands.Cog):
     @commands.command(cls=EconomyCommand, aliases=["store"])
     async def shop(self, ctx, page: Optional[IndexConverter] = Index(0)):
         select_sql = """
-        SELECT `author`, `name`, `description`, `price`, `buy_count`, `stock`
+        SELECT `author`, `role`, `name`, `description`, `price`, `buy_count`, `stock`
         FROM `shop_items`
         WHERE `shop_items`.`server` = ?
         ORDER BY `shop_items`.`price` DESC
@@ -1419,16 +1419,16 @@ class Economy(commands.Cog):
             title=ctx.lang["economy"]["shop"].format(ctx.guild.name), 
             colour=ctx.color)
 
-        fields = ("name", "price", "buy_count", "stock", "author")
+        fields = ("name", "price", "buy_count", "stock", "author", "role")
         context_item = namedtuple("item", fields)
         formatter = ContextFormatter(
             *fields, guild=ctx.guild, 
             member=ctx.author, currency=ctx.currency)
 
-        for author_id, name, desc, price, buy_count, stock in check:
+        for author_id, role_id, name, desc, price, buy_count, stock in check:
             formatter.ctx["item"] = context_item( 
                 name, price, buy_count, stock or StringConstants.INFINITY, 
-                ctx.guild.get_member(author_id))
+                ctx.guild.get_member(author_id), ctx.guild.get_role(role_id))
             
             formatter.ctx["author"] = ctx.guild.get_member(author_id) or ctx.lang["shared"]["left_member"]
 
