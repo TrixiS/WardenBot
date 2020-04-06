@@ -307,6 +307,20 @@ class Fun(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def roflize(self, ctx, *, text: str):
+        result = []
+        
+        for i, s in enumerate(text):
+            i += 1
+
+            if i % 2 != 0:
+                result.append(s.upper())
+            else:
+                result.append(s.lower())
+
+        await ctx.send(''.join(result))
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
