@@ -20,8 +20,6 @@ from .utils.models import PseudoMember, ContextFormatter
 from .utils.db import DbType
 
 # TODO: fill MORE stories lists in langs
-# TODO: check permissions to send messages in ctx.send
-# TODO: make formatter format just {something} using eval and compile or something similar
 
 class Account:
 
