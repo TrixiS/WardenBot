@@ -49,18 +49,19 @@ class WardenContext(Context):
         finally:
             return content
 
-    async def accept(self, message):
+    async def accept(self, message, timeout=30):
         no = self.lang["shared"]["no"].lower()
         yes = self.lang["shared"]["yes"].lower()
 
         result = await self.ask(
             f"{message} ({yes.title()}, {no.title()})", 
-            check=lambda x: x.author == self.author and x.content.lower() in (yes, no))
+            check=lambda x: x.author == self.author and x.content.lower() in (yes, no),
+            timeout=timeout)
 
-        if result.lower() == no:
+        if result is None or result.lower() == no:
             return await self.abort()
 
-        return result is not None
+        return True
 
     async def abort(self):
         await self.answer(self.lang["shared"]["aborted"].format(
