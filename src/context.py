@@ -58,12 +58,9 @@ class WardenContext(Context):
             check=lambda x: x.author == self.author and x.content.lower() in (yes, no))
 
         if result.lower() == no:
-            await self.answer(self.lang["shared"]["aborted"].format(
-                self.command.qualified_name))
-        elif result is None:
-            return False
-        else:
-            return True
+            return await self.abort()
+
+        return result is not None
 
     async def abort(self):
         await self.answer(self.lang["shared"]["aborted"].format(

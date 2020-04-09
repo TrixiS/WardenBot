@@ -720,13 +720,11 @@ class Economy(commands.Cog):
     @commands.command(name="delete-money")
     @is_commander()
     async def delete_money(self, ctx, *, member: discord.Member):
-        if not await ctx.accept(ctx.lang["economy"]["really_delete?"].format(
+        if await ctx.accept(ctx.lang["economy"]["really_delete?"].format(
                 markdown(member.name, "**"))):
-            return
-
-        await Account(self.bot, member).delete()
-        await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
-            member.mention))
+            await ctx.answer(ctx.lang["economy"]["lost_all_money"].format(
+                member.mention))
+            await Account(self.bot, member).delete()
 
     @commands.group(name="start-money", cls=EconomyGroup, invoke_without_command=True)
     async def start_money(self, ctx):
