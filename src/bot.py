@@ -92,17 +92,15 @@ class Warden(AutoShardedBot):
         await super().close()
 
     async def get_color(self, guild):
-        color = await self.db.execute("SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
+        color = await self.db.execute(
+            "SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
-
-        color = color or self.config.default_color
-
-        return discord.Colour.from_rgb(*map(int, color.split(';')))
+        return discord.Colour.from_rgb(*map(int, color.split(';'))) if color else guild.me.color
 
     async def get_lang(self, guild):
-        lang = await self.db.execute("SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?",
+        lang = await self.db.execute(
+            "SELECT `lang` FROM `langs` WHERE `langs`.`server` = ?",
             guild.id)
-
         return self.langs[lang or self.config.default_lang]
 
     async def process_commands(self, message):
