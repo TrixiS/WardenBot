@@ -1444,7 +1444,7 @@ class Economy(commands.Cog):
 
     @commands.command(cls=EconomyGame)
     async def buy(self, ctx, *, item: ShopItemConverter):
-        if 0 < item.stock == item.buy_count:
+        if 0 < item.stock < item.buy_count:
             return await ctx.answer(ctx.lang["economy"]["over_stock"].format(
                 item.name))
 
