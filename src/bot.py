@@ -11,6 +11,7 @@ from context import WardenContext
 
 import logging
 import discord
+import random
 
 
 class Warden(AutoShardedBot):
@@ -95,7 +96,13 @@ class Warden(AutoShardedBot):
         color = await self.db.execute(
             "SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
-        return discord.Colour.from_rgb(*map(int, color.split(';'))) if color else guild.me.color
+
+        if color is None:
+            color = guild.me.color
+        elif color == "rnd":
+            color = discord.Colour.from_rgb(*random.choices(range(255), k=3))
+
+        return color
 
     async def get_lang(self, guild):
         lang = await self.db.execute(

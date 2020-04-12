@@ -59,6 +59,19 @@ class General(commands.Cog):
             "DELETE FROM `colors` WHERE `colors`.`server` = ?",
             ctx.guild.id, with_commit=True)
 
+    @embed_color.command(name="random")
+    @is_commander()
+    async def embed_color_random(self, ctx):
+        await ctx.answer(ctx.lang["general"]["color_set_to_random"])
+        check = await self.bot.db.execute(
+            "UPDATE `colors` SET `color` = ? WHERE `colors`.`server` = ?",
+            "rnd", ctx.guild.id, with_commit=True)
+
+        if not check:
+            await self.bot.db.execute(
+                "INSERT INTO `colors` VALUES (?, ?)", 
+                ctx.guild.id, "rnd", with_commit=True)
+
     async def _role_setup_pattern(self, ctx, role: discord.Role, table: str, no_key: str, is_key: str, new_key: str):
         if role is None:
             check = await self.bot.db.execute(f"SELECT `role` FROM `{table}` WHERE `{table}`.`server` = ?",
