@@ -101,6 +101,8 @@ class Warden(AutoShardedBot):
             color = guild.me.color
         elif color == "rnd":
             color = discord.Colour.from_rgb(*random.choices(range(255), k=3))
+        else:
+            color = discord.Colour.from_rgb(*map(int, color.split(';')))
 
         return color
 
