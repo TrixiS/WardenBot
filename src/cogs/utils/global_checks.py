@@ -6,4 +6,4 @@ async def none_guild(ctx):
 
 
 async def has_message_perms(ctx):
-    return check_bot_permissions(ctx, {"send_messages": True, "embed_links": True})
+    return await check_bot_permissions(ctx, {"send_messages": True, "embed_links": True})

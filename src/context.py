@@ -1,5 +1,6 @@
 from discord.ext.commands import Context
 from cogs.utils.constants import EmbedConstants
+from cogs.utils.global_checks import has_message_perms
 from asyncio import TimeoutError
 from io import BytesIO
 
@@ -16,6 +17,9 @@ class WardenContext(Context):
         self.color = None
 
     async def send(self, content: str=None, **kwargs) -> None:
+        if not (await has_message_perms(self)):
+            return
+
         try:
             msg = await super().send(content, **kwargs)
         except Exception as e:
