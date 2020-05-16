@@ -35,7 +35,7 @@ class MuteRoles:
             role = discord.utils.get(guild.roles, name="Muted") or \
                 await guild.create_role(name="Muted")
 
-        for channel in role.guild.channels:
+        for channel in filter(lambda x: x.type == discord.ChannelType.text, role.guild.channels):
             await channel.set_permissions(role, overwrite=self.overwrite)
 
         check = await self.bot.db.execute("UPDATE `mute_roles` SET `role` = ? WHERE `mute_roles`.`server` = ?",
@@ -492,6 +492,17 @@ class Moderation(commands.Cog):
             time = UnixTime(expires).passed_seconds()
             
             self.mute_pool.pool[member] = self.mute_pool.create_task(member, time)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_create(self, channel):
+        if (not channel.permissions_for(channel.guild.me).manage_channels or 
+                channel.type != discord.ChannelType.text):
+            return
+
+        mute_role = await MuteRoles(self.bot).get_mute_role(channel.guild)        
+
+        if mute_role is not None and mute_role not in channel.changed_roles:
+            await channel.set_permissions(mute_role, overwrite=MuteRoles.overwrite)
 
 
 def setup(bot):
