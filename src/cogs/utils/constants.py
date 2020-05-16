@@ -1,4 +1,8 @@
 
+class DiscordConstants:
+
+    MSG_MAX_LEN = 2000
+
 
 class TagsConstants:
 
@@ -85,6 +89,9 @@ class FunConstants:
     DOG_API_URL = "https://dog.ceo/api/breeds/image/random"
     SPELLER_API_URL = "https://speller.yandex.net/services/spellservice.json/checkText"
     IMAGE_API_URL = "https://www.colorbook.io/imagecreator.php/?"
+    MAX_CHAR_BYTE_LEN = 20
+    KEKW_EMOJI = "<:KEKW:707305785847185450>"
+    OMEGALUL_EMOJI = "<:OMEGALUL:707305786128334849>"
 
 
 class InfoConstants:

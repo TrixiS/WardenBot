@@ -1,13 +1,15 @@
 import discord
 import random
+import string
+import datetime
 
 from discord.ext import commands
 from enum import Enum
 from typing import Optional
 from urllib.parse import urlencode
 
-from .utils.constants import EmbedConstants, FunConstants
-from .utils.strings import markdown, human_choice
+from .utils.constants import EmbedConstants, FunConstants, DiscordConstants
+from .utils.strings import markdown, human_choice, multi_replace
 from .utils.converters import EnumConverter
 
 
@@ -308,18 +310,66 @@ class Fun(commands.Cog):
         await ctx.send(embed=em)
 
     @commands.command()
-    async def roflize(self, ctx, *, text: str):
+    async def cycle(self, ctx, *, text: commands.clean_content):
         result = []
         
         for i, s in enumerate(text):
-            i += 1
-
-            if i % 2 != 0:
+            if (i + 1) % 2 != 0:
                 result.append(s.upper())
             else:
                 result.append(s.lower())
 
         await ctx.send(''.join(result))
+
+    @commands.command()
+    async def encode(self, ctx, *, text: str):
+        encoded = ' '.join(
+            str(bin(ord(s)))[2:] 
+            for s in text 
+            if s not in string.whitespace)
+
+        await ctx.answer(encoded)
+
+    @commands.command()
+    async def decode(self, ctx, *, text: str):
+        if any(s not in "01 " for s in text):
+            return await ctx.answer(ctx.lang["fun"]["binary_only"])
+        
+        decoded = (
+            chr(int(code, base=2)) 
+            for code in text.split()
+            if len(code) <= FunConstants.MAX_CHAR_BYTE_LEN)
+
+        await ctx.answer(''.join(decoded) or ctx.lang["fun"]["incorrect_bytes"])
+
+    @commands.command()
+    async def omega(self, ctx, *, text: commands.clean_content):
+        o_letters = ctx.lang["fun"]["o"].lower() + ctx.lang["fun"]["o"].upper()
+        o_count = text.count(o_letters[0]) + text.count(o_letters[1])
+
+        if o_count == 0:
+            return await ctx.send(text)            
+
+        offset = o_count * len(FunConstants.OMEGALUL_EMOJI)
+        text = text[:DiscordConstants.MSG_MAX_LEN + o_count - offset]
+
+        await ctx.send(multi_replace(
+            text, o_letters, FunConstants.OMEGALUL_EMOJI))
+
+    @commands.command()
+    async def still(self, ctx, *, text: commands.clean_content):
+        current_year = str(datetime.datetime.now().year)
+        offset = len(
+            ctx.lang["fun"]["in"] + 
+            "   " + 
+            FunConstants.KEKW_EMOJI + 
+            current_year)
+        
+        await ctx.send("{} {} {} {}".format(
+            text[:DiscordConstants.MSG_MAX_LEN - offset],
+            ctx.lang["fun"]["in"],
+            current_year, 
+            FunConstants.KEKW_EMOJI))
 
 
 def setup(bot):
