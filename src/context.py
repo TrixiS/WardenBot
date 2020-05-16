@@ -1,8 +1,9 @@
 from discord.ext.commands import Context
-from discord import Embed
 from cogs.utils.constants import EmbedConstants
 from asyncio import TimeoutError
+from io import BytesIO
 
+import discord
 import logging
 
 
@@ -24,10 +25,19 @@ class WardenContext(Context):
         return msg
 
     async def answer(self, message: str, **kwargs) -> None:
-        em = Embed(colour=self.color, description=message)
-        em.set_author(name=self.message.author.name, icon_url=self.message.author.avatar_url)
+        if len(message) > EmbedConstants.DESC_MAX_LEN:
+            file = BytesIO(bytes(message, "utf-8"))
+            
+            await self.send(
+                self.author.mention, 
+                file=discord.File(file, filename="answer.txt"))
+        else:
+            em = discord.Embed(colour=self.color, description=message)
+            em.set_author(
+                name=self.message.author.name, 
+                icon_url=self.message.author.avatar_url)
 
-        await self.send(embed=em, **kwargs)
+            await self.send(embed=em, **kwargs)
 
     async def ask(self, text: str, *, with_attachments=False, **kwargs) -> str:
         await self.send(f"{self.message.author.mention}, {text}")
