@@ -13,6 +13,10 @@ from .utils.checks import is_commander
 from .utils.constants import TwitchAlertsConstants
 from .utils.converters import Index, IndexConverter
 
+# Since new Twitch API policy from 30 April 2020
+# twitch-python lib is broken and
+# this cog too (maybe I'll fix the lib and the cog later)
+
 
 class Alerts:
 
