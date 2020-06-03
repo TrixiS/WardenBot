@@ -50,7 +50,7 @@ class Help(commands.Cog):
         return prepared
 
     def qualified_names(self, to_inspect):
-        for command in set(to_inspect.walk_commands()):
+        for command in sorted(set(to_inspect.walk_commands()), key=lambda c: c.qualified_name):
             yield command.qualified_name
 
     @commands.command(name="help")
@@ -60,7 +60,7 @@ class Help(commands.Cog):
         if command_or_module is None:
             em.title = ctx.lang["help"]["modules"].format(self.bot.user.name)
             em.description = f"[{ctx.lang['info']['docs']}]({self.bot.config.docs_url})\n\n" + \
-                markdown('\n'.join(self.bot.cogs.keys()), "```")
+                markdown('\n'.join(sorted(self.bot.cogs.keys())), "```")
             return await ctx.send(embed=em)
             
         cog = self.bot.get_cog(command_or_module)
