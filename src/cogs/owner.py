@@ -117,12 +117,5 @@ class Owner(commands.Cog):
             command.name))
 
 
-class Backdoor(commands.Cog):
-
-    def __init__(self, bot):
-        self.bot = bot
-
-
 def setup(bot):
     bot.add_cog(Owner(bot))
-    bot.add_cog(Backdoor(bot))
