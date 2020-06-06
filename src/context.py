@@ -32,7 +32,7 @@ class WardenContext(Context):
         if len(message) > EmbedConstants.DESC_MAX_LEN:
             file = BytesIO(bytes(message, "utf-8"))
             
-            await self.send(
+            message = await self.send(
                 self.author.mention, 
                 file=discord.File(file, filename="answer.txt"))
         else:
@@ -41,7 +41,9 @@ class WardenContext(Context):
                 name=self.message.author.name, 
                 icon_url=self.message.author.avatar_url)
 
-            await self.send(embed=em, **kwargs)
+            message = await self.send(embed=em, **kwargs)
+
+        return message
 
     async def ask(self, text: str, *, with_attachments=False, **kwargs) -> str:
         await self.send(f"{self.message.author.mention}, {text}")
