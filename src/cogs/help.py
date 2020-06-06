@@ -85,10 +85,11 @@ class Help(commands.Cog):
 
         arguments_expl = self.prepare_arguments(ctx, command.callback.__annotations__.items())
 
-        em.add_field(
-            name=ctx.lang["help"]["arguments"], 
-            value=markdown('\n'.join(arguments_expl) or ctx.lang["shared"]["no"], "```"),
-            inline=False)
+        if arguments_expl:
+            em.add_field(
+                name=ctx.lang["help"]["arguments"], 
+                value=markdown('\n'.join(arguments_expl), "```"),
+                inline=False)
 
         if isinstance(command, commands.Group):
             subcommands = self.qualified_names(command)
@@ -111,7 +112,7 @@ class Help(commands.Cog):
         if permissions:
             em.add_field(
             name=ctx.lang["help"]["required_permissions"],
-            value=markdown('\n'.join(permissions)))
+            value=markdown('\n'.join(permissions), "```"))
 
         em.title = f'{ctx.lang["help"]["command"]} {StringConstants.DOT_SYMBOL} **{command.qualified_name}**'
 
