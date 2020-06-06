@@ -54,7 +54,6 @@ class Help(commands.Cog):
         for command in sorted(set(to_inspect.walk_commands()), key=lambda c: c.qualified_name):
             yield command.qualified_name
 
-    # TODO: remove "No" perms or sth etc.
     #       add aliases
     #       add lang description to all commands
     # TODO: close todos from #todos channel
@@ -89,6 +88,12 @@ class Help(commands.Cog):
             em.add_field(
                 name=ctx.lang["help"]["arguments"], 
                 value=markdown('\n'.join(arguments_expl), "```"),
+                inline=False)
+
+        if command.aliases:
+            em.add_field(
+                name=ctx.lang["help"]["aliases"],
+                value=markdown(", ".join(command.aliases), "```"),
                 inline=False)
 
         if isinstance(command, commands.Group):
