@@ -1,9 +1,10 @@
 import discord
 
 from discord.ext import commands
-from .utils.strings import markdown, human_choice
-from .utils.constants import StringConstants
 from typing import Union, Optional
+
+from .utils.constants import StringConstants
+from .utils.strings import markdown, human_choice
 
 
 class Help(commands.Cog):
@@ -53,6 +54,11 @@ class Help(commands.Cog):
         for command in sorted(set(to_inspect.walk_commands()), key=lambda c: c.qualified_name):
             yield command.qualified_name
 
+    # TODO: remove "No" perms or sth etc.
+    #       add aliases
+    #       add lang description to all commands
+    # TODO: close todos from #todos channel
+    # TODO: maybe use mysql async lib rewrite db.py
     @commands.command(name="help")
     async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)
@@ -84,13 +90,14 @@ class Help(commands.Cog):
             value=markdown('\n'.join(arguments_expl) or ctx.lang["shared"]["no"], "```"),
             inline=False)
 
-        em.add_field(
-            name=ctx.lang["help"]["subcommands"],
-            value=markdown(
-                '\n'.join(self.qualified_names(command)) 
-                if isinstance(command, commands.Group) else ctx.lang["shared"]["no"], 
-                "```"),
-            inline=False)
+        if isinstance(command, commands.Group):
+            subcommands = self.qualified_names(command)
+
+            if subcommands:
+                em.add_field(
+                    name=ctx.lang["help"]["subcommands"],
+                    value=markdown('\n'.join(subcommands), "```"),
+                    inline=False)
 
         permissions = []
 
@@ -101,9 +108,10 @@ class Help(commands.Cog):
             elif check.__qualname__.startswith("has_"):
                 permissions.append(ctx.lang["help"]["guild_permissions"])
 
-        em.add_field(
+        if permissions:
+            em.add_field(
             name=ctx.lang["help"]["required_permissions"],
-            value=markdown('\n'.join(permissions) or ctx.lang["shared"]["no"], "```"))
+            value=markdown('\n'.join(permissions)))
 
         em.title = f'{ctx.lang["help"]["command"]} {StringConstants.DOT_SYMBOL} **{command.qualified_name}**'
 
