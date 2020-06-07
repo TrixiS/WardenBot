@@ -5,12 +5,26 @@ from typing import Union, Optional
 
 from .utils.constants import StringConstants
 from .utils.strings import markdown, human_choice
+from .utils.checks import bot_has_permissions
+from .utils.models import Pages
 
 
 class Help(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+        self.arg_page = """
+        {lang[help][arguments_expl]}\n
+        * — {lang[help][optional_argument]}
+        {dot} — {lang[help][required_argument]}\n
+        ```[* {lang[shared][or]} {dot}] \
+        [{lang[help][arg_name]}] -> \
+        [{lang[help][arg_type]}]```
+        """.replace(' ' * 8, '')
+
+        self.type_page = """{lang[help][types_expl]}\n
+        {types}"""
 
     def prepare_arguments(self, ctx, arugments) -> list:
 
@@ -54,11 +68,10 @@ class Help(commands.Cog):
         for command in sorted(set(to_inspect.walk_commands()), key=lambda c: c.qualified_name):
             yield command.qualified_name
 
-    #       add aliases
-    #       add lang description to all commands
     # TODO: close todos from #todos channel
+    # TODO: add lang description to all commands
     # TODO: maybe use mysql async lib rewrite db.py
-    @commands.command(name="help")
+    @commands.group(name="help", invoke_without_command=True)
     async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)
 
@@ -122,6 +135,16 @@ class Help(commands.Cog):
         em.title = f'{ctx.lang["help"]["command"]} {StringConstants.DOT_SYMBOL} **{command.qualified_name}**'
 
         await ctx.send(embed=em)
+    
+    @help_command.command(name="arguments", aliases=["args", "argument", "arg"])
+    @bot_has_permissions(add_reactions=True)
+    async def help_args(self, ctx):
+        pages = Pages(ctx, [
+            discord.Embed(**kwargs, colour=ctx.color)
+            for kwargs in ctx.lang["help"]["help_args_pages"]
+        ])
+
+        await pages.paginate()
 
 
 def setup(bot):
