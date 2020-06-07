@@ -75,7 +75,8 @@ class Pages:
  
         def reaction_check(r, u):
             return (u == self.user and 
-                    str(r) in (self.first_page, self.prev_page, self.next_page, self.last_page))
+                    str(r) in (self.first_page, self.prev_page, self.next_page, self.last_page) and
+                    r.message.id == self.message.id)
 
         self.ctx = ctx
         self.bot = ctx.bot
