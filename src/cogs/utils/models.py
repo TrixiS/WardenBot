@@ -128,9 +128,9 @@ class Pages:
         self.message = message
 
     async def paginate(self):
-        while True:
-            await self.show_embed()
+        await self.show_embed()
 
+        while True:
             try:
                 reaction, user = await self.bot.wait_for(
                     "reaction_add",
@@ -143,10 +143,20 @@ class Pages:
                 reaction = str(reaction)
 
                 if reaction == self.first_page:
+                    if self.current_page_index == 0:
+                        continue
+
                     self.current_page_index = 0
                 elif reaction == self.prev_page:
                     self.current_page_index -= 1
                 elif reaction == self.next_page:
                     self.current_page_index += 1
                 elif reaction == self.last_page:
-                    self.current_page_index = len(self.pages) - 1
+                    last_index = len(self.pages) - 1
+
+                    if self.current_page_index == last_index:
+                        continue
+                    
+                    self.current_page_index = last_index
+
+                await self.show_embed()
