@@ -14,18 +14,6 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.arg_page = """
-        {lang[help][arguments_expl]}\n
-        * — {lang[help][optional_argument]}
-        {dot} — {lang[help][required_argument]}\n
-        ```[* {lang[shared][or]} {dot}] \
-        [{lang[help][arg_name]}] -> \
-        [{lang[help][arg_type]}]```
-        """.replace(' ' * 8, '')
-
-        self.type_page = """{lang[help][types_expl]}\n
-        {types}"""
-
     def prepare_arguments(self, ctx, arugments) -> list:
 
         def prepare_type(typ):
@@ -140,11 +128,39 @@ class Help(commands.Cog):
     @bot_has_permissions(add_reactions=True)
     async def help_args(self, ctx):
         pages = Pages(ctx, [
-            discord.Embed(**kwargs, colour=ctx.color)
-            for kwargs in ctx.lang["help"]["help_args_pages"]
+            discord.Embed(**attrs, colour=ctx.color)
+            for attrs in ctx.lang["help"]["help_args_pages"]
         ])
 
         await pages.paginate()
+
+    @help_command.command(name="types", aliases=["type"])
+    async def help_types(self, ctx, argument_type: str):
+        if argument_type.endswith("[]"):
+            argument_type = argument_type[:-2]
+
+        argument_info = discord.utils.find(
+            lambda x: x["name"].lower() == argument_type.lower(), 
+            ctx.lang["help"]["arg_types"])
+
+        if argument_info is None:
+            return await ctx.answer(ctx.lang["help"]["unknown_type"])
+
+        em = discord.Embed(
+            title=argument_info["name"], 
+            colour=ctx.color)
+        em.add_field(
+            name=ctx.lang["shared"]["description"], 
+            value=argument_info["description"],
+            inline=False)
+        em.add_field(
+            name=ctx.lang["shared"]["example"],
+            value=argument_info["example"],
+            inline=False)
+
+        em.set_thumbnail(url=ctx.guild.me.avatar_url)
+
+        await ctx.send(embed=em)
 
 
 def setup(bot):
