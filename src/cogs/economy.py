@@ -530,7 +530,7 @@ class Bet(uint):
 
 class ShopItemConverter(commands.Converter):
 
-    __qualname__ = "Shop item"
+    __qualname__ = "Item"
 
     async def convert(self, ctx, arg):
         arg = arg[:EconomyConstants.ITEM_MAX_LEN]

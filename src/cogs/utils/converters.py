@@ -18,6 +18,8 @@ class without_whitespace(commands.clean_content):
 
 class EnumConverter(commands.Converter):
 
+    __qualname__ = "Enum"
+
     def __init__(self, enum_cls):
         self.enum_cls = enum_cls
 

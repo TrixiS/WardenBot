@@ -135,7 +135,7 @@ class Help(commands.Cog):
         await pages.paginate()
 
     @help_command.command(name="types", aliases=["type"])
-    async def help_types(self, ctx, argument_type: str):
+    async def help_types(self, ctx, *, argument_type: str):
         if argument_type.endswith("[]"):
             argument_type = argument_type[:-2]
 

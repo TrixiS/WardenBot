@@ -54,7 +54,7 @@ class RextesterPLs(Enum):
 
 class RextesterPLConverter(EnumConverter):
 
-    __qualname__ = "Programming language"
+    __qualname__ = "ProgrammingLanguage"
 
     def __init__(self):
         super().__init__(RextesterPLs)
@@ -73,9 +73,7 @@ class SpellerLanguage(Enum):
 
 class SpellerLanguageConverter(EnumConverter):
 
-    __qualname__ = human_choice(
-        tuple(SpellerLanguage.__members__.keys()), 
-        second_sep="or")
+    __qualname__ = "Language"
 
     def __init__(self):
         super().__init__(SpellerLanguage)
