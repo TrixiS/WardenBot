@@ -40,6 +40,7 @@ class StringConstants:
         "discriminator", "color", "colour",
         "display_name", "top_role"
     )
+    DASH = '—'
 
 
 class ModerationConstants:
