@@ -393,7 +393,8 @@ class Fun(commands.Cog):
 
             await self.bot.db.execute(
                 "INSERT INTO `color_roles` VALUES (?, ?, ?)", 
-                ctx.guild.id, ctx.author.id, color_role.id)
+                ctx.guild.id, ctx.author.id, color_role.id,
+                with_commit=True)
         else:
             if color_role >= ctx.guild.me.top_role:
                 return await ctx.answer(ctx.langp["errors"]["role_over_top_role"].format(
