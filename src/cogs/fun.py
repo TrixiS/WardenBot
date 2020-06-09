@@ -392,8 +392,8 @@ class Fun(commands.Cog):
                 colour=color)
 
             await self.bot.db.execute(
-                "INSERT INTO `color_roles` VALUES (?, ?)", 
-                ctx.guild.id, color_role.id)
+                "INSERT INTO `color_roles` VALUES (?, ?, ?)", 
+                ctx.guild.id, ctx.author.id, color_role.id)
         else:
             if color_role >= ctx.guild.me.top_role:
                 return await ctx.answer(ctx.langp["errors"]["role_over_top_role"].format(
@@ -405,7 +405,7 @@ class Fun(commands.Cog):
             await ctx.author.add_roles(color_role)
 
         await ctx.answer(ctx.lang["fun"]["color_changed"].format(
-            str(color)).upper())
+            str(color).upper()))
 
 
 def setup(bot):
