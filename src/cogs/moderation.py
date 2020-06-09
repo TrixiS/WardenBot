@@ -231,8 +231,16 @@ class Moderation(commands.Cog):
     @is_moderator()
     async def cases(self, ctx, member: Optional[discord.Member]=None, page: Optional[IndexConverter]=Index(0)):
         if member is not None:
-            cases = await self.bot.db.execute("SELECT `id`, `author`, `type` FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ? LIMIT ? OFFSET ?",
-                ctx.guild.id, member.id, ModerationConstants.CASES_PER_PAGE, 
+            sql = """
+            SELECT `id`, `author`, `type`
+            FROM `cases`
+            WHERE `cases`.`server` = ? AND `cases`.`member` = ?
+            ORDER BY `id` DESC
+            LIMIT ? OFFSET ?
+            """
+
+            cases = await self.bot.db.execute(
+                sql, ctx.guild.id, member.id, ModerationConstants.CASES_PER_PAGE, 
                 ModerationConstants.CASES_PER_PAGE * page.value, 
                 fetch_all=True)
 
@@ -243,12 +251,21 @@ class Moderation(commands.Cog):
                 return await ctx.answer(ctx.lang["moderation"]["no_member_cases"].format(
                     member.mention))
         else:
-            cases = await self.bot.db.execute("SELECT `id`, `member`, `type` FROM `cases` WHERE `cases`.`server` = ? LIMIT ? OFFSET ?",
-                ctx.guild.id, ModerationConstants.CASES_PER_PAGE, 
+            sql = """
+            SELECT `id`, `member`, `type`
+            FROM `cases`
+            WHERE `cases`.`server` = ?
+            ORDER BY `id` DESC
+            LIMIT ? OFFSET ?
+            """
+
+            cases = await self.bot.db.execute(
+                sql, ctx.guild.id, ModerationConstants.CASES_PER_PAGE, 
                 ModerationConstants.CASES_PER_PAGE * page.value, 
                 fetch_all=True)
 
-            count = await self.bot.db.execute("SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ?",
+            count = await self.bot.db.execute(
+                "SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ?",
                 ctx.guild.id)
 
             if cases is None or len(cases) == 0 and count == 0:
@@ -499,7 +516,7 @@ class Moderation(commands.Cog):
                 channel.type != discord.ChannelType.text):
             return
 
-        mute_role = await MuteRoles(self.bot).get_mute_role(channel.guild)        
+        mute_role = await self.roles.get_mute_role(channel.guild)        
 
         if mute_role is not None and mute_role not in channel.changed_roles:
             await channel.set_permissions(mute_role, overwrite=MuteRoles.overwrite)
