@@ -10,7 +10,8 @@ from urllib.parse import urlencode
 
 from .utils.constants import EmbedConstants, FunConstants, DiscordConstants
 from .utils.strings import markdown, human_choice, multi_replace
-from .utils.converters import EnumConverter
+from .utils.converters import EnumConverter, EqualRole
+from .utils.checks import bot_has_permissions
 
 
 class RextesterPLs(Enum):
@@ -368,6 +369,43 @@ class Fun(commands.Cog):
             ctx.lang["fun"]["in"],
             current_year, 
             FunConstants.KEKW_EMOJI))
+
+    @commands.command()
+    @bot_has_permissions(manage_roles=True)
+    async def colorme(self, ctx, *, color: discord.Colour):
+        select_sql = """
+        SELECT `role`
+        FROM `color_roles`
+        WHERE `color_roles`.`server` = ? AND `color_roles`.`member` = ?
+        """
+
+        role_id = await self.bot.db.execute(
+            select_sql, ctx.author.id, ctx.guild.id)
+
+        color_role = ctx.guild.get_role(role_id) or discord.utils.find(
+            lambda r: r.name == str(ctx.author), 
+            ctx.guild.roles)
+
+        if color_role is None:
+            color_role = await ctx.guild.create_role(
+                name=str(ctx.author), 
+                colour=color)
+
+            await self.bot.db.execute(
+                "INSERT INTO `color_roles` VALUES (?, ?)", 
+                ctx.guild.id, color_role.id)
+        else:
+            if color_role >= ctx.guild.me.top_role:
+                return await ctx.answer(ctx.langp["errors"]["role_over_top_role"].format(
+                    color_role.mention))
+
+            await color_role.edit(colour=color)
+
+        if color_role not in ctx.author.roles:
+            await ctx.author.add_roles(color_role)
+
+        await ctx.answer(ctx.lang["fun"]["color_changed"].format(
+            str(color)).upper())
 
 
 def setup(bot):
