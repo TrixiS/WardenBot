@@ -244,7 +244,8 @@ class Moderation(commands.Cog):
                 ModerationConstants.CASES_PER_PAGE * page.value, 
                 fetch_all=True)
 
-            count = await self.bot.db.execute("SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ?",
+            count = await self.bot.db.execute(
+                "SELECT COUNT(*) FROM `cases` WHERE `cases`.`server` = ? AND `cases`.`member` = ?",
                 ctx.guild.id, member.id)
 
             if cases is None or len(cases) == 0 and count == 0:
@@ -494,8 +495,17 @@ class Moderation(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        check = await self.bot.db.execute("SELECT `server`, `member`, `expires` FROM `cases` WHERE `cases`.`type` = ? AND `cases`.`expires` > UNIX_TIMESTAMP() AND `cases`.`removed` = ?",
-            EntryType.Mute.name, False, fetch_all=True)
+        sql = """
+        SELECT `server`, `member`, `expires`
+        FROM `cases`
+        WHERE `cases`.`type` = ? 
+            AND `cases`.`expires` > UNIX_TIMESTAMP() 
+            AND `cases`.`removed` = ?
+        """
+
+        check = await self.bot.db.execute(
+            sql, EntryType.Mute.name, False, 
+            fetch_all=True)
 
         if check is None or len(check) == 0:
             return
