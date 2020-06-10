@@ -369,7 +369,7 @@ class Fun(commands.Cog):
         else:
             if color_role >= ctx.guild.me.top_role:
                 return await ctx.answer(ctx.lang["errors"]["role_over_top_role"].format(
-                    color_role.mention))
+                    color_role.mention, self.bot.user.mention))
 
             await color_role.edit(colour=color)
 
