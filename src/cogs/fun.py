@@ -368,7 +368,7 @@ class Fun(commands.Cog):
                 with_commit=True)
         else:
             if color_role >= ctx.guild.me.top_role:
-                return await ctx.answer(ctx.langp["errors"]["role_over_top_role"].format(
+                return await ctx.answer(ctx.lang["errors"]["role_over_top_role"].format(
                     color_role.mention))
 
             await color_role.edit(colour=color)
