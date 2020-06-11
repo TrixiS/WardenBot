@@ -376,6 +376,7 @@ class Fun(commands.Cog):
         if color_role not in ctx.author.roles:
             await ctx.author.add_roles(color_role)
 
+        ctx.color = color
         await ctx.answer(ctx.lang["fun"]["color_changed"].format(
             str(color).upper()))
 
