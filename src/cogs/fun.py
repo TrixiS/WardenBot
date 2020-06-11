@@ -351,7 +351,7 @@ class Fun(commands.Cog):
         """
 
         role_id = await self.bot.db.execute(
-            select_sql, ctx.author.id, ctx.guild.id)
+            select_sql, ctx.guild.id, ctx.author.id)
 
         color_role = ctx.guild.get_role(role_id) or discord.utils.find(
             lambda r: r.name == str(ctx.author), 
