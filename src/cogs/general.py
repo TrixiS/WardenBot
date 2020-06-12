@@ -1,9 +1,11 @@
 import discord
 
 from discord.ext import commands
+from typing import Optional
+
 from .utils.checks import is_commander
 from .utils.strings import markdown
-from typing import Optional
+from .utils.converters import CommandConverter
 
 
 class General(commands.Cog):
@@ -114,6 +116,70 @@ class General(commands.Cog):
     @commands.has_permissions(administrator=True)
     async def moderator_delete(self, ctx):
         await self._role_delete_pattern(ctx, "moderators", "deleted_moderator")
+
+    @commands.command()
+    @commands.cooldown(1, 15, commands.BucketType.guild)
+    @is_commander()
+    async def disable(self, ctx, *, command: CommandConverter()):
+        if command in self.bot.required_commands:
+            return await ctx.answer(ctx.lang["general"]["need_opt_command"].format(
+                command.qualified_name))
+
+        if not hasattr(command, "disabled_in"):
+            setattr(command, "disabled_in", [])
+
+        if ctx.guild.id in command.disabled_in:
+            command.disabled_in.remove(ctx.guild.id)
+            await ctx.answer(ctx.lang["general"]["enabled"].format(
+                command.qualified_name))
+
+            await self.bot.db.execute(
+                "DELETE FROM `disable` WHERE `disable`.`server` = ? AND `disable`.`command` = ?",
+                ctx.guild.id, command.qualified_name, 
+                with_commit=True)
+        else:
+            command.disabled_in.append(ctx.guild.id)
+            await ctx.answer(ctx.lang["general"]["disabled"].format(
+                command.qualified_name))
+
+            await self.bot.db.execute(
+                "INSERT INTO `disable` VALUES (?, ?)",
+                ctx.guild.id, command.qualified_name,
+                with_commit=True)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        disables = await self.bot.db.execute(
+            "SELECT * FROM `disable`", 
+            fetch_all=True)
+
+        if disables is None:
+            return  
+
+        commands = {}
+
+        for command_name in set(map(lambda x: x[1], disables)):
+            command = self.bot.get_command(command_name)
+
+            if command is not None:
+                commands[command_name] = command
+
+        incorrect_guilds = []
+
+        for guild_id, command_name in filter(lambda x: x[0] not in incorrect_guilds, disables):
+            if command_name not in commands:
+                continue
+
+            guild = self.bot.get_guild(guild_id)
+
+            if guild is None:
+                incorrect_guilds.append(guild_id)
+                continue
+
+            command = commands[command_name]
+            setattr(command, "disabled_in", [])
+            command.disabled_in.append(guild_id)
+
 
 def setup(bot):
     bot.add_cog(General(bot))
