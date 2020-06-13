@@ -206,6 +206,10 @@ class Info(commands.Cog):
 
         await ctx.send(embed=em)
 
+    @commands.command()
+    async def invite(self, ctx):
+        await ctx.answer(f"[{ctx.lang['info']['invite']}]({InfoConstants.BOT_INVITE_URL})")
+
 
 def setup(bot):
     bot.add_cog(Info(bot))
