@@ -99,3 +99,11 @@ def is_moderator(*, check=all, **perms):
         raise commands.CheckFailure(ctx.lang["errors"]["you_must_be_moderator"])
 
     return commands.check(predicate)
+
+
+def only_in_guilds(*guilds):
+
+    async def predicate(ctx):
+        return ctx.guild.id in guilds
+
+    return predicate
