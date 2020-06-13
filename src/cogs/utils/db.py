@@ -113,7 +113,7 @@ class DataBase:
             else fetched
 
     def prepare_query(self, query: str) -> str:
-        result = ""
+        result = []
 
         in_param = False
 
@@ -124,6 +124,6 @@ class DataBase:
             if not in_param and s == self.param_lit:
                 s = r"%s"
 
-            result += s
+            result.append(s)
 
-        return result
+        return ''.join(result)
