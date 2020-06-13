@@ -123,10 +123,6 @@ class Warden(AutoShardedBot):
         if ctx.command is None:
             return
 
-        if (hasattr(ctx.command, "disabled_in") and 
-                message.guild.id in ctx.command.disabled_in):
-            return
-
         ctx.lang = await self.get_lang(message.guild)
         ctx.color = await self.get_color(message.guild)
 
