@@ -6,8 +6,6 @@ import traceback
 
 from discord.ext import commands
 
-from .utils.global_checks import CommandDisabled
-
 
 class ErrorHandler(commands.Cog):
 
@@ -22,7 +20,10 @@ class ErrorHandler(commands.Cog):
     # TODO: add lang support for d.py exceptions
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        if isinstance(error, CommandDisabled):
+        # if not hasattr(error, "message") or error.message is None or len(error.message) == 0:
+        #     return
+        
+        if isinstance(error, commands.DisabledCommand):
             return
         elif isinstance(error, commands.CommandError):
             message = getattr(error, "message", str(error))
