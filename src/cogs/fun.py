@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 from .utils.constants import EmbedConstants, FunConstants, DiscordConstants
 from .utils.strings import markdown, human_choice, multi_replace
 from .utils.converters import EnumConverter, EqualRole
-from .utils.checks import bot_has_permissions
+from .utils.checks import bot_has_permissions, disabled_command
 
 
 class RextesterPLs(Enum):
@@ -342,6 +342,7 @@ class Fun(commands.Cog):
         await ctx.answer(''.join(decoded) or ctx.lang["fun"]["incorrect_bytes"])
 
     @commands.command()
+    @disabled_command()
     @bot_has_permissions(manage_roles=True)
     async def colorme(self, ctx, *, color: discord.Colour):
         select_sql = """
