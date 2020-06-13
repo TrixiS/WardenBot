@@ -107,3 +107,18 @@ def only_in_guilds(*guilds):
         return ctx.guild.id in guilds
 
     return predicate
+
+
+def disabled_command():
+
+    def predicate(ctx):
+        if not hasattr(ctx.command, "disabled_in"):
+            setattr(ctx.command, "disabled_in", {ctx.guild.id: True})
+            raise commands.DisabledCommand()
+        
+        if ctx.guild.id not in ctx.command.disabled_in:
+            raise commands.DisabledCommand()
+
+        return True
+
+    return commands.check(predicate)
