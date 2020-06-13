@@ -7,6 +7,7 @@ from .utils.constants import StringConstants
 from .utils.strings import markdown, human_choice
 from .utils.checks import bot_has_permissions
 from .utils.models import Pages
+from .thirdparty import ThirdParty
 
 
 class Help(commands.Cog):
@@ -64,9 +65,14 @@ class Help(commands.Cog):
         em = discord.Embed(colour=ctx.color)
 
         if command_or_module is None:
+            cogs = sorted(
+                cog.qualified_name for cog in self.bot.cogs.values()
+                if not isinstance(cog, ThirdParty))
+
             em.title = ctx.lang["help"]["modules"].format(self.bot.user.name)
             em.description = (f"`w!help args`\n`w!help <{ctx.lang['help']['module']}>`\n`w!help <{ctx.lang['help']['command'].lower()}>`\n\n" +
-                markdown('\n'.join(sorted(cog.qualified_name for cog in self.bot.cogs.values())), "```\n"))
+                markdown('\n'.join(cogs), "```\n"))
+                
             return await ctx.send(embed=em)
             
         cog = self.bot.get_cog(command_or_module)

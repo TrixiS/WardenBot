@@ -1,7 +1,6 @@
 src/config.py
 src/cogs/_twitch_alerts.py
 src/cogs/twitch_alerts.py
-src/cogs/thirdparty.py
 tests/
 config.py
 *.pyc
