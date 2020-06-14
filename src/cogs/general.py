@@ -164,23 +164,17 @@ class General(commands.Cog):
             if command is not None:
                 commands[command_name] = command
 
-        incorrect_guilds = []
-
-        for guild_id, command_name, is_disabled in filter(
-                lambda x: x[0] not in incorrect_guilds, 
-                disables):
+        for guild_id, command_name, is_disabled in disables:
                 
             if command_name not in commands:
                 continue
 
-            guild = self.bot.get_guild(guild_id)
-
-            if guild is None:
-                incorrect_guilds.append(guild_id)
-                continue
-
             command = commands[command_name]
-            setattr(command, "disabled_in", {guild_id: is_disabled})
+
+            if not hasattr(command, "disabled_in"):
+                setattr(command, "disabled_in", {})
+
+            command.disabled_in[guild_id] = is_disabled
 
 
 def setup(bot):
