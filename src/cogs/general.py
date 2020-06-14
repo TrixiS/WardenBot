@@ -128,7 +128,7 @@ class General(commands.Cog):
         if not hasattr(command, "disabled_in"):
             setattr(command, "disabled_in", {})
 
-        if ctx.guild.id in command.disabled_in:
+        if ctx.guild.id in command.disabled_in and command.disabled_in[ctx.guild.id]:
             command.disabled_in[ctx.guild.id] = False
             await ctx.answer(ctx.lang["general"]["enabled"].format(
                 command.qualified_name))
