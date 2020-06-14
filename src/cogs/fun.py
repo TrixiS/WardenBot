@@ -372,7 +372,8 @@ class Fun(commands.Cog):
                 return await ctx.answer(ctx.lang["errors"]["role_over_top_role"].format(
                     color_role.mention, self.bot.user.mention))
 
-            await color_role.edit(colour=color)
+            if color_role.colour != color:
+                await color_role.edit(colour=color)
 
         if color_role not in ctx.author.roles:
             await ctx.author.add_roles(color_role)
