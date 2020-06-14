@@ -134,8 +134,8 @@ class General(commands.Cog):
                 command.qualified_name))
 
             await self.bot.db.execute(
-                "DELETE FROM `disable` WHERE `disable`.`server` = ? AND `disable`.`command` = ?",
-                ctx.guild.id, command.qualified_name, 
+                "UPDATE `disable` SET `disabled` = ? WHERE `server` = ? AND `command` = ?",
+                False, ctx.guild.id, command.qualified_name,
                 with_commit=True)
         else:
             command.disabled_in[ctx.guild.id] = True
@@ -143,8 +143,8 @@ class General(commands.Cog):
                 command.qualified_name))
 
             await self.bot.db.execute(
-                "INSERT INTO `disable` VALUES (?, ?)",
-                ctx.guild.id, command.qualified_name,
+                "INSERT INTO `disable` VALUES (?, ?, ?)",
+                ctx.guild.id, command.qualified_name, True,
                 with_commit=True)
 
     @commands.Cog.listener()
@@ -166,7 +166,10 @@ class General(commands.Cog):
 
         incorrect_guilds = []
 
-        for guild_id, command_name in filter(lambda x: x[0] not in incorrect_guilds, disables):
+        for guild_id, command_name, is_disabled in filter(
+                lambda x: x[0] not in incorrect_guilds, 
+                disables):
+                
             if command_name not in commands:
                 continue
 
@@ -177,8 +180,7 @@ class General(commands.Cog):
                 continue
 
             command = commands[command_name]
-            setattr(command, "disabled_in", {})
-            command.disabled_in[guild_id] = True
+            setattr(command, "disabled_in", {guild_id: is_disabled})
 
 
 def setup(bot):
