@@ -130,22 +130,25 @@ class General(commands.Cog):
 
         if ctx.guild.id in command.disabled_in and command.disabled_in[ctx.guild.id]:
             command.disabled_in[ctx.guild.id] = False
+            
             await ctx.answer(ctx.lang["general"]["enabled"].format(
                 command.qualified_name))
-
+            
             await self.bot.db.execute(
                 "UPDATE `disable` SET `disabled` = ? WHERE `server` = ? AND `command` = ?",
                 False, ctx.guild.id, command.qualified_name,
                 with_commit=True)
         else:
-            command.disabled_in[ctx.guild.id] = True
             await ctx.answer(ctx.lang["general"]["disabled"].format(
                 command.qualified_name))
 
-            await self.bot.db.execute(
-                "INSERT INTO `disable` VALUES (?, ?, ?)",
-                ctx.guild.id, command.qualified_name, True,
-                with_commit=True)
+            if ctx.guild.id not in command.disabled_in:
+                await self.bot.db.execute(
+                    "INSERT INTO `disable` VALUES (?, ?, ?)",
+                    ctx.guild.id, command.qualified_name, True,
+                    with_commit=True)
+            
+            command.disabled_in[ctx.guild.id] = True
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -174,7 +177,7 @@ class General(commands.Cog):
             if not hasattr(command, "disabled_in"):
                 setattr(command, "disabled_in", {})
 
-            command.disabled_in[guild_id] = is_disabled
+            command.disabled_in[guild_id] = bool(is_disabled)
 
 
 def setup(bot):

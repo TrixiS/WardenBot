@@ -121,7 +121,6 @@ def disabled_command():
             raise commands.DisabledCommand()
         
         if ctx.guild.id not in ctx.command.disabled_in:
-            ctx.command.disabled_in[ctx.guild.id] = True
             raise commands.DisabledCommand()
 
         return True
