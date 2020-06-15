@@ -1,5 +1,6 @@
 from discord.ext import commands
 from .strings import markdown
+from .disable import set_disabled
 
 
 async def check_permissions(ctx, perms, *, check=all):
@@ -112,15 +113,10 @@ def only_in_guilds(*guilds):
 def disabled_command():
 
     async def predicate(ctx):
-        if not hasattr(ctx.command, "disabled_in"):
-            setattr(ctx.command, "disabled_in", {ctx.guild.id: True})
-            await ctx.bot.db.execute(
-                "INSERT INTO `disable` VALUES (?, ?, ?)",
-                ctx.guild.id, ctx.command.qualified_name, True,
-                with_commit=True)
-            raise commands.DisabledCommand()
-        
+        set_disabled(ctx.command)
+
         if ctx.guild.id not in ctx.command.disabled_in:
+            ctx.command.disabled_in[ctx.guild.id] = True
             raise commands.DisabledCommand()
 
         return True

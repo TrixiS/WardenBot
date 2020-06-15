@@ -6,6 +6,7 @@ from typing import Optional
 from .utils.checks import is_commander
 from .utils.strings import markdown
 from .utils.converters import CommandConverter
+from .utils.disable import set_disabled, set_disable_state
 
 
 class General(commands.Cog):
@@ -125,8 +126,7 @@ class General(commands.Cog):
             return await ctx.answer(ctx.lang["general"]["need_opt_command"].format(
                 command.qualified_name))
 
-        if not hasattr(command, "disabled_in"):
-            setattr(command, "disabled_in", {})
+        set_disabled(command)
 
         if ctx.guild.id in command.disabled_in and command.disabled_in[ctx.guild.id]:
             command.disabled_in[ctx.guild.id] = False
@@ -134,24 +134,26 @@ class General(commands.Cog):
             await ctx.answer(ctx.lang["general"]["enabled"].format(
                 command.qualified_name))
             
-            await self.bot.db.execute(
+            check = await self.bot.db.execute(
                 "UPDATE `disable` SET `disabled` = ? WHERE `server` = ? AND `command` = ?",
                 False, ctx.guild.id, command.qualified_name,
                 with_commit=True)
+
+            if not check:
+                await set_disable_state(ctx, command, False)
         else:
+            command.disabled_in[ctx.guild.id] = True
+            
             await ctx.answer(ctx.lang["general"]["disabled"].format(
                 command.qualified_name))
 
             if ctx.guild.id not in command.disabled_in:
-                await self.bot.db.execute(
-                    "INSERT INTO `disable` VALUES (?, ?, ?)",
-                    ctx.guild.id, command.qualified_name, True,
-                    with_commit=True)
-            
-            command.disabled_in[ctx.guild.id] = True
+                await set_disable_state(ctx, command, True)
 
     @commands.Cog.listener()
     async def on_ready(self):
+        await self.bot.wait_until_ready()
+
         disables = await self.bot.db.execute(
             "SELECT * FROM `disable`", 
             fetch_all=True)
@@ -167,16 +169,23 @@ class General(commands.Cog):
             if command is not None:
                 commands[command_name] = command
 
-        for guild_id, command_name, is_disabled in disables:
+        incorrect_guilds = []
+
+        for guild_id, command_name, is_disabled in filter(
+                lambda x: x[0] not in incorrect_guilds, 
+                disables):
                 
             if command_name not in commands:
                 continue
 
+            guild = self.bot.get_guild(guild_id)
+
+            if guild is None:
+                incorrect_guilds.append(guild_id)
+                continue
+
             command = commands[command_name]
-
-            if not hasattr(command, "disabled_in"):
-                setattr(command, "disabled_in", {})
-
+            set_disabled(command)
             command.disabled_in[guild_id] = bool(is_disabled)
 
 
