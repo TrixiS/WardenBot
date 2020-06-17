@@ -141,9 +141,13 @@ class General(commands.Cog):
                 cmd_or_cog.disabled_in[ctx.guild.id]):
             cmd_or_cog.disabled_in[ctx.guild.id] = False
             
-            await ctx.answer(ctx.lang["general"]["enabled"].format(
-                cmd_or_cog.qualified_name))
-            
+            if isinstance(cmd_or_cog, commands.Command):
+                await ctx.answer(ctx.lang["general"]["cmd_enabled"].format(
+                    cmd_or_cog.qualified_name))
+            else:
+                await ctx.answer(ctx.lang["general"]["cog_enabled"].format(
+                    cmd_or_cog.qualified_name))
+
             check = await self.bot.db.execute(
                 "UPDATE `disable` SET `disabled` = ? WHERE `server` = ? AND `command` = ?",
                 False, ctx.guild.id, cmd_or_cog.qualified_name,
@@ -152,8 +156,12 @@ class General(commands.Cog):
             if not check:
                 await set_disable_state(ctx, cmd_or_cog, False)
         else:
-            await ctx.answer(ctx.lang["general"]["disabled"].format(
-                cmd_or_cog.qualified_name))
+            if isinstance(cmd_or_cog, commands.Command):
+                await ctx.answer(ctx.lang["general"]["cmd_disabled"].format(
+                    cmd_or_cog.qualified_name))
+            else:
+                await ctx.answer(ctx.lang["general"]["cog_disabled"].format(
+                    cmd_or_cog.qualified_name))
 
             if ctx.guild.id not in cmd_or_cog.disabled_in:
                 await set_disable_state(ctx, cmd_or_cog, True)
