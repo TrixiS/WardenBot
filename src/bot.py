@@ -24,7 +24,6 @@ class Warden(AutoShardedBot):
         self.assets_path = self.path.parent / "assets"
         self.session = ClientSession(loop=self.loop)
         self.db = DataBase(self.config.db_type, **self.config.database_settings)
-        self.required_commands = (self.get_command(c) for c in self.config.required_commands)
         
         self.uptime = None
         self.langs = None
