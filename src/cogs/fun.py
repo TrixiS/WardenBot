@@ -11,7 +11,8 @@ from urllib.parse import urlencode
 from .utils.constants import EmbedConstants, FunConstants, DiscordConstants
 from .utils.strings import markdown, human_choice, multi_replace
 from .utils.converters import EnumConverter, EqualRole
-from .utils.checks import bot_has_permissions, disabled_command
+from .utils.checks import bot_has_permissions
+from .utils.disable import disabled_command
 
 
 class RextesterPLs(Enum):
@@ -373,7 +374,7 @@ class Fun(commands.Cog):
                     color_role.mention, self.bot.user.mention))
 
             if color_role.colour != color:
-                await color_role.edit(colour=color)
+                await color_role.edit(colour=color, name=str(ctx.author))
 
         if color_role not in ctx.author.roles:
             await ctx.author.add_roles(color_role)

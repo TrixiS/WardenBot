@@ -1,11 +1,11 @@
 import discord
 
 from discord.ext import commands
-from typing import Optional
+from typing import Optional, Union
 
 from .utils.checks import is_commander
 from .utils.strings import markdown
-from .utils.converters import CommandConverter
+from .utils.converters import CommandConverter, ModuleConverter
 from .utils.disable import set_disabled, set_disable_state
 
 
@@ -13,6 +13,8 @@ class General(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.required_commands = (self.bot.get_command(c)
+            for c in self.bot.config.required_commands)
 
     async def _settings_pattern(self, ctx, table: str, field: str, new_value: str, message: str):
         check = await self.bot.db.execute(f"UPDATE `{table}` SET `{field}` = ? WHERE `{table}`.`server` = ?",
@@ -121,34 +123,42 @@ class General(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 15, commands.BucketType.guild)
     @is_commander()
-    async def disable(self, ctx, *, command: CommandConverter()):
-        if command in self.bot.required_commands:
+    async def disable(self, ctx, *, cmd_or_cog: Union[CommandConverter, ModuleConverter]):
+        if (isinstance(cmd_or_cog, commands.Command) and
+                cmd_or_cog in self.required_commands):
             return await ctx.answer(ctx.lang["general"]["need_opt_command"].format(
-                command.qualified_name))
+                cmd_or_cog.qualified_name))
 
-        set_disabled(command)
+        if (isinstance(cmd_or_cog, commands.Cog) and
+                any(c in self.required_commands
+                for c in cmd_or_cog.walk_commands())):
+            return await ctx.answer(ctx.lang["general"]["need_opt_cog"].format(
+                cmd_or_cog.qualified_name))
 
-        if ctx.guild.id in command.disabled_in and command.disabled_in[ctx.guild.id]:
-            command.disabled_in[ctx.guild.id] = False
+        set_disabled(cmd_or_cog)
+
+        if (ctx.guild.id in cmd_or_cog.disabled_in and
+                cmd_or_cog.disabled_in[ctx.guild.id]):
+            cmd_or_cog.disabled_in[ctx.guild.id] = False
             
             await ctx.answer(ctx.lang["general"]["enabled"].format(
-                command.qualified_name))
+                cmd_or_cog.qualified_name))
             
             check = await self.bot.db.execute(
                 "UPDATE `disable` SET `disabled` = ? WHERE `server` = ? AND `command` = ?",
-                False, ctx.guild.id, command.qualified_name,
+                False, ctx.guild.id, cmd_or_cog.qualified_name,
                 with_commit=True)
 
             if not check:
-                await set_disable_state(ctx, command, False)
+                await set_disable_state(ctx, cmd_or_cog, False)
         else:
-            command.disabled_in[ctx.guild.id] = True
-            
             await ctx.answer(ctx.lang["general"]["disabled"].format(
-                command.qualified_name))
+                cmd_or_cog.qualified_name))
 
-            if ctx.guild.id not in command.disabled_in:
-                await set_disable_state(ctx, command, True)
+            if ctx.guild.id not in cmd_or_cog.disabled_in:
+                await set_disable_state(ctx, cmd_or_cog, True)
+
+            cmd_or_cog.disabled_in[ctx.guild.id] = True
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -161,21 +171,24 @@ class General(commands.Cog):
         if disables is None:
             return  
 
-        commands = {}
+        models = {}
 
-        for command_name in set(map(lambda x: x[1], disables)):
-            command = self.bot.get_command(command_name)
+        for name in set(map(lambda x: x[1], disables)):
+            if name[0].isupper():
+                model = self.bot.get_cog(name)
+            else:
+                model = self.bot.get_command(name)
 
-            if command is not None:
-                commands[command_name] = command
+            if model is not None:
+                models[name] = model
 
         incorrect_guilds = []
 
-        for guild_id, command_name, is_disabled in filter(
+        for guild_id, name, is_disabled in filter(
                 lambda x: x[0] not in incorrect_guilds, 
                 disables):
                 
-            if command_name not in commands:
+            if name not in models:
                 continue
 
             guild = self.bot.get_guild(guild_id)
@@ -184,9 +197,9 @@ class General(commands.Cog):
                 incorrect_guilds.append(guild_id)
                 continue
 
-            command = commands[command_name]
-            set_disabled(command)
-            command.disabled_in[guild_id] = bool(is_disabled)
+            model = models[name]
+            set_disabled(model)
+            model.disabled_in[guild_id] = bool(is_disabled)
 
 
 def setup(bot):

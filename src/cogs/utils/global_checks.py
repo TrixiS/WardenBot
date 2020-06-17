@@ -11,9 +11,17 @@ async def has_message_perms(ctx):
 
 
 async def is_command_disabled(ctx):
-    if (hasattr(ctx.command, "disabled_in") and 
+    if ctx.bot.is_owner(ctx.author):
+        return True
+
+    if (hasattr(ctx.command, "disabled_in") and
             ctx.guild.id in ctx.command.disabled_in and
             ctx.command.disabled_in[ctx.guild.id]):
+        raise DisabledCommand()
+
+    if (hasattr(ctx.command.cog, "disabled_in") and
+            ctx.guild.id in ctx.command.cog.disabled_in and
+            ctx.command.cog.disabled_in[ctx.guild.id]):
         raise DisabledCommand()
 
     return True

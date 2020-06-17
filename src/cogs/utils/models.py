@@ -58,10 +58,6 @@ class ContextFormatter:
         return string
 
 
-class PaginateError(BaseException):
-    pass
-
-
 class Pages:
 
     first_page = '↩️'
@@ -71,7 +67,7 @@ class Pages:
 
     def __init__(self, ctx, pages):
         if len(pages) < 2:
-            raise PaginateError("Length of pages should be > 1.")
+            raise Exception("Length of pages should be > 1.")
  
         def reaction_check(r, u):
             return (u == self.user and 

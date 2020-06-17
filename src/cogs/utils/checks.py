@@ -108,17 +108,3 @@ def only_in_guilds(*guilds):
         return ctx.guild.id in guilds
 
     return predicate
-
-
-def disabled_command():
-
-    async def predicate(ctx):
-        set_disabled(ctx.command)
-
-        if ctx.guild.id not in ctx.command.disabled_in:
-            ctx.command.disabled_in[ctx.guild.id] = True
-            raise commands.DisabledCommand()
-
-        return True
-
-    return commands.check(predicate)
