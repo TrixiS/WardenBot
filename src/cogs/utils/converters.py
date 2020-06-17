@@ -61,6 +61,19 @@ class CommandConverter(commands.Converter):
                 self.cls.__qualname__))
 
         return command
+
+
+class ModuleConverter(commands.Converter):
+
+    __qualname__ = "Module"
+
+    async def convert(self, ctx, arg):
+        module = ctx.bot.get_cog(arg)
+
+        if module is None:
+            raise commands.BadArgument(ctx.lang["errors"]["invalid_module"])
+        
+        return module
         
 
 class uint(commands.Converter):
