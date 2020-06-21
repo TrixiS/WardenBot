@@ -208,7 +208,8 @@ class Info(commands.Cog):
 
     @commands.command()
     async def invite(self, ctx):
-        await ctx.answer(f"[{ctx.lang['info']['invite']}]({InfoConstants.BOT_INVITE_URL})")
+        await ctx.answer(
+            f"[{ctx.lang['info']['invite']}]({InfoConstants.BOT_INVITE_URL.format(self.bot.user.id)})")
 
 
 def setup(bot):
