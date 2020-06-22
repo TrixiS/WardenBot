@@ -9,9 +9,11 @@ VIDEOS_CHANNEL_ID = 719902573834010694
 
 class ThirdParty(commands.Cog):
 
+    url_pattern = re.compile(
+        r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+
     def __init__(self, bot):
         self.bot = bot
-        self.url_pattern = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
 
     async def filter_youtube_links(self, message):
         if message.guild.id != LIGTAZ_GUILD_ID or message.channel.id != VIDEOS_CHANNEL_ID:
