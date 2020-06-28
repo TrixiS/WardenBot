@@ -21,8 +21,6 @@ class ErrorHandler(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
-        logging.info(str(error))
-
         if isinstance(error, commands.DisabledCommand):
             return
         elif isinstance(error, commands.CommandOnCooldown):
@@ -31,6 +29,8 @@ class ErrorHandler(commands.Cog):
                 (dt.datetime.now() + dt.timedelta(seconds=math.ceil(error.retry_after))).strftime(ctx.lang["long_date"]))
         elif isinstance(error, commands.CheckFailure):
             message = error.message
+        elif isinstance(error, commands.BadArgument):
+            message = error.message if hasattr(error, "message") else str(error)
         elif isinstance(error, discord.DiscordException):
             message = ctx.lang["errors"]["exception"].format(
                 ctx.command.qualified_name)
