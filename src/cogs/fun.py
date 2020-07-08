@@ -383,6 +383,18 @@ class Fun(commands.Cog):
         await ctx.answer(ctx.lang["fun"]["color_changed"].format(
             str(color).upper()))
 
+    @commands.command()
+    async def aest(self, ctx, *, text: str):
+        result = []
+
+        for c in text:
+            if not ord(c) in range(33, 127):
+                result.append(c)
+            else:
+                result.append(chr(ord(c) + 65248))
+
+        await ctx.send(''.join(result))
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
