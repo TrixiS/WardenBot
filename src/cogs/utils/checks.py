@@ -107,4 +107,4 @@ def only_in_guilds(*guilds):
     async def predicate(ctx):
         return ctx.guild.id in guilds
 
-    return predicate
+    return commands.check(predicate)

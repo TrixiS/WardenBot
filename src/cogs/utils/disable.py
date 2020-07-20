@@ -25,12 +25,6 @@ def disabled_command():
             ctx.command.disabled_in[ctx.guild.id] = True
             raise commands.DisabledCommand()
 
-        set_disabled(ctx.command.cog)
-
-        if ctx.guild.id not in ctx.commands.cog.disabled_in:
-            ctx.command.cog.disabled_in[ctx.guild.id] = True
-            raise commands.DisabledCommand()
-
         return True
 
     return commands.check(predicate)
