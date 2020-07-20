@@ -32,8 +32,13 @@ class MuteRoles:
 
     async def setup_mute_role(self, *, guild=None, role=None):
         if role is None:
-            role = discord.utils.get(guild.roles, name="Muted") or \
-                await guild.create_role(name="Muted")
+            role = discord.utils.get(guild.roles, name="Muted")
+
+            if role is None:
+                if len(guild.roles) == 250:
+                    return
+
+                role = await guild.create_role(name="Muted")
 
         for channel in filter(lambda x: x.type == discord.ChannelType.text, role.guild.channels):
             await channel.set_permissions(role, overwrite=self.overwrite)
@@ -91,6 +96,9 @@ class MutePool:
 
     async def add_mute(self, member: discord.Member, info: ActionInfo):        
         mute_role = await self.roles.get_mute_role(member.guild)
+
+        if mute_role is None:
+            return
 
         if mute_role not in member.roles:
             await member.add_roles(mute_role, reason=info.reason)
@@ -159,7 +167,7 @@ class Moderation(commands.Cog):
                 True, last_mute_id, with_commit=True)
 
     @commands.command()
-    @bot_has_permissions(manage_roles=True)
+    @bot_has_permissions(manage_roles=True, manage_channels=True)
     @is_moderator(manage_roles=True)
     async def mute(self, ctx, member: EqualMember, time: HumanTime, *, reason: Optional[entry_reason]):
         if reason is None:
@@ -203,8 +211,13 @@ class Moderation(commands.Cog):
     @is_commander(manage_roles=True)
     async def mute_role(self, ctx, role: EqualRole=None):
         if role is None:
+            mute_role = await self.roles.get_mute_role(guild=ctx.guild)
+
+            if mute_role is None:
+                return await ctx.answer(ctx.lang["moderation"]["too_many_roles"])
+
             return await ctx.answer(ctx.lang["moderation"]["mute_role_now"].format(
-                (await self.roles.get_mute_role(guild=ctx.guild)).mention))
+                mute_role.mention))
 
         await self.roles.setup_mute_role(role=role)
 
