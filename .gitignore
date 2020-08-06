@@ -1,6 +1,4 @@
 src/config.py
-src/cogs/_twitch_alerts.py
-src/cogs/twitch_alerts.py
 tests/
 config.py
 *.pyc
@@ -12,3 +10,4 @@ db_init.sql
 src/plugins
 src/plugin_loader/bin/
 src/plugin_loader/obj/
+src/cogs/mafia.py
