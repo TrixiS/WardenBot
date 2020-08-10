@@ -17,14 +17,14 @@ class TwitchAPIToken:
     def __init__(self, api, token, expr_date):
         self.api = api
         self.token = token
-        self.exrp_date = expr_date
+        self.expr_date = expr_date
 
     def __str__(self):
         return self.token
 
     @property
     def expired(self):
-        return dt.datetime.utcnow() >= self.exrp_date
+        return dt.datetime.utcnow() >= self.expr_date
 
 
 class TwitchEntity:
@@ -64,11 +64,11 @@ class TwitchAPI:
 
         self.token = TwitchAPIToken(
             self, data["access_token"], 
-            dt.datetime.utcnow() + dt.timedelta(seconds=data["expires_in"]))
+            dt.datetime.utcnow() + dt.timedelta(seconds=data["expires_in"] - 60))
 
         return self.token
 
-    async def req(self, api_method, **params):
+    async def req(self, api_method, method="GET", with_cursor=False, **params):
         token = await self.get_api_token()
 
         req_headers = {
@@ -82,21 +82,31 @@ class TwitchAPI:
             if isinstance(value, (list, tuple)):
                 for item in value:
                     params_values.append((key, item))
-            else:
+            elif value is not None:
                 params_values.append((key, value))
 
         params = MultiDict(params_values)
 
-        async with self.bot.session.get(
+        async with self.bot.session.request(
+                method,
                 self.base_api_url + api_method,
                 params=params,
                 headers=req_headers) as r:
-            data = (await r.json())["data"]
+            try:
+                json = await r.json()
+                data = json["data"]
+            except Exception:
+                return
 
             if len(data) == 0:
                 return
             
-            return tuple(TwitchEntity(**entity) for entity in data)
+            result = tuple(TwitchEntity(**entity) for entity in data)
+
+            if with_cursor and "cursor" in json["pagination"] and len(json["pagination"]["cursor"]):
+                setattr(result[0], "cursor", json["pagination"]["cursor"])
+
+            return result
 
 
 class TwitchChannel(commands.Converter):
@@ -113,114 +123,73 @@ class TwitchChannel(commands.Converter):
 class TwitchAlerts(commands.Cog):
 
     base_url = "https://twitch.tv/"
+    sub_url = "https://api.twitch.tv/helix/streams?user_id={}"
 
     def __init__(self, bot):
         self.bot = bot
         self.api = TwitchAPI(bot)
         self.latest_iter_time = dt.datetime.utcnow()
-        self.anonse.start()
+        self.check_subs.start()
 
     def cog_unload(self):
-        self.anonse.stop()
+        self.check_subs.stop()
 
     def embed_url(self, user):
-        name = user.display_name.capitalize()
-        return f"[{name}]({self.base_url}{name})"
+        name = user.display_name
+        return f"[{name}]({self.base_url}{name.lower()})"
 
-    @tasks.loop(minutes=2, count=None)
-    async def anonse(self):
-        anonses = await self.get_anonses()
+    async def toggle_sub(self, user, subscribe=True):
+        req_params = {
+            "hub.callback": self.bot.config.twitch_webhooks_callback,
+            "hub.mode": "subscribe" if subscribe else "unsubscribe",
+            "hub.topic": self.sub_url.format(user.id),
+            "hub.lease_seconds": 864000,
+            "hub.secret": self.bot.config.twitch_webhooks_secret
+        }
 
-        if anonses is None or len(anonses) == 0:
-            return
+        await self.api.req(
+            "webhooks/hub",
+            method="POST", 
+            **req_params)
 
-        guild_data = {}
-        all_guilds = set()
+    @tasks.loop(minutes=10, count=None)
+    async def check_subs(self):
+        await self.bot.wait_until_ready()
 
-        for guilds in map(lambda x: x[1], anonses):
-            all_guilds.update(guilds)
-
-        for guild in all_guilds:
-            data = await self.get_guild_data(guild)
-            
-            if data[2] is not None:
-                channel_perms = data[2].permissions_for(guild.me)
-
-                if channel_perms.send_messages and channel_perms.embed_links:
-                    guild_data[guild] = data
-
-        for stream, guilds in anonses:
-            for guild in filter(lambda g: g in guild_data, guilds):
-                self.bot.loop.create_task(self.send_alert(guild_data[guild], stream))
-
-    async def send_alert(self, data, stream):
-        lang, color, channel = data
-        login = stream.user_name.lower()
-        big_thumb_url = f"https://static-cdn.jtvnw.net/previews-ttv/live_user_{login}-640x360.jpg"
-        game = await self.api.req("games", id=stream.game_id, first=1)
-        user = await self.api.req("users", id=stream.user_id, first=1)
-
-        em = discord.Embed(
-            description=f"[{stream.title}](https://twitch.tv/{login}/)", 
-            colour=color)
-
-        em.add_field(name=lang["twitch"]["viewers"], value=stream.viewer_count)
-        em.add_field(name=lang["twitch"]["game"], value=game[0].name)
-        em.set_author(name=stream.user_name.capitalize(), icon_url=user[0].profile_image_url)
-        em.set_image(url=big_thumb_url)
-        em.set_thumbnail(url=stream.thumbnail_url)
-
-        await channel.send(embed=em)
-
-    async def get_guild_data(self, guild):
-        lang = await self.bot.get_lang(guild)
-        color = await self.bot.get_color(guild)
-        anonse_channel = await self.get_anonse_channel(guild)
-        return lang, color, anonse_channel            
-
-    async def get_anonses(self):
         ids = await self.bot.db.execute(
             "SELECT `user_id` FROM `twitch` GROUP BY `user_id` HAVING COUNT(*) >= 1",
             fetch_all=True)
-        
+
         if ids is None or len(ids) == 0:
             return
 
-        subscriptions = []
-        streams = await self.get_streams(tuple(map(lambda x: x[0], ids)))
+        notification_subs_ids = tuple(
+            int(s.topic.split('=')[1])
+            for s in await self.get_notification_subs())
 
-        for stream in filter(lambda s: s is not None and s.type == "live", streams):
-            stream_started = dt.datetime.strptime(
-                stream.started_at, r"%Y-%m-%dT%H:%M:%Sz")
+        for user_id in map(lambda x: x[0], ids):
+            if user_id not in notification_subs_ids:
+                await self.toggle_sub(discord.Object(user_id))
 
-            if self.latest_iter_time > stream_started:
-                continue
+    async def get_notification_subs(self):
+        result = []
+        cursor = None
 
-            subscribed_guilds = await self.get_subscribed_guilds(
-                int(stream.user_id))
+        while True:
+            searched = await self.api.req(
+                "webhooks/subscriptions",
+                with_cursor=True,
+                first=100, after=cursor)
+
+            if searched is None or (len(searched) and searched == tuple(result)):
+                break
+
+            if hasattr(searched[0], "cursor"):
+                cursor = searched[0].cursor
             
-            if len(subscribed_guilds):
-                subscriptions.append((stream, subscribed_guilds))
+            result.extend(searched)
 
-        self.latest_iter_time = dt.datetime.utcnow()
-        return subscriptions
-
-    async def get_subscribed_guilds(self, user_id):
-        check = await self.bot.db.execute(
-            "SELECT `server` FROM `twitch` WHERE `twitch`.`user_id` = ?",
-            user_id, fetch_all=True)
-
-        guilds = []
-
-        for row in check:
-            guild = self.bot.get_guild(row[0])
-
-            if guild is None:
-                continue
-
-            guilds.append(guild) 
-
-        return guilds
+        return result
 
     async def get_anonse_channel(self, guild):
         channel_id = await self.bot.db.execute(
@@ -250,6 +219,11 @@ class TwitchAlerts(commands.Cog):
             query=username,
             first=1)
 
+    async def any_guild_subscribed(self, user):
+        return bool(await self.bot.db.execute(
+            "SELECT 1 FROM `twitch` WHERE `user_id` = ?",
+            int(user.id)))
+
     def split_params(self, values, offset=100):
         offset_down = 0
         offset_up = offset
@@ -275,20 +249,6 @@ class TwitchAlerts(commands.Cog):
             searched = await self.api.req(
                 "users",
                 id=list(ids),
-                first=100)
-
-            if searched:
-                result.extend(searched)
-
-        return result
-
-    async def get_streams(self, ids):
-        result = []
-
-        for ids in self.split_params(ids):
-            searched = await self.api.req(
-                "streams",
-                user_id=list(ids),
                 first=100)
 
             if searched:
@@ -346,6 +306,9 @@ class TwitchAlerts(commands.Cog):
             return await ctx.answer(ctx.lang["twitch"]["already_subscribed"].format(
                 self.embed_url(channel)))
 
+        if not await self.any_guild_subscribed(channel):
+            await self.toggle_sub(channel)
+
         await self.bot.db.execute(
             "INSERT INTO `twitch` VALUES (?, ?)",
             ctx.guild.id, int(channel.id),
@@ -368,6 +331,9 @@ class TwitchAlerts(commands.Cog):
         else:
             await ctx.answer(ctx.lang["twitch"]["not_subscribed"].format(
                 self.embed_url(channel)))
+
+        if not await self.any_guild_subscribed(channel):
+            await self.toggle_sub(channel, subscribe=False)
 
     @is_commander()
     @twitch.command(name="channel")
