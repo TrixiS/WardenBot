@@ -1,6 +1,5 @@
 import discord
 import datetime as dt
-import logging
 
 from discord.ext import commands, tasks
 from typing import Optional
@@ -63,7 +62,7 @@ class TwitchAPI:
             data = await r.json()
 
         self.token = TwitchAPIToken(
-            self, data["access_token"], 
+            self, data["access_token"],
             dt.datetime.utcnow() + dt.timedelta(seconds=data["expires_in"] - 60))
 
         return self.token
@@ -100,7 +99,7 @@ class TwitchAPI:
 
             if len(data) == 0:
                 return
-            
+
             result = tuple(TwitchEntity(**entity) for entity in data)
 
             if with_cursor and "cursor" in json["pagination"] and len(json["pagination"]["cursor"]):
@@ -134,8 +133,8 @@ class TwitchAlerts(commands.Cog):
     def cog_unload(self):
         self.check_subs.stop()
 
-    def embed_url(self, user):
-        name = user.display_name
+    def embed_url(self, user, capital=False):
+        name = user.display_name.capitalize() if capital else user.display_name
         return f"[{name}]({self.base_url}{name.lower()})"
 
     async def toggle_sub(self, user, subscribe=True):
@@ -149,7 +148,7 @@ class TwitchAlerts(commands.Cog):
 
         await self.api.req(
             "webhooks/hub",
-            method="POST", 
+            method="POST",
             **req_params)
 
     @tasks.loop(minutes=10, count=None)
@@ -186,7 +185,7 @@ class TwitchAlerts(commands.Cog):
 
             if hasattr(searched[0], "cursor"):
                 cursor = searched[0].cursor
-            
+
             result.extend(searched)
 
         return result
@@ -277,7 +276,7 @@ class TwitchAlerts(commands.Cog):
         pages_content = [[]]
 
         for sub in subs:
-            if (sum(map(len, sub)) + len(sub) * sep_len + 
+            if (sum(map(len, sub)) + len(sub) * sep_len +
                     len(sub) + sep_len >= EmbedConstants.DESC_MAX_LEN):
                 pages_content.append([sub])
             else:
@@ -304,7 +303,7 @@ class TwitchAlerts(commands.Cog):
 
         if check:
             return await ctx.answer(ctx.lang["twitch"]["already_subscribed"].format(
-                self.embed_url(channel)))
+                self.embed_url(channel, capital=True)))
 
         if not await self.any_guild_subscribed(channel):
             await self.toggle_sub(channel)
@@ -315,7 +314,7 @@ class TwitchAlerts(commands.Cog):
             with_commit=True)
 
         await ctx.answer(ctx.lang["twitch"]["sub"].format(
-            self.embed_url(channel)))
+            self.embed_url(channel, capital=True)))
 
     @is_commander()
     @twitch.command(name="unsubscribe", aliases=["unsub"])
@@ -327,10 +326,10 @@ class TwitchAlerts(commands.Cog):
 
         if check:
             await ctx.answer(ctx.lang["twitch"]["unsub"].format(
-                self.embed_url(channel)))
+                self.embed_url(channel, capital=True)))
         else:
             await ctx.answer(ctx.lang["twitch"]["not_subscribed"].format(
-                self.embed_url(channel)))
+                self.embed_url(channel, capital=True)))
 
         if not await self.any_guild_subscribed(channel):
             await self.toggle_sub(channel, subscribe=False)
