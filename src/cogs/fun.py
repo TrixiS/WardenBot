@@ -1,16 +1,17 @@
 import discord
 import random
 import string
-import datetime
+import qrcode
 
 from discord.ext import commands
 from enum import Enum
 from typing import Optional
 from urllib.parse import urlencode
+from io import BytesIO
 
-from .utils.constants import EmbedConstants, FunConstants, DiscordConstants
-from .utils.strings import markdown, human_choice, multi_replace
-from .utils.converters import EnumConverter, EqualRole
+from .utils.constants import EmbedConstants, FunConstants
+from .utils.strings import markdown
+from .utils.converters import EnumConverter
 from .utils.checks import bot_has_permissions
 from .utils.disable import disabled_command
 
@@ -92,7 +93,7 @@ class Fun(commands.Cog):
         right_attachment = discord.utils.find(
             lambda a: 0 < a.size <= FunConstants.ATTACH_MAX_SIZE,
             ctx.message.attachments)
-            
+
         if code is None and right_attachment is not None:
             try:
                 code = (await right_attachment.read()).decode("utf-8")
@@ -148,7 +149,7 @@ class Fun(commands.Cog):
             image_url = (await req.json())['message']
 
         em = discord.Embed(
-            title=ctx.lang["fun"]["dog"].format(ctx.author.name), 
+            title=ctx.lang["fun"]["dog"].format(ctx.author.name),
             colour=ctx.color)
         em.set_image(url=image_url)
 
@@ -197,7 +198,7 @@ class Fun(commands.Cog):
             'ь': 'm',
             'б': ',',
             'ю': '.'
-        }       
+        }
 
         en_letters = {
             'q': 'й',
@@ -259,7 +260,7 @@ class Fun(commands.Cog):
     async def speller(self, ctx, lang: SpellerLanguageConverter, word: str):
         if not word.isalpha():
             return await ctx.answer(ctx.lang["fun"]["alpha_needed"])
-        
+
         req_data = {
             "text": word,
             "lang": lang.name,
@@ -268,7 +269,7 @@ class Fun(commands.Cog):
 
         async with self.bot.session.post(FunConstants.SPELLER_API_URL, data=req_data) as req:
             data = await req.json()
-    
+
         if len(data) == 0 or len(data[0]['s']) == 0:
             return await ctx.answer(ctx.lang["fun"]["no_mistakes"])
 
@@ -285,18 +286,18 @@ class Fun(commands.Cog):
     @commands.command(aliases=["color", "colour"])
     async def hex(self, ctx, hex_color: discord.Colour):
         em = discord.Embed(
-            title=ctx.lang["shared"]["color"], 
+            title=ctx.lang["shared"]["color"],
             colour=hex_color)
-        
+
         str_hex = str(hex_color)[1:].upper()
 
         em.add_field(
-            name="HEX", 
-            value=str_hex, 
+            name="HEX",
+            value=str_hex,
             inline=False)
         em.add_field(
-            name="RGB", 
-            value=str(hex_color.to_rgb()), 
+            name="RGB",
+            value=str(hex_color.to_rgb()),
             inline=False)
 
         req_data = {
@@ -312,7 +313,7 @@ class Fun(commands.Cog):
     @commands.command()
     async def cycle(self, ctx, *, text: commands.clean_content):
         result = []
-        
+
         for i, s in enumerate(text):
             if (i + 1) % 2 != 0:
                 result.append(s.upper())
@@ -324,8 +325,8 @@ class Fun(commands.Cog):
     @commands.command()
     async def encode(self, ctx, *, text: str):
         encoded = ' '.join(
-            str(bin(ord(s)))[2:] 
-            for s in text 
+            str(bin(ord(s)))[2:]
+            for s in text
             if s not in string.whitespace)
 
         await ctx.answer(encoded)
@@ -334,9 +335,9 @@ class Fun(commands.Cog):
     async def decode(self, ctx, *, text: str):
         if any(s not in "01 " for s in text):
             return await ctx.answer(ctx.lang["fun"]["binary_only"])
-        
+
         decoded = (
-            chr(int(code, base=2)) 
+            chr(int(code, base=2))
             for code in text.split()
             if len(code) <= FunConstants.MAX_CHAR_BYTE_LEN)
 
@@ -356,16 +357,16 @@ class Fun(commands.Cog):
             select_sql, ctx.guild.id, ctx.author.id)
 
         color_role = ctx.guild.get_role(role_id) or discord.utils.find(
-            lambda r: r.name == str(ctx.author), 
+            lambda r: r.name == str(ctx.author),
             ctx.guild.roles)
 
         if color_role is None:
             color_role = await ctx.guild.create_role(
-                name=str(ctx.author), 
+                name=str(ctx.author),
                 colour=color)
 
             await self.bot.db.execute(
-                "INSERT INTO `color_roles` VALUES (?, ?, ?)", 
+                "INSERT INTO `color_roles` VALUES (?, ?, ?)",
                 ctx.guild.id, ctx.author.id, color_role.id,
                 with_commit=True)
         else:
@@ -394,6 +395,18 @@ class Fun(commands.Cog):
                 result.append(chr(ord(c) + 65248))
 
         await ctx.send(''.join(result))
+
+    @commands.command(aliases=["QR", "qrcode", "qr"])
+    async def qrcommand(self, ctx, *, text: str):
+        if len(text) > 1500:
+            return await ctx.answer(ctx.lang["fun"]["qr_max_len"])
+
+        image = qrcode.make(text, box_size=10, border=1)
+        buffer = BytesIO()
+        image.save(buffer, format="png")
+        buffer.seek(0)
+
+        await ctx.reply(file=discord.File(buffer, filename="qr.png"))
 
 
 def setup(bot):

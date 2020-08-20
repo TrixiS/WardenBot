@@ -1,7 +1,6 @@
 from discord.ext.commands import Context
 from cogs.utils.constants import EmbedConstants
 from cogs.utils.global_checks import has_message_perms
-from asyncio import TimeoutError
 from io import BytesIO
 
 import discord
@@ -9,14 +8,14 @@ import logging
 
 
 class WardenContext(Context):
-    
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.lang = None
         self.color = None
 
-    async def send(self, content: str=None, **kwargs) -> None:
+    async def send(self, content: str = None, **kwargs) -> None:
         if not (await has_message_perms(self)):
             return
 
@@ -31,14 +30,14 @@ class WardenContext(Context):
     async def answer(self, message: str, **kwargs) -> None:
         if len(message) > EmbedConstants.DESC_MAX_LEN:
             file = BytesIO(bytes(message, "utf-8"))
-            
+
             message = await self.send(
-                self.author.mention, 
+                self.author.mention,
                 file=discord.File(file, filename="answer.txt"))
         else:
             em = discord.Embed(colour=self.color, description=message)
             em.set_author(
-                name=self.message.author.name, 
+                name=self.message.author.name,
                 icon_url=self.message.author.avatar_url)
 
             message = await self.send(embed=em, **kwargs)
@@ -57,7 +56,7 @@ class WardenContext(Context):
             msg = await self.bot.wait_for("message", **kwargs, check=check, timeout=timeout)
 
             content = msg.content
-            
+
             if with_attachments:
                 content += '\n'.join(
                     attach.url for attach in msg.attachments
@@ -70,7 +69,7 @@ class WardenContext(Context):
         yes = self.lang["shared"]["yes"].lower()
 
         result = await self.ask(
-            f"{message} ({yes.title()}, {no.title()})", 
+            f"{message} ({yes.title()}, {no.title()})",
             check=lambda x: x.author == self.author and x.content.lower() in (yes, no),
             timeout=timeout)
 
@@ -82,3 +81,9 @@ class WardenContext(Context):
     async def abort(self):
         await self.answer(self.lang["shared"]["aborted"].format(
             self.command.qualified_name))
+
+    async def reply(self, content="", *args, **kwargs):
+        await self.send(
+            f"{self.author.mention}, {content}".strip(),
+            *args, **kwargs
+        )
