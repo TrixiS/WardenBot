@@ -1,6 +1,5 @@
 import discord
 import string
-import datetime as dt
 
 from discord.ext import commands
 
@@ -72,9 +71,9 @@ class ModuleConverter(commands.Converter):
 
         if module is None:
             raise commands.BadArgument(ctx.lang["errors"]["invalid_module"])
-        
+
         return module
-        
+
 
 class uint(commands.Converter):
 
@@ -125,11 +124,11 @@ class HumanTime(commands.Converter):
         arg = arg.lower()
 
         seconds_in = ctx.lang["time_map"]
-        
+
         try:
             total_seconds = int(arg[:-1]) * seconds_in[arg[-1]]
             return min(max(1, total_seconds), self.SECONDS_IN_YEAR)
-        except:
+        except Exception:
             raise commands.BadArgument(ctx.lang["errors"]["time_convert_failed"])
 
 
@@ -171,14 +170,17 @@ class EqualRole(commands.RoleConverter):
     async def convert(self, ctx, arg):
         role = await super().convert(ctx, arg)
 
+        if role == ctx.guild.get_role(ctx.guild.id):
+            raise commands.BadArgument(ctx.lang["errors"]["everyone_role"])
+
         if role.managed:
             raise commands.BadArgument(ctx.lang["errors"]["managed_role"].format(
                 role.mention))
 
         if (role >= ctx.author.top_role and not ctx.bot.is_owner(ctx.author)) or \
-            role >= ctx.guild.me.top_role:
-                raise commands.BadArgument(
-                    ctx.lang["errors"]["role_over_top_role"].format(
-                        role.mention, ctx.bot.user.mention))
+                role >= ctx.guild.me.top_role:
+            raise commands.BadArgument(
+                ctx.lang["errors"]["role_over_top_role"].format(
+                    role.mention, ctx.bot.user.mention))
 
         return role

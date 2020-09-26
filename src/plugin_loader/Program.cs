@@ -17,17 +17,17 @@ namespace PluginLoader
     {
         private static Loader loader = new Loader(new AssemblyLoader());
         private static WardenConnector connector;
-        
-        public static async Task Main(string[] args)
-        {
-            loader.RunPluginsFromPath(args[0]);
 
-            connector = new WardenConnector("127.0.0.1", int.Parse(args[2]), args[1]);
-            connector.OnCommandReceived += OnCommandReceived;
-            connector.Start();
-            
-            await Task.Delay(-1);
-        }
+		public static async Task Main(string[] args)
+		{
+			loader.RunPluginsFromPath(args[0]);
+
+			connector = new WardenConnector("127.0.0.1", int.Parse(args[2]), args[1]);
+			connector.OnCommandReceived += OnCommandReceived;
+			connector.Start();
+
+			await Task.Delay(-1);
+		}
 
         private static void OnCommandReceived(object sender, ConnectorEventArgs e)
         {

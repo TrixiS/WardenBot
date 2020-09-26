@@ -9,6 +9,7 @@ from .utils.checks import bot_has_permissions
 from .utils.models import Pages
 from .thirdparty import ThirdParty
 
+# TODO: add Module to langs
 
 class Help(commands.Cog):
 
@@ -57,9 +58,6 @@ class Help(commands.Cog):
         for command in sorted(set(to_inspect.walk_commands()), key=lambda c: c.qualified_name):
             yield command.qualified_name
 
-    # TODO: close todos from #todos channel
-    # TODO: add lang description to all commands
-    # TODO: maybe use mysql async lib rewrite db.py
     @commands.group(name="help", invoke_without_command=True)
     async def help_command(self, ctx, *, command_or_module: Optional[str]):
         em = discord.Embed(colour=ctx.color)

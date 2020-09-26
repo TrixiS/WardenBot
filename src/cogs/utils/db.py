@@ -54,7 +54,7 @@ class DataBase:
                 result.append(value)
 
         return result
-        
+
     def _adapt(self) -> None:
         if self.db_type is DbType.SQLite:
             self.conn.create_function("rand", 0, random)
@@ -66,7 +66,7 @@ class DataBase:
 
     async def commit(self) -> None:
         async with self._lock:
-            self.conn.commit()
+            return self.conn.commit()
 
     async def execute(self, query: str, *args, **kwargs):
         if self.db_type is DbType.MySQL:
@@ -120,7 +120,7 @@ class DataBase:
         for s in query:
             if s in "`'\"":
                 in_param = not in_param
-            
+
             if not in_param and s == self.param_lit:
                 s = r"%s"
 

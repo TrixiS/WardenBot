@@ -11,3 +11,7 @@ src/plugins
 src/plugin_loader/bin/
 src/plugin_loader/obj/
 src/cogs/mafia.py
+src/cogs/_mafia.py
+src/cogs/_private_voices.py
+src/cogs/verification.py
+warden.log

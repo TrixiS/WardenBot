@@ -2,10 +2,9 @@ import discord
 import datetime as dt
 
 from discord.ext import commands, tasks
-from typing import Optional
 from multidict import MultiDict
 
-from .utils.checks import is_commander
+from .utils.checks import bot_has_permissions, is_commander
 from .utils.constants import EmbedConstants
 from .utils.converters import Index, IndexConverter
 from .utils.models import Pages
@@ -13,8 +12,7 @@ from .utils.models import Pages
 
 class TwitchAPIToken:
 
-    def __init__(self, api, token, expr_date):
-        self.api = api
+    def __init__(self, token, expr_date):
         self.token = token
         self.expr_date = expr_date
 
@@ -23,7 +21,7 @@ class TwitchAPIToken:
 
     @property
     def expired(self):
-        return dt.datetime.utcnow() >= self.expr_date
+        return dt.datetime.utcnow().timestamp() >= self.expr_date
 
 
 class TwitchEntity:
@@ -62,8 +60,9 @@ class TwitchAPI:
             data = await r.json()
 
         self.token = TwitchAPIToken(
-            self, data["access_token"],
-            dt.datetime.utcnow() + dt.timedelta(seconds=data["expires_in"] - 60))
+            data["access_token"],
+            dt.datetime.utcnow().timestamp() + int(data["expires_in"]) - 3600
+        )
 
         return self.token
 
@@ -189,16 +188,6 @@ class TwitchAlerts(commands.Cog):
             result.extend(searched)
 
         return result
-
-    async def get_anonse_channel(self, guild):
-        channel_id = await self.bot.db.execute(
-            "SELECT `channel` FROM `twitch_channels` WHERE `twitch_channels`.`server` = ?",
-            guild.id)
-
-        if channel_id is None:
-            return
-
-        return guild.get_channel(channel_id)
 
     async def set_anonse_channel(self, new_channel):
         check = await self.bot.db.execute(
@@ -335,24 +324,58 @@ class TwitchAlerts(commands.Cog):
             await self.toggle_sub(channel, subscribe=False)
 
     @is_commander()
+    @bot_has_permissions(manage_webhooks=True)
     @twitch.command(name="channel")
-    async def twitch_channel(self, ctx, *, channel: Optional[discord.TextChannel]):
-        set_channel = await self.get_anonse_channel(ctx.guild)
+    async def twitch_channel(self, ctx, *, channel: discord.TextChannel):
+        webhook = None
+        webhook_id = await self.bot.db.execute(
+            "SELECT `id` FROM `twitch_webhooks` WHERE `server` = ?",
+            ctx.guild.id
+        )
 
-        if channel is None:
-            if set_channel is None:
-                await ctx.answer(ctx.lang["twitch"]["no_channel"])
-            else:
-                await ctx.answer(ctx.lang["twitch"]["now_channel"].format(set_channel.mention))
+        if webhook_id is not None:
+            guild_webhooks = await ctx.guild.webhooks()
+            webhook = discord.utils.find(
+                lambda x: x.id == int(webhook_id),
+                guild_webhooks
+            )
+
+        webhook_channel = ctx.guild.get_channel(webhook.channel_id) if webhook else None
+
+        if webhook is not None and webhook_channel == channel:
+            return await ctx.answer(ctx.lang["twitch"]["webhook_already_set"].format(
+                channel.mention
+            ))
+
+        if webhook is not None:
+            await webhook.delete()
+
+        avatar_asset = self.bot.user.avatar_url_as(
+            format="png",
+            size=128
+        )
+
+        new_webhook = await channel.create_webhook(
+            name=ctx.lang["twitch"]["webhook_name"],
+            avatar=await avatar_asset.read()
+        )
+
+        if webhook_id is None:
+            await self.bot.db.execute(
+                "INSERT INTO `twitch_webhooks` VALUES (?, ?, ?)",
+                ctx.guild.id, str(new_webhook.id), new_webhook.token,
+                with_commit=True
+            )
         else:
-            if channel == set_channel:
-                await ctx.answer(ctx.lang["twitch"]["channel_deleted"].format(channel.mention))
-                await self.bot.db.execute(
-                    "DELETE FROM `twitch_channels` WHERE `twitch_channels`.`server` = ?",
-                    ctx.guild.id, with_commit=True)
-            else:
-                await ctx.answer(ctx.lang["twitch"]["new_channel"].format(channel.mention))
-                await self.set_anonse_channel(channel)
+            await self.bot.db.execute(
+                "UPDATE `twitch_webhooks` SET `id` = ?, `token` = ? WHERE `server` = ?",
+                str(new_webhook.id), new_webhook.token, ctx.guild.id,
+                with_commit=True
+            )
+
+        await ctx.answer(ctx.lang["twitch"]["webhook_set"].format(
+            channel.mention
+        ))
 
 
 def setup(bot):

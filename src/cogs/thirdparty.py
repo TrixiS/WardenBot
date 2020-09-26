@@ -16,6 +16,9 @@ class ThirdParty(commands.Cog):
         self.bot = bot
 
     async def filter_youtube_links(self, message):
+        if message.guild is None or message.channel is None:
+            return
+
         if message.guild.id != LIGTAZ_GUILD_ID or message.channel.id != VIDEOS_CHANNEL_ID:
             return
 

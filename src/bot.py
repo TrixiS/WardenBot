@@ -14,6 +14,8 @@ import discord
 import random
 
 
+# TODO: import bot config from bot class not in init args
+
 class Warden(AutoShardedBot):
 
     def __init__(self, *args, **kwargs):
@@ -24,10 +26,10 @@ class Warden(AutoShardedBot):
         self.assets_path = self.path.parent / "assets"
         self.session = ClientSession(loop=self.loop)
         self.db = DataBase(self.config.db_type, **self.config.database_settings)
-        
+
         self.uptime = None
         self.langs = None
-        
+
         if self.config.use_csharp_plugins:
             self.plugin_loader = PluginLoader(self)
         else:
@@ -57,7 +59,7 @@ class Warden(AutoShardedBot):
 
             try:
                 ext_path = to_ext(path)
-                
+
                 if reload and ext_path in self.extensions:
                     self.unload_extension(ext_path)
 
@@ -84,7 +86,7 @@ class Warden(AutoShardedBot):
         return guild.get_role(role_id)
 
     def is_owner(self, user):
-        return user.id in self.config.owners
+        return user.id in self.config.owners and not self.config.debug_mode
 
     def run(self):
         super().run(self.config.bot_token, reconnect=True)
@@ -94,14 +96,17 @@ class Warden(AutoShardedBot):
         await super().close()
 
     async def get_color(self, guild):
+        # if guild is not None:
         color = await self.db.execute(
             "SELECT `color` FROM `colors` WHERE `colors`.`server` = ?",
             guild.id)
+        # else:
+        #     color = "rnd"
 
         if color is None:
             color = guild.me.color
         elif color == "rnd":
-            color = discord.Colour.from_rgb(*random.choices(range(255), k=3))
+            color = discord.Colour.from_rgb(*random.choices(range(256), k=3))
         else:
             color = discord.Colour.from_rgb(*map(int, color.split(';')))
 
@@ -133,10 +138,10 @@ class Warden(AutoShardedBot):
 
     async def on_ready(self):
         logging.info(f'{self.user.name} started with {len(self.guilds)} guilds')
-        
-        if self.uptime is None: 
+
+        if self.uptime is None:
             self.uptime = datetime.now()
-        
+
         await self.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, 
+            type=discord.ActivityType.watching,
             name=self.config.status))
